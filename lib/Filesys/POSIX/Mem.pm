@@ -4,67 +4,24 @@ use strict;
 use warnings;
 
 use Filesys::POSIX::Bits;
+use Filesys::POSIX::Inode;
+use Filesys::POSIX::FdTable;
 
 sub new {
     my ($class) = @_;
-    my $root = _mkfs();
-
-    return bless {
-        'root'  => $root,
-        'cwd'   => $root,
-        'umask' => 022,
-        'fds'   => {}
-    }, $class;
-}
-
-sub _fd_alloc {
-    my ($self, $inode) = @_;
-    my $fd = 3;
-
-    foreach (sort { $a <=> $b } keys %{$self->{'fds'}}) {
-        next if $self->{'fds'}->{$fd = $_ + 1};
-        last;
-    }
-
-    $self->{'fds'}->{$fd} = $inode;
-
-    return $fd;
-}
-
-sub _fd_lookup {
-    my ($self, $fd) = @_;
-    my $inode = $self->{'fds'}->{$fd} or die('Invalid file descriptor');
-
-    return $inode;
-}
-
-sub _fd_free {
-    my ($self, $fd) = @_;
-    delete $self->{'fds'}->{$fd};
-}
-
-sub _inode {
-    my ($mode) = @_;
-    my $now = time;
-
-    return {
-        'atime' => $now,
-        'mtime' => $now,
-        'uid'   => 0,
-        'gid'   => 0,
-        'mode'  => $mode
-    };
-}
-
-sub _mkfs {
-    my $root = _inode($S_IFDIR | 0755);
+    my $root = Filesys::POSIX::Inode->new($S_IFDIR | 0755);
 
     $root->{'dirent'} = {
         '.'     => $root,
         '..'    => $root
     };
 
-    return $root;
+    return bless {
+        'root'  => $root,
+        'cwd'   => $root,
+        'umask' => 022,
+        'fds'   => Filesys::POSIX::FdTable->new
+    }, $class;
 }
 
 sub _cleanpath {
@@ -126,7 +83,7 @@ sub stat {
 
 sub fstat {
     my ($self, $fd) = @_;
-    return $self->_fd_lookup($fd);
+    return $self->{'fds'}->lookup($fd);
 }
 
 sub open {
@@ -144,7 +101,7 @@ sub open {
         die('File exists') if $parent->{'dirent'}->{$name};
         die('Not a directory') unless $parent->{'mode'} & $S_IFDIR;
 
-        $inode = _inode($mode);
+        $inode = Filesys::POSIX::Inode->new($mode);
 
         if ($mode & $S_IFDIR) {
             my $parent = $hier[0]? $self->stat(join('/', @hier[0..$#hier-1])): $self->{'root'};
@@ -158,12 +115,12 @@ sub open {
         }
     }
 
-    return $self->_fd_alloc($inode);
+    return $self->{'fds'}->alloc($inode);
 }
 
 sub close {
     my ($self, $fd) = @_;
-    $self->_fd_free($fd);
+    $self->{'fds'}->free($fd);
 }
 
 sub getcwd {
@@ -175,37 +132,24 @@ sub chdir {
     $self->{'cwd'} = $self->stat($path);
 }
 
-sub _chown {
-    my ($self, $node, $uid, $gid) = @_;
-    @{$node}{qw/uid gid/} = ($uid, $gid);
-}
-
 sub chown {
     my ($self, $path, $uid, $gid) = @_;
-    $self->_chown($self->stat($path), $uid, $gid);
+    $self->stat($path)->chown($uid, $gid);
 }
 
 sub fchown {
     my ($self, $fd, $uid, $gid) = @_;
-    $self->_chown($self->fstat($fd), $uid, $gid);
-}
-
-sub _chmod {
-    my ($self, $node, $mode) = @_;
-    my $format = $node->{'mode'} & $S_IFMT;
-    my $perm = $mode & ($S_IPERM | $S_IPROT);
-
-    $node->{'mode'} = $format | $perm;
+    $self->fstat($fd)->chown($uid, $gid);
 }
 
 sub chmod {
     my ($self, $path, $mode) = @_;
-    $self->_chmod($self->stat($path), $mode);
+    $self->stat($path)->chmod($mode);
 }
 
 sub fchmod {
     my ($self, $fd, $mode) = @_;
-    $self->_chmod($self->fstat($fd), $mode);
+    $self->fstat($fd)->chmod($mode);
 }
 
 sub mkdir {
