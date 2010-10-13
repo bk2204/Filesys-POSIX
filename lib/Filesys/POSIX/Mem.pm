@@ -17,6 +17,18 @@ our $O_NOFOLLOW = 0x0400;
 our $O_SYMLINK  = 0x0800;
 our $O_EVTONLY  = 0x1000;
 
+our $S_IFMT     = 0170000;
+our $S_IPROT    = 0007000;
+our $S_IPERM    = 0000777;
+our $S_IFIFO    = 0010000;
+our $S_IFCHR    = 0020000;
+our $S_IFDIR    = 0040000;
+our $S_IFBLK    = 0060000;
+our $S_IFREG    = 0100000;
+our $S_IFLNK    = 0120000;
+our $S_IFSOCK   = 0140000;
+our $S_IFWHT    = 0160000;
+
 sub new {
     my ($class) = @_;
     my $root = _mkfs();
@@ -186,21 +198,44 @@ sub chdir {
     $self->{'cwd'} = $self->stat($path);
 }
 
+sub _chown {
+    my ($self, $node, $uid, $gid) = @_;
+    @{$node}{qw/uid gid/} = ($uid, $gid);
+}
+
 sub chown {
     my ($self, $path, $uid, $gid) = @_;
-    my $node = $self->stat($path);
-    @{$node}{qw/uid gid/} = ($uid, $gid);
+    $self->_chown($self->stat($path), $uid, $gid);
 }
 
 sub fchown {
     my ($self, $fd, $uid, $gid) = @_;
-    my $node = $self->fstat($fd);
-    @{$node}{qw/uid gid/} = ($uid, $gid);
+    $self->_chown($self->fstat($fd), $uid, $gid);
+}
+
+sub _chmod {
+    my ($self, $node, $mode) = @_;
+    my $format = $node->{'mode'} & $S_IFMT;
+    my $perm = $mode & ($S_IPERM | $S_IPROT);
+
+    $node->{'mode'} = $format | $perm;
+}
+
+sub chmod {
+    my ($self, $path, $mode) = @_;
+    $self->_chmod($self->stat($path), $mode);
+}
+
+sub fchmod {
+    my ($self, $fd, $mode) = @_;
+    $self->_chmod($self->fstat($fd), $mode);
 }
 
 sub mkdir {
     my ($self, $path, $mode) = @_;
-    my $fd = $self->open($path, $O_CREAT, 040777);
+    my $perm = $mode? $mode & ($S_IPERM | $S_IPROT): $S_IPERM ^ $self->{'umask'};
+
+    my $fd = $self->open($path, $O_CREAT, $perm | $S_IFDIR);
     $self->close($fd);
 }
 
