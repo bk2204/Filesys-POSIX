@@ -8,17 +8,30 @@ use Filesys::POSIX::Inode;
 
 sub new {
     my ($class, %opts) = @_;
-    my $root = Filesys::POSIX::Inode->new($S_IFDIR | 0755);
+    my $fs = bless \%opts, $class;
+
+    my $root = Filesys::POSIX::Inode->new(
+        'mode'  => $S_IFDIR | 0755,
+        'dev'   => $fs
+    );
 
     $root->{'dirent'} = {
         '.'     => $root,
         '..'    => $root
     };
 
-    return bless {
-        'noatime'   => $opts{'noatime'},
-        'first'     => $root
-    }, $class;
+    $fs->{'root'} = $root;
+
+    return $fs;
+}
+
+sub inode {
+    my ($self, $mode) = @_;
+
+    return Filesys::POSIX::Inode->new(
+        'mode'  => $mode,
+        'dev'   => $self
+    );
 }
 
 1;
