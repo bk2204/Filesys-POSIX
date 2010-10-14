@@ -78,14 +78,15 @@ sub open {
 
     if ($flags & $O_CREAT) {
         my $parent = $self->stat($hier->dirname);
-        my $perms = $mode? $mode & ($S_IFMT | $S_IPROT | $S_IPERM): $S_IFREG | ($S_IPERM ^ $self->{'umask'});
+        my $format = $mode? $mode & $S_IFMT: $S_IFREG;
+        my $perms = $mode? $mode & ($S_IPROT | $S_IPERM): $S_IPERM ^ $self->{'umask'};
 
         die('File exists') if $parent->{'dirent'}->{$name};
         die('Not a directory') unless $parent->{'mode'} & $S_IFDIR;
 
-        $inode = Filesys::POSIX::Inode->new($mode);
+        $inode = Filesys::POSIX::Inode->new($format | $perms);
 
-        if ($mode & $S_IFDIR) {
+        if ($format & $S_IFDIR) {
             $inode->{'dirent'} = {
                 '.'     => $inode,
                 '..'    => $parent
