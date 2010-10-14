@@ -1,64 +1,86 @@
-package Filesys::POSIX::Mem;
+package Filesys::POSIX;
 
 use strict;
 use warnings;
 
 use Filesys::POSIX::Mem;
 use Filesys::POSIX::Bits;
-use Filesys::POSIX::Inode;
 use Filesys::POSIX::FdTable;
 use Filesys::POSIX::Path;
 
 sub new {
     my ($class, %opts) = @_;
 
-    die('No root filesystem specified') unless $opts{'root'};
+    die('No root filesystem specified') unless $opts{'rootfs'};
 
     return bless {
-        'root'  => $opts{'root'},
-        'cwd'   => $opts{'root'},
-        'umask' => 022,
-        'fds'   => Filesys::POSIX::FdTable->new
+        'cwd'       => $opts{'rootfs'}->{'root'},
+        'umask'     => 022,
+        'fds'       => Filesys::POSIX::FdTable->new,
+        'root'      => $opts{'rootfs'}->{'root'},
+        'mounts'    => {
+            $opts{'rootfs'}->{'root'} => $opts{'rootfs'}
+        }
     }, $class;
 }
 
 sub umask {
     my ($self, $umask) = @_;
 
-    if ($umask) {
-        return $self->{'umask'} = $umask;
+    return $self->{'umask'} = $umask if $umask;
+    return $self->{'umask'};
+}
+
+sub _find_inode {
+    my ($self, $path, %opts) = @_;
+    my $hier = Filesys::POSIX::Path->new($path);
+    my $dir = $self->{'cwd'};
+    my $node;
+
+    while ($hier->count) {
+        my $item = $hier->shift;
+
+        unless ($item) {
+            $dir = $self->{'root'};
+            next;
+        }
+
+        die('Not a directory') unless $dir->{'mode'} & $S_IFDIR;
+
+        if ($self->{'mounts'}->{$dir}) {
+            $dir = $self->{'mounts'}->{$dir}->{'root'};
+        }
+
+        unless ($opts{'noatime'}) {
+            $dir->{'atime'} = time;
+        }
+
+        $node = $dir->{'dirent'}->{$item} or die('No such file or directory');
+
+        if ($opts{'resolve_symlinks'} && $node->{'mode'} & $S_IFLNK) {
+            $hier = Filesys::POSIX::Path->new($node->readlink);
+        } else {
+            $dir = $node;
+        }
     }
 
-    return $self->{'umask'};
+    die('No such file or directory') unless $node;
+
+    return $node;
+}
+
+sub stat {
+    my ($self, $path) = @_;
+
+    return $self->_find_inode($path,
+        'resolve_symlinks' => 1
+    );
 }
 
 sub lstat {
     my ($self, $path) = @_;
-    my $hier = Filesys::POSIX::Path->new($path);
-    my $node = $self->{'cwd'};
-    my $now = time;
 
-    unless ($hier->[0]) {
-        $node = $self->{'root'};
-        $hier->shift;
-    }
-
-    dir: while (my $dir = $hier->shift) {
-        die('Not a directory') unless $node->{'mode'} & $S_IFDIR;
-
-        $node->{'atime'} = $now unless $self->{'noatime'};
-
-        subdir: foreach (keys %{$node->{'dirent'}}) {
-            if ($_ eq $dir) {
-                $node = $node->{'dirent'}->{$_};
-                next dir;
-            }
-        }
-
-        die('No such file or directory');
-    }
-
-    return $node;
+    return $self->_find_inode($path);
 }
 
 sub fstat {
@@ -80,7 +102,7 @@ sub open {
         die('File exists') if $parent->{'dirent'}->{$name};
         die('Not a directory') unless $parent->{'mode'} & $S_IFDIR;
 
-        $inode = Filesys::POSIX::Inode->new;
+        $inode = $parent->{'dev'}->inode;
 
         if ($format & $S_IFDIR) {
             $perms |= $S_IX ^ $self->{'umask'} unless $perms;
@@ -117,6 +139,11 @@ sub chown {
     $self->stat($path)->chown($uid, $gid);
 }
 
+sub lchown {
+    my ($self, $path, $uid, $gid) = @_;
+    $self->lstat($path)->chown($uid, $gid);
+}
+
 sub fchown {
     my ($self, $fd, $uid, $gid) = @_;
     $self->fstat($fd)->chown($uid, $gid);
@@ -127,6 +154,11 @@ sub chmod {
     $self->stat($path)->chmod($mode);
 }
 
+sub lchmod {
+    my ($self, $path, $mode) = @_;
+    $self->lstat($path)->chmod($mode);
+}
+
 sub fchmod {
     my ($self, $fd, $mode) = @_;
     $self->fstat($fd)->chmod($mode);
@@ -134,7 +166,7 @@ sub fchmod {
 
 sub mkdir {
     my ($self, $path, $mode) = @_;
-    my $perm = $mode? $mode & ($S_IPERM | $S_IPROT): $S_IPERM;
+    my $perm = $mode? $mode & ($S_IPERM | $S_IPROT): $S_IPERM ^ $self->{'umask'};
 
     my $fd = $self->open($path, $O_CREAT, $perm | $S_IFDIR);
     $self->close($fd);
