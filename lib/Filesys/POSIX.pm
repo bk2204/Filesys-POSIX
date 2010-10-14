@@ -7,20 +7,22 @@ use Filesys::POSIX::Mem;
 use Filesys::POSIX::Bits;
 use Filesys::POSIX::FdTable;
 use Filesys::POSIX::Path;
+use Filesys::POSIX::VFS;
 
 sub new {
     my ($class, %opts) = @_;
 
     die('No root filesystem specified') unless $opts{'rootfs'};
 
+    my $vfs = Filesys::POSIX::VFS->new;
+    $vfs->mount($opts{'rootfs'}, '/', $opts{'rootfs'}->{'root'}, %opts);
+
     return bless {
-        'cwd'       => $opts{'rootfs'}->{'root'},
-        'umask'     => 022,
-        'fds'       => Filesys::POSIX::FdTable->new,
-        'root'      => $opts{'rootfs'}->{'root'},
-        'mounts'    => {
-            $opts{'rootfs'}->{'root'} => $opts{'rootfs'}
-        }
+        'cwd'   => $opts{'rootfs'}->{'root'},
+        'umask' => 022,
+        'fds'   => Filesys::POSIX::FdTable->new,
+        'root'  => $opts{'rootfs'}->{'root'},
+        'vfs'   => $vfs
     }, $class;
 }
 
@@ -47,8 +49,8 @@ sub _find_inode {
 
         die('Not a directory') unless $dir->{'mode'} & $S_IFDIR;
 
-        if ($self->{'mounts'}->{$dir}) {
-            $dir = $self->{'mounts'}->{$dir}->{'root'};
+        if ($self->{'vfs'}->{$dir}) {
+            $dir = $self->{'vfs'}->{$dir}->{'dev'}->{'root'};
         }
 
         unless ($opts{'noatime'}) {
@@ -132,6 +134,11 @@ sub getcwd {
 sub chdir {
     my ($self, $path) = @_;
     $self->{'cwd'} = $self->stat($path);
+}
+
+sub fchdir {
+    my ($self, $fd) = @_;
+    $self->{'cwd'} = $self->fstat($fd);
 }
 
 sub chown {
