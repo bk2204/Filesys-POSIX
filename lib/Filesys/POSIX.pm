@@ -116,6 +116,7 @@ sub open {
         }
 
         $inode->{'mode'} = $format | $perms;
+        $inode->{'parent'} = $parent;
         $parent->{'dirent'}->{$name} = $inode;
     }
 
@@ -189,6 +190,7 @@ sub link {
     die('Is a directory') if $node->{'mode'} & $S_IFDIR;
     die('Not a directory') unless $parent->{'mode'} & $S_IFDIR;
     die('File exists') if $parent->{'dirent'}->{$name};
+    die('Cross-device link') if $node->{'dev'} != $parent->{'dev'};
 
     $parent->{'dirent'}->{$name} = $node;
 }
