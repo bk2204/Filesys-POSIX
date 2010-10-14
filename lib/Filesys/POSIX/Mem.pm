@@ -6,9 +6,10 @@ use warnings;
 use Filesys::POSIX::Bits;
 use Filesys::POSIX::Inode;
 use Filesys::POSIX::FdTable;
+use Filesys::POSIX::Path;
 
 sub new {
-    my ($class) = @_;
+    my ($class, %opts) = @_;
     my $root = Filesys::POSIX::Inode->new($S_IFDIR | 0755);
 
     $root->{'dirent'} = {
@@ -17,41 +18,29 @@ sub new {
     };
 
     return bless {
-        'root'  => $root,
-        'cwd'   => $root,
-        'umask' => 022,
-        'fds'   => Filesys::POSIX::FdTable->new
+        'noatime'   => $opts{'noatime'},
+        'root'      => $root,
+        'cwd'       => $root,
+        'umask'     => 022,
+        'fds'       => Filesys::POSIX::FdTable->new
     }, $class;
 }
 
-sub _cleanpath {
-    my ($path) = @_;
-    my @components = split /\//, $path;
-
-    my @ret = grep {
-        $_ && $_ ne '.'
-    } @components;
-
-    $components[0]? @ret: ('', @ret);
-}
-
-sub _resolve {
+sub stat {
     my $self = shift;
-    my @hier = _cleanpath(shift);
+    my $hier = Filesys::POSIX::Path->new(shift);
     my $node = $self->{'cwd'};
     my $now = time;
 
-    die('Empty path') unless @hier;
-
-    unless ($hier[0]) {
+    unless ($hier->[0]) {
         $node = $self->{'root'};
-        shift @hier;
+        $hier->shift;
     }
 
-    dir: while (my $dir = shift @hier) {
+    dir: while (my $dir = $hier->shift) {
         die('Not a directory') unless $node->{'mode'} & 040000;
 
-        $node->{'atime'} = $now;
+        $node->{'atime'} = $now unless $self->{'noatime'};
 
         subdir: foreach (keys %{$node->{'dirent'}}) {
             if ($_ eq $dir) {
@@ -76,11 +65,6 @@ sub umask {
     return $self->{'umask'};
 }
 
-sub stat {
-    my ($self, $path) = @_;
-    return $self->_resolve($path);
-}
-
 sub fstat {
     my ($self, $fd) = @_;
     return $self->{'fds'}->lookup($fd);
@@ -88,14 +72,12 @@ sub fstat {
 
 sub open {
     my ($self, $path, $flags, $mode) = @_;
-    my @hier = _cleanpath($path);
-    my $name = $hier[$#hier];
+    my $hier = Filesys::POSIX::Path->new($path);
+    my $name = $hier->basename;
     my $inode;
 
-    die('Empty path') unless $name;
-
     if ($flags & $O_CREAT) {
-        my $parent = $hier[0]? $self->stat(join('/', @hier[0..$#hier-1])): $self->{'root'};
+        my $parent = $self->stat($hier->dirname);
         my $perms = $mode? $mode & ($S_IFMT | $S_IPROT | $S_IPERM): $S_IFREG | ($S_IPERM ^ $self->{'umask'});
 
         die('File exists') if $parent->{'dirent'}->{$name};
@@ -104,8 +86,6 @@ sub open {
         $inode = Filesys::POSIX::Inode->new($mode);
 
         if ($mode & $S_IFDIR) {
-            my $parent = $hier[0]? $self->stat(join('/', @hier[0..$#hier-1])): $self->{'root'};
-
             $inode->{'dirent'} = {
                 '.'     => $inode,
                 '..'    => $parent
@@ -158,6 +138,43 @@ sub mkdir {
 
     my $fd = $self->open($path, $O_CREAT, $perm | $S_IFDIR);
     $self->close($fd);
+}
+
+sub link {
+    my ($self, $src, $dest) = @_;
+}
+
+sub symlink {
+    my ($self, $src, $dest) = @_;
+}
+
+sub unlink {
+    my ($self, $path) = @_;
+    my $hier = Filesys::POSIX::Path->new($path);
+    my $name = $hier->basename;
+    my $node = $self->stat($hier->full);
+    my $parent = $self->stat($hier->dirname);
+
+    die('Is a directory') if $node->{'mode'} & $S_IFDIR;
+    die('Not a directory') unless $parent->{'mode'} & $S_IFDIR;
+    die('No such file or directory') unless $parent->{'dirent'}->{$name};
+
+    delete $parent->{'dirent'}->{$name};
+}
+
+sub rmdir {
+    my ($self, $path) = @_;
+    my $hier = Filesys::POSIX::Path->new($path);
+    my $name = $hier->basename;
+    my $node = $self->stat($hier->full);
+    my $parent = $self->stat($hier->dirname);
+
+    die('Not a directory') unless $node->{'mode'} & $S_IFDIR;
+    die('Device or resource busy') if $node == $parent;
+    die('Directory not empty') unless scalar(keys %{$node->{'dirent'}}) == 2 && @{$node->{'dirent'}}{qw/. ../};
+    die('No such file or directory') unless $parent->{'dirent'}->{$name};
+
+    delete $parent->{'dirent'}->{$name};
 }
 
 1;
