@@ -10,13 +10,14 @@ sub new {
     my $now = time;
 
     return bless {
-        'atime' => $now,
-        'mtime' => $now,
-        'uid'   => 0,
-        'gid'   => 0,
-        'mode'  => $opts{'mode'}? $opts{'mode'}: 0,
-        'dev'   => $opts{'dev'},
-        'rdev'  => $opts{'rdev'}
+        'atime'     => $now,
+        'mtime'     => $now,
+        'uid'       => 0,
+        'gid'       => 0,
+        'mode'      => $opts{'mode'}? $opts{'mode'}: 0,
+        'dev'       => $opts{'dev'},
+        'rdev'      => $opts{'rdev'},
+        'parent'    => $opts{'parent'}
     }, $class;
 }
 
