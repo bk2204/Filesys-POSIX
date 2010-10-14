@@ -167,6 +167,15 @@ sub symlink {
     $self->close($fd);
 }
 
+sub readlink {
+    my ($self, $path) = @_;
+    my $node = $self->stat($path);
+
+    die('Not a symlink') unless $node & $S_IFLNK;
+
+    return $node->{'dest'};
+}
+
 sub unlink {
     my ($self, $path) = @_;
     my $hier = Filesys::POSIX::Path->new($path);
