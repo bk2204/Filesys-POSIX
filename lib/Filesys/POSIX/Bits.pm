@@ -15,7 +15,7 @@ BEGIN {
         $S_IFIFO $S_IFCHR $S_IFDIR $S_IFBLK $S_IFREG $S_IFLNK $S_IFSOCK
         $S_IFWHT $S_IPROT $S_ISUID $S_ISGID $S_ISVTX $S_IPERM $S_IRWXU
         $S_IRUSR $S_IWUSR $S_IXUSR $S_IRWXG $S_IRGRP $S_IWGRP $S_IXGRP
-        $S_IRWXO $S_IROTH $S_IWOTH $S_IXOTH
+        $S_IRWXO $S_IROTH $S_IWOTH $S_IXOTH $S_IRW $S_IX
     );
 }
 
@@ -68,7 +68,9 @@ our $S_ISVTX    = 0001000;
 #
 # Inode permission bitfield and values
 #
-our $S_IPERM    = 0000777;
+our $S_IRW      = 0000666;
+our $S_IX       = 0000111;
+our $S_IPERM    = $S_IRW | $S_IX;
 
 # Per assigned user
 our $S_IRWXU    = 0000700;
