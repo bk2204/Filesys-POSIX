@@ -18,6 +18,14 @@ sub new {
     }, $class;
 }
 
+sub format {
+    shift->{'mode'} & $S_IFMT;
+}
+
+sub perms {
+    shift->{'mode'} & ($S_IPROT | $S_IPERM);
+}
+
 sub chown {
     my ($self, $uid, $gid) = @_;
     @{$self}{qw/uid gid/} = ($uid, $gid);
@@ -29,6 +37,14 @@ sub chmod {
     my $perm = $mode & ($S_IPERM | $S_IPROT);
 
     $self->{'mode'} = $format | $perm;
+}
+
+sub readlink {
+    my ($self) = @_;
+
+    die('Not a symlink') unless $self->{'mode'} & $S_IFLNK;
+
+    return $self->{'dest'};
 }
 
 1;
