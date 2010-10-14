@@ -3,8 +3,6 @@ package Filesys::POSIX::Path;
 use strict;
 use warnings;
 
-use Carp;
-
 sub new {
     my ($class, $path) = @_;
     my @components = split(/\//, $path);
@@ -13,7 +11,7 @@ sub new {
         $_ && $_ ne '.'
     } @components;
 
-    confess('Empty path') unless @components || $path;
+    die('Empty path') unless @components || $path;
 
     return bless [
         $components[0]? @ret: ('', @ret)
