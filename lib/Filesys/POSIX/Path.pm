@@ -11,7 +11,7 @@ sub new {
         $_ && $_ ne '.'
     } @components;
 
-    die('Empty path') unless @components || $components[0];
+    die('Empty path') unless @components || $path;
 
     return bless [
         $components[0]? @ret: ('', @ret)
@@ -34,8 +34,15 @@ sub components {
     return @$self;
 }
 
-sub name {
+sub full {
     my $self = _proxy(@_);
+    my @hier = @$self;
+
+    if (@hier == 0) {
+        return '.';
+    } elsif (@hier == 1 && !$hier[0]) {
+        return '/';
+    }
 
     return join('/', @$self);
 }
@@ -44,14 +51,26 @@ sub dirname {
     my $self = _proxy(@_);
     my @hier = @$self;
 
+    if (@hier == 0) {
+        return '.';
+    } elsif (@hier == 1 && !$hier[0]) {
+        return '/';
+    }
+
     return $#hier? join('/', @hier[0..$#hier-1]): '.';
 }
 
 sub basename {
     my ($self, $ext) = (_proxy(@_[0..1]), $_[2]);
     my @hier = @$self;
-    my $name = $hier[$#hier];
 
+    if (@hier == 0) {
+        return '.';
+    } elsif (@hier == 1 && !$hier[0]) {
+        return '/';
+    }
+
+    my $name = $hier[$#hier];
     $name =~ s/$ext$// if $ext;
 
     return $name;
