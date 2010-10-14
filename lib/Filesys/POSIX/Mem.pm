@@ -91,9 +91,9 @@ sub open {
                 '.'     => $inode,
                 '..'    => $parent
             };
-
-            $parent->{'dirent'}->{$name} = $inode;
         }
+
+        $parent->{'dirent'}->{$name} = $inode;
     }
 
     return $self->{'fds'}->alloc($inode);
