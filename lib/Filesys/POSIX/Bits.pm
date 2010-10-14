@@ -22,19 +22,25 @@ BEGIN {
 #
 # Flags as recognized by open()
 #
-our $O_RDONLY   = 0x0001;
-our $O_WRONLY   = 0x0002;
-our $O_RDWR     = 0x0004;
-our $O_NONBLOCK = 0x0008;
-our $O_APPEND   = 0x0010;
-our $O_CREAT    = 0x0020;
-our $O_TRUNC    = 0x0040;
-our $O_EXCL     = 0x0080;
-our $O_SHLOCK   = 0x0100;
-our $O_EXLOCK   = 0x0200;
-our $O_NOFOLLOW = 0x0400;
-our $O_SYMLINK  = 0x0800;
-our $O_EVTONLY  = 0x1000;
+our $O_MODE     = 0x0003;
+
+our $O_RDONLY   = 0x0000;
+our $O_WRONLY   = 0x0001;
+our $O_RDWR     = 0x0002;
+
+our $O_SYNC     = 0x0080;
+
+our $O_SHLOCK   = 0x0010;
+our $O_EXLOCK   = 0x0020;
+our $O_ASYNC    = 0x0040;
+our $O_FSYNC    = $O_SYNC;
+our $O_NOFOLLOW = 0x0100;
+
+our $O_CREAT    = 0x0200;
+our $O_TRUNC    = 0x0400;
+our $O_EXCL     = 0x0800;
+
+our $O_EVTONLY  = 0x8000;
 
 #
 # Inode format bitfield and values
