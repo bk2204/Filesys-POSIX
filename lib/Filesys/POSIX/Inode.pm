@@ -14,7 +14,7 @@ sub new {
         'mtime' => $now,
         'uid'   => 0,
         'gid'   => 0,
-        'mode'  => $mode
+        'mode'  => $mode? $mode: 0
     }, $class;
 }
 
