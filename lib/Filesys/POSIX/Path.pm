@@ -3,6 +3,8 @@ package Filesys::POSIX::Path;
 use strict;
 use warnings;
 
+use Carp;
+
 sub new {
     my ($class, $path) = @_;
     my @components = split(/\//, $path);
@@ -11,7 +13,7 @@ sub new {
         $_ && $_ ne '.'
     } @components;
 
-    die('Empty path') unless @components || $path;
+    confess('Empty path') unless @components || $path;
 
     return bless [
         $components[0]? @ret: ('', @ret)
@@ -57,7 +59,17 @@ sub dirname {
         return '/';
     }
 
-    return $#hier? join('/', @hier[0..$#hier-1]): '.';
+    if ($#hier) {
+        my @parts = @hier[0..$#hier-1];
+
+        if (@parts == 1 && !$parts[0]) {
+            return '/';
+        }
+
+        return join('/', @parts);
+    }
+
+    return '.';
 }
 
 sub basename {
