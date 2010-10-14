@@ -27,8 +27,8 @@ sub new {
 }
 
 sub stat {
-    my $self = shift;
-    my $hier = Filesys::POSIX::Path->new(shift);
+    my ($self, $path) = @_;
+    my $hier = Filesys::POSIX::Path->new($path);
     my $node = $self->{'cwd'};
     my $now = time;
 
@@ -38,7 +38,7 @@ sub stat {
     }
 
     dir: while (my $dir = $hier->shift) {
-        die('Not a directory') unless $node->{'mode'} & 040000;
+        die('Not a directory') unless $node->{'mode'} & $S_IFDIR;
 
         $node->{'atime'} = $now unless $self->{'noatime'};
 
