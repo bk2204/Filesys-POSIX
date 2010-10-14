@@ -6,7 +6,7 @@ use warnings;
 use Filesys::POSIX::Bits;
 
 sub new {
-    my ($class, $mode) = @_;
+    my ($class, %opts) = @_;
     my $now = time;
 
     return bless {
@@ -14,7 +14,9 @@ sub new {
         'mtime' => $now,
         'uid'   => 0,
         'gid'   => 0,
-        'mode'  => $mode? $mode: 0
+        'mode'  => $opts{'mode'}? $opts{'mode'}: 0,
+        'dev'   => $opts{'dev'},
+        'rdev'  => $opts{'rdev'}
     }, $class;
 }
 
