@@ -39,13 +39,10 @@ sub _find_inode {
     my $dir = $self->{'cwd'};
     my $node;
 
+    return $self->{'root'} if $hier->full eq '/';
+
     while ($hier->count) {
         my $item = $hier->shift;
-
-        unless ($item) {
-            $dir = $self->{'root'};
-            next;
-        }
 
         die('Not a directory') unless $dir->{'mode'} & $S_IFDIR;
 
@@ -126,10 +123,6 @@ sub open {
 sub close {
     my ($self, $fd) = @_;
     $self->{'fds'}->free($fd);
-}
-
-sub getcwd {
-    return shift->{'cwd'};
 }
 
 sub chdir {
