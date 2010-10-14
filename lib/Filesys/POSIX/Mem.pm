@@ -79,20 +79,23 @@ sub open {
     if ($flags & $O_CREAT) {
         my $parent = $self->stat($hier->dirname);
         my $format = $mode? $mode & $S_IFMT: $S_IFREG;
-        my $perms = $mode? $mode & ($S_IPROT | $S_IPERM): $S_IPERM ^ $self->{'umask'};
+        my $perms = $mode? $mode & $S_IPERM: $S_IRW ^ $self->{'umask'};
 
         die('File exists') if $parent->{'dirent'}->{$name};
         die('Not a directory') unless $parent->{'mode'} & $S_IFDIR;
 
-        $inode = Filesys::POSIX::Inode->new($format | $perms);
+        $inode = Filesys::POSIX::Inode->new;
 
         if ($format & $S_IFDIR) {
+            $perms |= $S_IX ^ $self->{'umask'} unless $perms;
+
             $inode->{'dirent'} = {
                 '.'     => $inode,
                 '..'    => $parent
             };
         }
 
+        $inode->{'mode'} = $format | $perms;
         $parent->{'dirent'}->{$name} = $inode;
     }
 
@@ -143,10 +146,25 @@ sub mkdir {
 
 sub link {
     my ($self, $src, $dest) = @_;
+    my $hier = Filesys::POSIX::Path->new($dest);
+    my $name = $hier->basename;
+    my $node = $self->stat($src);
+    my $parent = $self->stat($hier->dirname);
+
+    die('Is a directory') if $node->{'mode'} & $S_IFDIR;
+    die('Not a directory') unless $parent->{'mode'} & $S_IFDIR;
+    die('File exists') if $parent->{'dirent'}->{$name};
+
+    $parent->{'dirent'}->{$name} = $node;
 }
 
 sub symlink {
     my ($self, $src, $dest) = @_;
+    my $perms = $S_IPERM ^ $self->{'umask'};
+
+    my $fd = $self->open($dest, $O_CREAT | $O_WRONLY, $S_IFLNK | $perms);
+    $self->fstat($fd)->{'dest'} = Filesys::POSIX::Path->full($src);
+    $self->close($fd);
 }
 
 sub unlink {
