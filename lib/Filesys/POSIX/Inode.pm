@@ -18,14 +18,6 @@ sub new {
     }, $class;
 }
 
-sub format {
-    shift->{'mode'} & $S_IFMT;
-}
-
-sub perms {
-    shift->{'mode'} & ($S_IPROT | $S_IPERM);
-}
-
 sub chown {
     my ($self, $uid, $gid) = @_;
     @{$self}{qw/uid gid/} = ($uid, $gid);
