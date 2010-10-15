@@ -12,24 +12,33 @@ sub new {
 sub _resolve_mountpoint {
     my ($self, $node) = @_;
 
-    if (ref $node eq 'Filesys::POSIX::Inode') {
-        return $node if $self->{$node};
-    } elsif (ref $node eq 'Filesys::POSIX::Mem') {
-        foreach (keys %$self) {
-            return $_ if $self->{$_}->{'dev'} == $node;
-        }
-    } else {
-        die('Node passed not an inode mountpoint or filesystem reference');
+    die('Not an inode') unless ref $node eq 'Filesys::POSIX::Inode';
+
+    #
+    # Is the current inode's filesystem's root inode a mount point?
+    #
+    return $node->{'dev'}->{'root'} if exists $self->{$node->{'dev'}->{'root'}};
+
+    #
+    # Is the current inode a mount point?
+    #
+    return $node if exists $self->{$node};
+
+    #
+    # Is the current inode's device currently mounted?
+    #
+    foreach (keys %$self) {
+        next unless $self->{$_}->{'dev'} eq $node->{'dev'};
+
+        return $_;
     }
 
-    die('Not currently mounted');
+    die('Not mounted');
 }
 
 sub statfs {
-    my ($self, $mountpoint) = @_;
-
-    die('Not an inode') unless ref $mountpoint eq 'Filesys::POSIX::Inode';
-    die('Not mounted') unless $self->{$mountpoint};
+    my ($self, $node) = @_;
+    my $mountpoint = $self->_resolve_mountpoint($node);
 
     return $self->{$mountpoint};
 }
@@ -44,16 +53,21 @@ sub statfs {
 sub mount {
     my ($self, $fs, $path, $mountpoint, %opts) = @_;
 
-    foreach ($fs, $mountpoint) {
-        eval {
-            $self->_resolve_mountpoint($_);
-        };
+    #
+    # Does the mount point passed already have a filesystem mounted?
+    #
+    die('Already mounted') if exists $self->{$mountpoint};
 
-        die('Already mounted') unless $@;
+    #
+    # Is the filesystem passed currently mounted?
+    #
+    foreach (keys %$self) {
+        die('Already mounted') if $self->{$_}->{'dev'} == $fs;
     }
 
     $self->{$mountpoint} = {
         %opts,
+        'node'  => $mountpoint,
         'dev'   => $fs,
         'path'  => $path
     };
