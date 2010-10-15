@@ -43,6 +43,14 @@ sub statfs {
     return $self->{$mountpoint};
 }
 
+sub mountpoints {
+    my ($self) = @_;
+
+    return map {
+        $self->{$_}->{'node'}
+    } keys %$self;
+}
+
 #
 # It should be noted that any usage of pathnames in this module are entirely
 # symbolic and are not used for canonical purposes.  The higher-level
