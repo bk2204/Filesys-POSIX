@@ -131,19 +131,11 @@ sub open {
         die('File exists') if $parent->{'dirent'}->{$name};
         die('Not a directory') unless $parent->{'mode'} & $S_IFDIR;
 
-        $inode = $parent->{'dev'}->inode;
-
         if ($format & $S_IFDIR) {
             $perms |= $S_IX ^ $self->{'umask'} unless $perms;
-
-            $inode->{'dirent'} = {
-                '.'     => $inode,
-                '..'    => $parent
-            };
         }
 
-        $inode->{'mode'} = $format | $perms;
-        $inode->{'parent'} = $parent;
+        $inode = $parent->{'dev'}->inode($format | $perms, $parent);
         $parent->{'dirent'}->{$name} = $inode;
     }
 
