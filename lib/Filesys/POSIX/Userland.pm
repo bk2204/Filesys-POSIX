@@ -7,7 +7,7 @@ use Filesys::POSIX::Bits;
 
 sub _find_inode_path {
     my ($self, $start) = @_;
-    my $node = $start;
+    my $node = $self->_last($start);
     my @ret;
 
     while (my $dir = $node->{'parent'}) {
