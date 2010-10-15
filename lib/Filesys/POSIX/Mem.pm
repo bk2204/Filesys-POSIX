@@ -21,7 +21,6 @@ sub new {
     };
 
     $root->{'parent'} = $root;
-
     $fs->{'root'} = $root;
 
     return $fs;
