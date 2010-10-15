@@ -8,28 +8,30 @@ use Filesys::POSIX::Inode;
 
 sub new {
     my ($class) = @_;
+
     my $fs = bless {}, $class;
-
-    my $root = $fs->inode($S_IFDIR | 0755);
-
-    $root->{'dirent'} = {
-        '.'     => $root,
-        '..'    => $root
-    };
-
-    $root->{'parent'}   = $root;
-    $fs->{'root'}       = $root;
+    $fs->{'root'} = $fs->inode($S_IFDIR | 0755);
 
     return $fs;
 }
 
 sub inode {
-    my ($self, $mode) = @_;
+    my ($self, $mode, $parent) = @_;
 
-    return Filesys::POSIX::Inode->new(
-        'mode'  => $mode,
-        'dev'   => $self
+    my $inode = Filesys::POSIX::Inode->new(
+        'mode'      => $mode,
+        'dev'       => $self,
+        'parent'    => $parent
     );
+
+    if ($mode & $S_IFDIR) {
+        $inode->{'dirent'} = {
+            '.'     => $inode,
+            '..'    => $parent? $parent: $inode
+        };
+    }
+
+    return $inode;
 }
 
 1;
