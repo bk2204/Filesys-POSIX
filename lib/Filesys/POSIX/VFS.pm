@@ -12,20 +12,24 @@ sub new {
 sub _resolve_mountpoint {
     my ($self, $node) = @_;
 
-    return $node if $self->{$node};
-
-    foreach (keys %$self) {
-        next unless $self->{$_}->{'dev'} eq $node;
-        return $_;
-        last;
+    if (ref $node eq 'Filesys::POSIX::Inode') {
+        return $node if $self->{$node};
+    } elsif (ref $node eq 'Filesys::POSIX::Mem') {
+        foreach (keys %$self) {
+            return $_ if $self->{$_}->{'dev'} == $node;
+        }
+    } else {
+        die('Node passed not an inode mountpoint or filesystem reference');
     }
 
     die('Not currently mounted');
 }
 
 sub statfs {
-    my ($self, $node) = @_;
-    my $mountpoint = $self->_resolve_mountpoint;
+    my ($self, $mountpoint) = @_;
+
+    die('Not an inode') unless ref $mountpoint eq 'Filesys::POSIX::Inode';
+    die('Not mounted') unless $self->{$mountpoint};
 
     return $self->{$mountpoint};
 }
