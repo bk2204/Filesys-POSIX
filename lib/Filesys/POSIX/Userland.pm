@@ -62,4 +62,19 @@ sub statfs {
     return $self->{'vfs'}->statfs($node);
 }
 
+sub fstatfs {
+    my ($self, $fd) = @_;
+    my $node = $self->fstat($fd);
+
+    return $self->{'vfs'}->statfs($node);
+}
+
+sub mountpoints {
+    my ($self) = @_;
+
+    return map {
+        $self->_find_inode_path($_)
+    } $self->{'vfs'}->mountpoints;
+}
+
 1;
