@@ -33,6 +33,32 @@ sub umask {
     return $self->{'umask'};
 }
 
+#
+# Determine if the given inode is a mount point for another filesystem.  If
+# so, return the root of that filesystem; otherwise, simply return the
+# inode.
+#
+sub _next {
+    my ($self, $node) = @_;
+
+    if (exists $self->{'vfs'}->{$node}) {
+        return $self->{'vfs'}->{$node}->{'dev'}->{'root'};
+    }
+
+    return $node;
+}
+
+sub _last {
+    my ($self, $node) = @_;
+    my $vfs = $self->{'vfs'};
+
+    foreach (keys %$vfs) {
+        return $self->{'vfs'}->{$_}->{'node'} if $self->{'vfs'}->{$_}->{'dev'}->{'root'} eq $node;
+    }
+
+    return $node;
+}
+
 sub _find_inode {
     my ($self, $path, %opts) = @_;
     my $hier = Filesys::POSIX::Path->new($path);
@@ -55,7 +81,7 @@ sub _find_inode {
             $dir->{'atime'} = time;
         }
 
-        $node = $dir->{'dirent'}->{$item} or die('No such file or directory');
+        $node = $self->_next($dir->{'dirent'}->{$item}) or confess('No such file or directory');
 
         if ($opts{'resolve_symlinks'} && $node->{'mode'} & $S_IFLNK) {
             $hier = Filesys::POSIX::Path->new($node->readlink);
@@ -181,10 +207,10 @@ sub link {
     my $node = $self->stat($src);
     my $parent = $self->stat($hier->dirname);
 
+    die('Cross-device link') unless $node->{'dev'} == $parent->{'dev'};
     die('Is a directory') if $node->{'mode'} & $S_IFDIR;
     die('Not a directory') unless $parent->{'mode'} & $S_IFDIR;
     die('File exists') if $parent->{'dirent'}->{$name};
-    die('Cross-device link') if $node->{'dev'} != $parent->{'dev'};
 
     $parent->{'dirent'}->{$name} = $node;
 }
