@@ -7,8 +7,8 @@ use Filesys::POSIX::Bits;
 use Filesys::POSIX::Inode;
 
 sub new {
-    my ($class, %opts) = @_;
-    my $fs = bless \%opts, $class;
+    my ($class) = @_;
+    my $fs = {};
 
     my $root = Filesys::POSIX::Inode->new(
         'mode'  => $S_IFDIR | 0755,
@@ -23,7 +23,7 @@ sub new {
     $root->{'parent'} = $root;
     $fs->{'root'} = $root;
 
-    return $fs;
+    return bless $fs, $class;
 }
 
 sub inode {
