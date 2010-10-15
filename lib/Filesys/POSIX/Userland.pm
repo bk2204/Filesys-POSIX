@@ -20,7 +20,7 @@ sub _find_inode_path {
             next dirent unless $dir->{'dirent'}->{$_} == $node;
 
             push @ret, $_;
-            $node = $dir;
+            $node = $self->_last($dir);
         }
     }
 
