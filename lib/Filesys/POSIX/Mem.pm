@@ -20,6 +20,8 @@ sub new {
         '..'    => $root
     };
 
+    $root->{'parent'} = $root;
+
     $fs->{'root'} = $root;
 
     return $fs;
