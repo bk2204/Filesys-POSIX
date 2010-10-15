@@ -72,7 +72,9 @@ sub fstatfs {
 sub mountpoints {
     my ($self) = @_;
 
-    return map {
+    return sort {
+        $a cmp $b
+    } map {
         $self->_find_inode_path($_)
     } $self->{'vfs'}->mountpoints;
 }
