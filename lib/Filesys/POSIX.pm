@@ -10,19 +10,19 @@ use Filesys::POSIX::Path;
 use Filesys::POSIX::VFS;
 
 sub new {
-    my ($class, %opts) = @_;
+    my ($class, $rootfs, %opts) = @_;
 
-    die('No root filesystem specified') unless $opts{'rootfs'};
+    die('No root filesystem specified') unless $rootfs;
 
     my $vfs = Filesys::POSIX::VFS->new;
-    $vfs->mount($opts{'rootfs'}, '/', $opts{'rootfs'}->{'root'}, %opts);
+    $vfs->mount($rootfs, '/', $rootfs->{'root'}, %opts);
 
     return bless {
-        'cwd'   => $opts{'rootfs'}->{'root'},
-        'umask' => 022,
         'fds'   => Filesys::POSIX::FdTable->new,
-        'root'  => $opts{'rootfs'}->{'root'},
-        'vfs'   => $vfs
+        'vfs'   => $vfs,
+        'cwd'   => $rootfs->{'root'},
+        'root'  => $rootfs->{'root'},
+        'umask' => 022,
     }, $class;
 }
 
@@ -80,7 +80,7 @@ sub _find_inode {
 
         die('Not a directory') unless $dir->{'mode'} & $S_IFDIR;
 
-        unless ($self->{'vfs'}->statfs($dir)->{'noatime'}) {
+        unless ($self->{'vfs'}->statfs($dir)->{'flags'}->{'noatime'}) {
             $dir->{'atime'} = time;
         }
         
