@@ -208,7 +208,7 @@ sub link {
     my $hier = Filesys::POSIX::Path->new($dest);
     my $name = $hier->basename;
     my $node = $self->stat($src);
-    my $parent = $self->stat($hier->dirname);
+    my $parent = $node->{'parent'};
 
     die('Cross-device link') unless $node->{'dev'} == $parent->{'dev'};
     die('Is a directory') if $node->{'mode'} & $S_IFDIR;
@@ -238,7 +238,7 @@ sub unlink {
     my $hier = Filesys::POSIX::Path->new($path);
     my $name = $hier->basename;
     my $node = $self->stat($hier->full);
-    my $parent = $self->stat($hier->dirname);
+    my $parent = $node->{'parent'};
 
     die('Is a directory') if $node->{'mode'} & $S_IFDIR;
     die('Not a directory') unless $parent->{'mode'} & $S_IFDIR;
@@ -252,7 +252,7 @@ sub rmdir {
     my $hier = Filesys::POSIX::Path->new($path);
     my $name = $hier->basename;
     my $node = $self->stat($hier->full);
-    my $parent = $self->stat($hier->dirname);
+    my $parent = $node->{'parent'};
 
     die('Not a directory') unless $node->{'mode'} & $S_IFDIR;
     die('Device or resource busy') if $node == $parent;
