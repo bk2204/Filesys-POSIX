@@ -44,13 +44,14 @@ sub _find_inode {
     while ($hier->count) {
         my $item = $hier->shift;
 
-        die('Not a directory') unless $dir->{'mode'} & $S_IFDIR;
-
-        if ($self->{'vfs'}->{$dir}) {
-            $dir = $self->{'vfs'}->{$dir}->{'dev'}->{'root'};
+        unless ($item) {
+            $dir = $self->{'root'};
+            next;
         }
 
-        unless ($opts{'noatime'}) {
+        die('Not a directory') unless $dir->{'mode'} & $S_IFDIR;
+
+        unless ($self->{'vfs'}->statfs($dir)->{'noatime'}) {
             $dir->{'atime'} = time;
         }
 
