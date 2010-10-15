@@ -41,6 +41,8 @@ sub umask {
 sub _next {
     my ($self, $node) = @_;
 
+    return undef unless $node;
+
     if (exists $self->{'vfs'}->{$node}) {
         return $self->{'vfs'}->{$node}->{'dev'}->{'root'};
     }
@@ -50,9 +52,10 @@ sub _next {
 
 sub _last {
     my ($self, $node) = @_;
-    my $vfs = $self->{'vfs'};
 
-    foreach (keys %$vfs) {
+    return undef unless $node;
+
+    foreach (keys %{$self->{'vfs'}}) {
         return $self->{'vfs'}->{$_}->{'node'} if $self->{'vfs'}->{$_}->{'dev'}->{'root'} eq $node;
     }
 
@@ -80,8 +83,8 @@ sub _find_inode {
         unless ($self->{'vfs'}->statfs($dir)->{'noatime'}) {
             $dir->{'atime'} = time;
         }
-
-        $node = $self->_next($dir->{'dirent'}->{$item}) or confess('No such file or directory');
+        
+        $node = $self->_next($dir->{'dirent'}->{$item}) or die('No such file or directory');
 
         if ($opts{'resolve_symlinks'} && $node->{'mode'} & $S_IFLNK) {
             $hier = Filesys::POSIX::Path->new($node->readlink);
