@@ -74,7 +74,7 @@ sub mount {
     }
 
     $self->{$mountpoint} = {
-        %opts,
+        'flags' => \%opts,
         'node'  => $mountpoint,
         'dev'   => $fs,
         'path'  => $path
