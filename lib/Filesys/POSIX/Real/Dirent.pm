@@ -3,8 +3,6 @@ package Filesys::POSIX::Real::Dirent;
 use strict;
 use warnings;
 
-use Filesys::POSIX::Real::Inode;
-
 sub new {
     my ($class, $path, $node) = @_;
 
