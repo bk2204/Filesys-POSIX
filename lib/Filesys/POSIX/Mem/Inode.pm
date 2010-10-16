@@ -38,7 +38,7 @@ sub child {
     die('Invalid directory entry name') if $name =~ /\//;
     die('File exists') if $self->{'dirent'}->exists($name);
 
-    my $child = Filesys::POSIX::Mem::Inode->new(
+    my $child = __PACKAGE__->new(
         'mode'      => $mode,
         'dev'       => $self->{'dev'},
         'parent'    => $self
