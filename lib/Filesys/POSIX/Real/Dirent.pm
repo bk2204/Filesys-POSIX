@@ -3,6 +3,8 @@ package Filesys::POSIX::Real::Dirent;
 use strict;
 use warnings;
 
+use Filesys::POSIX::Bits;
+
 sub new {
     my ($class, $path, $node) = @_;
 
@@ -54,7 +56,17 @@ sub exists {
 }
 
 sub delete {
-    return;
+    my ($self, $name) = @_;
+    my $member = $self->{'members'}->{$name} or return;
+    my $path = "$self->{'path'}/$name";
+
+    die('Invalid directory entry name') if $name =~ /\//;
+
+    if ($member->{'mode'} & $S_IFDIR) {
+        rmdir($path) or die $!;
+    } else {
+        unlink($path) or die $!;
+    }
 }
 
 sub list {
