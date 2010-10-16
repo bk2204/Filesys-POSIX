@@ -15,9 +15,9 @@ sub _find_inode_path {
 
         die('Not a directory') unless $dir->{'mode'} & $S_IFDIR;
 
-        dirent: foreach (keys %{$dir->{'dirent'}}) {
+        dirent: foreach ($dir->{'dirent'}->list) {
             next if $_ eq '.' || $_ eq '..';
-            next dirent unless $dir->{'dirent'}->{$_} == $node;
+            next dirent unless $dir->{'dirent'}->get($_) == $node;
 
             push @ret, $_;
             $node = $self->_last($dir);
