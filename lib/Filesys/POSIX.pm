@@ -135,7 +135,7 @@ sub open {
             $perms |= $S_IX ^ $self->{'umask'} unless $perms;
         }
 
-        $inode = $parent->{'dev'}->inode($format | $perms, $parent);
+        $inode = $parent->child($format | $perms);
         $parent->{'dirent'}->set($name, $inode);
     }
 
