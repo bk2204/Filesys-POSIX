@@ -32,13 +32,21 @@ sub new {
 }
 
 sub child {
-    my ($self, $mode) = @_;
+    my ($self, $name, $mode) = @_;
 
-    return Filesys::POSIX::Mem::Inode->new(
+    die('Not a directory') unless $self->{'mode'} & $S_IFDIR;
+    die('Invalid directory entry name') if $name =~ /\//;
+    die('File exists') if $self->{'dirent'}->exists($name);
+
+    my $child = Filesys::POSIX::Mem::Inode->new(
         'mode'      => $mode,
         'dev'       => $self->{'dev'},
         'parent'    => $self
     );
+
+    $self->{'dirent'}->set($name, $child);
+
+    return $child;
 }
 
 sub chown {
