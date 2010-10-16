@@ -21,11 +21,10 @@ my $real = Filesys::POSIX::Real->new('/Users/erin');
 $fs->mkdir('/mnt');
 $fs->mkdir('/mnt/real');
 $fs->mount($real, '/mnt/real');
-$fs->unmount('/mnt/real');
-$fs->mount($real, '/mnt/real');
+$fs->mkdir('/mnt/real/foo');
 
-foreach ($fs->mountpoints) {
-    my $dev = $fs->statfs($_);
+my $node = $fs->stat('/mnt/real/foo');
+$node->chmod(0777);
+$fs->rmdir('/mnt/real/foo');
 
-    printf("%s on %s (%s)\n", $dev, $_, join(', ', keys %{$dev->{'flags'}}));
-}
+printf("%s\n", $fs->realpath('/mnt/real/Documents/Virtual Machines'));
