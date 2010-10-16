@@ -55,12 +55,12 @@ sub child {
 
 sub chown {
     my ($self, $uid, $gid) = @_;
-    CORE::chown($self->{'path'}, $uid, $gid);
+    CORE::chown($uid, $gid, $self->{'path'});
 }
 
 sub chmod {
     my ($self, $mode) = @_;
-    CORE::chmod($self->{'path'}, $mode);
+    CORE::chmod($mode, $self->{'path'});
 }
 
 sub readlink {
