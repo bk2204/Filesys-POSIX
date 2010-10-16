@@ -67,6 +67,8 @@ sub delete {
     } else {
         unlink($path) or die $!;
     }
+
+    $self->_update;
 }
 
 sub list {
