@@ -128,8 +128,8 @@ sub open {
         my $format = $mode? $mode & $S_IFMT: $S_IFREG;
         my $perms = $mode? $mode & $S_IPERM: $S_IRW ^ $self->{'umask'};
 
-        die('File exists') if $parent->{'dirent'}->exists($name);
         die('Not a directory') unless $parent->{'mode'} & $S_IFDIR;
+        die('File exists') if $parent->{'dirent'}->exists($name);
 
         if ($format & $S_IFDIR) {
             $perms |= $S_IX ^ $self->{'umask'} unless $perms;
