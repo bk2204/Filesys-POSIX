@@ -12,8 +12,6 @@ sub new {
 sub _resolve_mountpoint {
     my ($self, $node) = @_;
 
-    die('Not an inode') unless ref $node eq 'Filesys::POSIX::Inode';
-
     #
     # Is the current inode's filesystem's root inode a mount point?
     #
