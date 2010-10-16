@@ -83,7 +83,7 @@ sub _find_inode {
         unless ($self->{'vfs'}->statfs($dir)->{'flags'}->{'noatime'}) {
             $dir->{'atime'} = time;
         }
-        
+
         $node = $self->_next($dir->{'dirent'}->get($item)) or die('No such file or directory');
 
         if ($opts{'resolve_symlinks'} && $node->{'mode'} & $S_IFLNK) {
@@ -135,8 +135,7 @@ sub open {
             $perms |= $S_IX ^ $self->{'umask'} unless $perms;
         }
 
-        $inode = $parent->child($format | $perms);
-        $parent->{'dirent'}->set($name, $inode);
+        $inode = $parent->child($name, $format | $perms);
     }
 
     return $self->{'fds'}->alloc($inode);
