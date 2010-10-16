@@ -4,12 +4,13 @@ use strict;
 use warnings;
 
 use Filesys::POSIX::Bits;
+use Filesys::POSIX::Mem::Dirent;
 
 sub new {
     my ($class, %opts) = @_;
     my $now = time;
 
-    return bless {
+    my $inode = bless {
         'atime'     => $now,
         'mtime'     => $now,
         'uid'       => 0,
@@ -19,6 +20,25 @@ sub new {
         'rdev'      => $opts{'rdev'},
         'parent'    => $opts{'parent'}
     }, $class;
+
+    if (exists $opts{'mode'} && $opts{'mode'} & $S_IFDIR) {
+        $inode->{'dirent'} = Filesys::POSIX::Mem::Dirent->new(
+            '.'     => $inode,
+            '..'    => $opts{'parent'}? $opts{'parent'}: $inode
+        );
+    }
+
+    return $inode;
+}
+
+sub child {
+    my ($self, $mode) = @_;
+
+    return Filesys::POSIX::Mem::Inode->new(
+        'mode'      => $mode,
+        'dev'       => $self->{'dev'},
+        'parent'    => $self
+    );
 }
 
 sub chown {
