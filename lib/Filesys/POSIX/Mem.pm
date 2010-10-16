@@ -5,34 +5,20 @@ use warnings;
 
 use Filesys::POSIX::Bits;
 use Filesys::POSIX::Mem::Inode;
-use Filesys::POSIX::Mem::Dirent;
 
 sub new {
     my ($class) = @_;
 
     my $fs = bless {}, $class;
-    $fs->{'root'} = $fs->inode($S_IFDIR | 0755);
 
-    return $fs;
-}
-
-sub inode {
-    my ($self, $mode, $parent) = @_;
-
-    my $inode = Filesys::POSIX::Mem::Inode->new(
-        'mode'      => $mode,
-        'dev'       => $self,
-        'parent'    => $parent
+    my $root = Filesys::POSIX::Mem::Inode->new(
+        'mode'      => $S_IFDIR | 0755,
+        'dev'       => $fs
     );
 
-    if ($mode & $S_IFDIR) {
-        $inode->{'dirent'} = Filesys::POSIX::Mem::Dirent->new(
-            '.'     => $inode,
-            '..'    => $parent? $parent: $inode
-        );
-    }
+    $fs->{'root'} = $root;
 
-    return $inode;
+    return $fs;
 }
 
 1;
