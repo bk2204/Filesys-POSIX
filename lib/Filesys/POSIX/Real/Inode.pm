@@ -4,7 +4,7 @@ use strict;
 use warnings;
 
 use Filesys::POSIX::Bits;
-use Filesys::POSIX::Real::Dirent;
+use Fcntl;
 
 sub new {
     my ($class, $path, %opts) = @_;
@@ -30,21 +30,44 @@ sub new {
     return $inode;
 }
 
+sub child {
+    my ($self, $name, $mode) = @_;
+
+    die('Not a directory') unless $self->{'mode'} & $S_IFDIR;
+    die('Invalid directory entry name') if $name =~ /\//;
+    die('File exists') if $self->{'dirent'}->exists($name);
+
+    my $path = "$self->{'path'}/$name";
+    my $child;
+
+    if ($mode & $S_IFDIR) {
+        mkdir($path, $mode) or die $!;
+    } else {
+        sysopen(my $fh, $path, O_CREAT | O_TRUNC | O_WRONLY, $mode) or die $!;
+        close($fh);
+    }
+
+    return __PACKAGE__->new($path,
+        'dev'       => $self->{'dev'},
+        'parent'    => $self
+    );
+}
+
 sub chown {
     my ($self, $uid, $gid) = @_;
-    chown($self->{'path'}, $uid, $gid);
+    CORE::chown($self->{'path'}, $uid, $gid);
 }
 
 sub chmod {
     my ($self, $mode) = @_;
-    chmod($self->{'path'}, $mode);
+    CORE::chmod($self->{'path'}, $mode);
 }
 
 sub readlink {
     my ($self) = @_;
     die('Not a symlink') unless $self->{'mode'} & $S_IFLNK;
-    
-    return readlink($self->{'path'});
+
+    return CORE::readlink($self->{'path'});
 }
 
 1;
