@@ -84,7 +84,7 @@ sub _find_inode {
             $dir->{'atime'} = time;
         }
         
-        $node = $self->_next($dir->{'dirent'}->{$item}) or die('No such file or directory');
+        $node = $self->_next($dir->{'dirent'}->get($item)) or die('No such file or directory');
 
         if ($opts{'resolve_symlinks'} && $node->{'mode'} & $S_IFLNK) {
             $hier = Filesys::POSIX::Path->new($node->readlink);
@@ -128,7 +128,7 @@ sub open {
         my $format = $mode? $mode & $S_IFMT: $S_IFREG;
         my $perms = $mode? $mode & $S_IPERM: $S_IRW ^ $self->{'umask'};
 
-        die('File exists') if $parent->{'dirent'}->{$name};
+        die('File exists') if $parent->{'dirent'}->exists($name);
         die('Not a directory') unless $parent->{'mode'} & $S_IFDIR;
 
         if ($format & $S_IFDIR) {
@@ -136,7 +136,7 @@ sub open {
         }
 
         $inode = $parent->{'dev'}->inode($format | $perms, $parent);
-        $parent->{'dirent'}->{$name} = $inode;
+        $parent->{'dirent'}->set($name, $inode);
     }
 
     return $self->{'fds'}->alloc($inode);
@@ -205,9 +205,9 @@ sub link {
     die('Cross-device link') unless $node->{'dev'} == $parent->{'dev'};
     die('Is a directory') if $node->{'mode'} & $S_IFDIR;
     die('Not a directory') unless $parent->{'mode'} & $S_IFDIR;
-    die('File exists') if $parent->{'dirent'}->{$name};
+    die('File exists') if $parent->{'dirent'}->exists($name);
 
-    $parent->{'dirent'}->{$name} = $node;
+    $parent->{'dirent'}->set($name, $node);
 }
 
 sub symlink {
@@ -234,9 +234,9 @@ sub unlink {
 
     die('Is a directory') if $node->{'mode'} & $S_IFDIR;
     die('Not a directory') unless $parent->{'mode'} & $S_IFDIR;
-    die('No such file or directory') unless $parent->{'dirent'}->{$name};
+    die('No such file or directory') unless $parent->{'dirent'}->exists($name);
 
-    delete $parent->{'dirent'}->{$name};
+    $parent->{'dirent'}->delete($name);
 }
 
 sub rmdir {
@@ -248,10 +248,10 @@ sub rmdir {
 
     die('Not a directory') unless $node->{'mode'} & $S_IFDIR;
     die('Device or resource busy') if $node == $parent;
-    die('Directory not empty') unless scalar(keys %{$node->{'dirent'}}) == 2 && @{$node->{'dirent'}}{qw/. ../};
-    die('No such file or directory') unless $parent->{'dirent'}->{$name};
+    die('Directory not empty') unless $node->{'dirent'}->count == 2;
+    die('No such file or directory') unless $parent->{'dirent'}->exists($name);
 
-    delete $parent->{'dirent'}->{$name};
+    $parent->{'dirent'}->delete($name);
 }
 
 1;

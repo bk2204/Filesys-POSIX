@@ -1,4 +1,4 @@
-package Filesys::POSIX::Inode;
+package Filesys::POSIX::Mem::Inode;
 
 use strict;
 use warnings;
