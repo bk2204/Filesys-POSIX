@@ -5,6 +5,7 @@ use warnings;
 
 use Filesys::POSIX::Bits;
 use Filesys::POSIX::Real::Inode;
+use Filesys::POSIX::Real::Dirent;
 
 sub new {
     my ($class, $path) = @_;
