@@ -45,6 +45,8 @@ sub mount {
     my $mountpoint = $self->stat($path);
     my $realpath = $self->_find_inode_path($mountpoint);
 
+    $fs->init(%opts);
+
     $self->{'vfs'}->mount($fs, $realpath, $mountpoint, %opts);
 }
 

@@ -7,18 +7,18 @@ use Filesys::POSIX::Bits;
 use Filesys::POSIX::Mem::Inode;
 
 sub new {
-    my ($class) = @_;
+    return bless {}, shift;
+}
 
-    my $fs = bless {}, $class;
+sub init {
+    my ($self) = @_;
 
-    my $root = Filesys::POSIX::Mem::Inode->new(
-        'mode'      => $S_IFDIR | 0755,
-        'dev'       => $fs
+    $self->{'root'} = Filesys::POSIX::Mem::Inode->new(
+        'mode'  => $S_IFDIR | 0755,
+        'dev'   => $self
     );
 
-    $fs->{'root'} = $root;
-
-    return $fs;
+    return $self;
 }
 
 1;

@@ -14,6 +14,8 @@ sub new {
 
     die('No root filesystem specified') unless $rootfs;
 
+    $rootfs->init(%opts);
+
     my $vfs = Filesys::POSIX::VFS->new;
     $vfs->mount($rootfs, '/', $rootfs->{'root'}, %opts);
 

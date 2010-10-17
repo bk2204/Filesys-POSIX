@@ -8,21 +8,18 @@ use Filesys::POSIX::Real::Inode;
 use Filesys::POSIX::Real::Dirent;
 
 sub new {
-    my ($class, $path) = @_;
+    return bless {}, shift;
+}
 
-    my $fs = bless {
-        'path' => $path
-    }, $class;
+sub init {
+    my ($self, %opts) = @_;
 
-    my $root = Filesys::POSIX::Real::Inode->new($path,
-        'dev' => $fs
+    $self->{'path'} = $opts{'path'};
+    $self->{'root'} = Filesys::POSIX::Real::Inode->new($opts{'path'},
+        'dev' => $self
     );
 
-    die('Not a directory') unless $root->{'mode'} & $S_IFDIR;
-
-    $fs->{'root'} = $root;
-
-    return $fs;
+    return $self;
 }
 
 1;
