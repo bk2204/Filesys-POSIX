@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use Filesys::POSIX::Bits;
+use Filesys::POSIX::Path;
 use Filesys::POSIX::Real::Inode;
 use Filesys::POSIX::Real::Dirent;
 
@@ -12,10 +13,13 @@ sub new {
 }
 
 sub init {
-    my ($self, %flags) = @_;
+    my ($self, %data) = @_;
 
-    $self->{'path'} = $flags{'path'};
-    $self->{'root'} = Filesys::POSIX::Real::Inode->new($flags{'path'},
+    my $path = $data{'special'};
+    $path =~ s/^real:// or die('Invalid special path');
+
+    $self->{'path'} = Filesys::POSIX::Path->full($path);
+    $self->{'root'} = Filesys::POSIX::Real::Inode->new($path,
         'dev' => $self
     );
 

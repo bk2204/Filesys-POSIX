@@ -57,7 +57,7 @@ sub mountpoints {
 # the appropriate VFS mount point for querying purposes.
 #
 sub mount {
-    my ($self, $fs, $path, $mountpoint, %flags) = @_;
+    my ($self, $fs, $path, $mountpoint, %data) = @_;
 
     #
     # Does the mount point passed already have a filesystem mounted?
@@ -71,11 +71,20 @@ sub mount {
         die('Already mounted') if $self->{$_}->{'dev'} == $fs;
     }
 
+    $data{'special'} ||= scalar $fs;
+
+    my %flags = map {
+        $_ => $data{$_}
+    } grep {
+        $_ ne 'special'
+    } keys %data;
+
     $self->{$mountpoint} = {
-        'flags' => \%flags,
-        'node'  => $mountpoint,
-        'dev'   => $fs,
-        'path'  => $path
+        'flags'     => \%flags,
+        'node'      => $mountpoint,
+        'special'   => $data{'special'},
+        'dev'       => $fs,
+        'path'      => $path
     };
 
     return $self;
