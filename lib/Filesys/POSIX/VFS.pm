@@ -10,25 +10,27 @@ sub new {
 }
 
 sub _resolve_mountpoint {
-    my ($self, $node) = @_;
-
-    #
-    # Is the current inode's filesystem's root inode a mount point?
-    #
-    return $node->{'dev'}->{'root'} if exists $self->{$node->{'dev'}->{'root'}};
+    my ($self, $node, %opts) = @_;
 
     #
     # Is the current inode a mount point?
     #
     return $node if exists $self->{$node};
 
-    #
-    # Is the current inode's device currently mounted?
-    #
-    foreach (keys %$self) {
-        next unless $self->{$_}->{'dev'} eq $node->{'dev'};
+    unless ($opts{'exact'}) {
+        #
+        # Is the current inode's filesystem's root inode a mount point?
+        #
+        return $node->{'dev'}->{'root'} if exists $self->{$node->{'dev'}->{'root'}};
 
-        return $_;
+        #
+        # Is the current inode's device currently mounted?
+        #
+        foreach (keys %$self) {
+            next unless $self->{$_}->{'dev'} eq $node->{'dev'};
+
+            return $_;
+        }
     }
 
     die('Not mounted');
@@ -92,7 +94,7 @@ sub mount {
 
 sub unmount {
     my ($self, $node) = @_;
-    my $mountpoint = $self->_resolve_mountpoint($node);
+    my $mountpoint = $self->_resolve_mountpoint($node, 'exact' => 1);
 
     delete $self->{$mountpoint};
     return $self;
