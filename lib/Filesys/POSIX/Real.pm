@@ -12,10 +12,10 @@ sub new {
 }
 
 sub init {
-    my ($self, %opts) = @_;
+    my ($self, %flags) = @_;
 
-    $self->{'path'} = $opts{'path'};
-    $self->{'root'} = Filesys::POSIX::Real::Inode->new($opts{'path'},
+    $self->{'path'} = $flags{'path'};
+    $self->{'root'} = Filesys::POSIX::Real::Inode->new($flags{'path'},
         'dev' => $self
     );
 

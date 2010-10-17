@@ -57,7 +57,7 @@ sub mountpoints {
 # the appropriate VFS mount point for querying purposes.
 #
 sub mount {
-    my ($self, $fs, $path, $mountpoint, %opts) = @_;
+    my ($self, $fs, $path, $mountpoint, %flags) = @_;
 
     #
     # Does the mount point passed already have a filesystem mounted?
@@ -72,7 +72,7 @@ sub mount {
     }
 
     $self->{$mountpoint} = {
-        'flags' => \%opts,
+        'flags' => \%flags,
         'node'  => $mountpoint,
         'dev'   => $fs,
         'path'  => $path

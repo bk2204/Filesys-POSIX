@@ -41,13 +41,13 @@ sub realpath {
 }
 
 sub mount {
-    my ($self, $fs, $path, %opts) = @_;
+    my ($self, $fs, $path, %flags) = @_;
     my $mountpoint = $self->stat($path);
     my $realpath = $self->_find_inode_path($mountpoint);
 
-    $fs->init(%opts);
+    $fs->init(%flags);
 
-    $self->{'vfs'}->mount($fs, $realpath, $mountpoint, %opts);
+    $self->{'vfs'}->mount($fs, $realpath, $mountpoint, %flags);
 }
 
 sub unmount {
