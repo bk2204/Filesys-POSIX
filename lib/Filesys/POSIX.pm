@@ -73,7 +73,6 @@ sub _find_inode {
 
 sub stat {
     my ($self, $path) = @_;
-
     return $self->_find_inode($path,
         'resolve_symlinks' => 1
     );
@@ -81,7 +80,6 @@ sub stat {
 
 sub lstat {
     my ($self, $path) = @_;
-
     return $self->_find_inode($path);
 }
 
