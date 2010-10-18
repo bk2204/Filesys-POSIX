@@ -4,7 +4,6 @@ use strict;
 use warnings;
 
 use Filesys::POSIX::Bits;
-use Filesys::POSIX::Mem::Dirent;
 
 sub new {
     my ($class, %opts) = @_;

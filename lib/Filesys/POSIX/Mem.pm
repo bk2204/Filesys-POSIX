@@ -5,6 +5,7 @@ use warnings;
 
 use Filesys::POSIX::Bits;
 use Filesys::POSIX::Mem::Inode;
+use Filesys::POSIX::Mem::Dirent;
 
 sub new {
     return bless {}, shift;
