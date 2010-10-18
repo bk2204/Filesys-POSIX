@@ -35,35 +35,6 @@ sub umask {
     return $self->{'umask'};
 }
 
-#
-# Determine if the given inode is a mount point for another filesystem.  If
-# so, return the root of that filesystem; otherwise, simply return the
-# inode.
-#
-sub _next {
-    my ($self, $node) = @_;
-
-    return undef unless $node;
-
-    if (exists $self->{'vfs'}->{$node}) {
-        return $self->{'vfs'}->{$node}->{'dev'}->{'root'};
-    }
-
-    return $node;
-}
-
-sub _last {
-    my ($self, $node) = @_;
-
-    return undef unless $node;
-
-    foreach (keys %{$self->{'vfs'}}) {
-        return $self->{'vfs'}->{$_}->{'node'} if $self->{'vfs'}->{$_}->{'dev'}->{'root'} eq $node;
-    }
-
-    return $node;
-}
-
 sub _find_inode {
     my ($self, $path, %opts) = @_;
     my $hier = Filesys::POSIX::Path->new($path);
@@ -86,7 +57,7 @@ sub _find_inode {
             $dir->{'atime'} = time;
         }
 
-        $node = $self->_next($dir->{'dirent'}->get($item)) or die('No such file or directory');
+        $node = $self->{'vfs'}->vnode($dir->{'dirent'}->get($item)) or die('No such file or directory');
 
         if ($opts{'resolve_symlinks'} && $node->{'mode'} & $S_IFLNK) {
             $hier = Filesys::POSIX::Path->new($node->readlink);
