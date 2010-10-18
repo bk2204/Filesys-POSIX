@@ -46,10 +46,19 @@ sub _find_inode {
     while ($hier->count) {
         my $item = $hier->shift;
 
+        #
+        # We've encountered an absolute path.  Start from the beginning.
+        #
         unless ($item) {
             $dir = $self->{'root'};
             next;
         }
+
+        #
+        # Before we go further, we need to resolve the current directory for
+        # a possible VFS inode in the event of a mountpoint or filesystem root.
+        #
+        $dir = $self->{'vfs'}->vnode($dir);
 
         die('Not a directory') unless $dir->{'mode'} & $S_IFDIR;
 
@@ -57,7 +66,13 @@ sub _find_inode {
             $dir->{'atime'} = time;
         }
 
-        $node = $self->{'vfs'}->vnode($dir->{'dirent'}->get($item)) or die('No such file or directory');
+        if ($item eq '..') {
+            $node = $dir->{'parent'}? $dir->{'parent'}: $dir;
+        } elsif ($item eq '.') {
+            $node = $dir;
+        } else {
+            $node = $self->{'vfs'}->vnode($dir->{'dirent'}->get($item)) or die('No such file or directory');
+        }
 
         if ($opts{'resolve_symlinks'} && $node->{'mode'} & $S_IFLNK) {
             $hier = Filesys::POSIX::Path->new($node->readlink);
