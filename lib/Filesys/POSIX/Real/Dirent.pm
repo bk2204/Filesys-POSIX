@@ -26,13 +26,21 @@ sub _update {
 
     opendir(my $dh, $self->{'path'}) or die $!;
 
+    my $node = $self->{'node'};
+    my $parent = $self->{'node'}->{'parent'};
+
     $self->{'mtime'} = $mtime;
     $self->{'members'} = {
+        '.'     => $node,
+        '..'    => $parent? $parent: $node,
+
         map {
             $_ => Filesys::POSIX::Real::Inode->new("$self->{'path'}/$_",
                 'dev'       => $self->{'node'}->{'dev'},
                 'parent'    => $self->{'node'}
             )
+        } grep {
+            $_ ne '.' && $_ ne '..'
         } readdir($dh)
     };
 
