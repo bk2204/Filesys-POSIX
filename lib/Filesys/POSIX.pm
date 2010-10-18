@@ -75,7 +75,7 @@ sub _find_inode {
         }
 
         if ($opts{'resolve_symlinks'} && $node->{'mode'} & $S_IFLNK) {
-            $hier = Filesys::POSIX::Path->new($node->readlink);
+            $hier = $hier->concat($node->readlink);
         } else {
             $dir = $node;
         }
