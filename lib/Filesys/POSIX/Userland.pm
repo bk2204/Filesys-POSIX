@@ -63,6 +63,12 @@ sub unmount {
         die('Device or resource busy') if $mount->{'dev'} eq $node->{'dev'};
     }
 
+    #
+    # Next, check to see if the current working directory's device inode
+    # is the same device as the one being requested for unmounting.
+    #
+    die('Device or resource busy') if $mount->{'dev'} eq $self->{'cwd'}->{'dev'};
+
     $self->{'vfs'}->unmount($mount);
 }
 
