@@ -17,10 +17,12 @@ sub new {
 }
 
 sub _update {
-    my ($self) = @_;
+    my ($self, %opts) = @_;
     my $mtime = (stat $self->{'path'})[9];
 
-    return unless $mtime > $self->{'mtime'};
+    unless ($opts{'force'}) {
+        return unless $mtime > $self->{'mtime'};
+    }
 
     opendir(my $dh, $self->{'path'}) or die $!;
 
@@ -68,7 +70,7 @@ sub delete {
         unlink($path) or die $!;
     }
 
-    $self->_update;
+    $self->_update('force' => 1);
 }
 
 sub list {
