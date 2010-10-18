@@ -52,9 +52,18 @@ sub mount {
 
 sub unmount {
     my ($self, $path) = @_;
-    my $mountpoint = $self->stat($path);
+    my $mount = $self->statfs($path);
 
-    $self->{'vfs'}->unmount($mountpoint);
+    #
+    # First, check for open file descriptors held on the desired device.
+    #
+    foreach ($self->{'fds'}->list) {
+        my $node = $self->{'fds'}->fetch($_);
+
+        die('Device or resource busy') if $mount->{'dev'} eq $node->{'dev'};
+    }
+
+    $self->{'vfs'}->unmount($mount);
 }
 
 sub statfs {
