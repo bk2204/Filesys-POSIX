@@ -22,7 +22,7 @@ sub statfs {
 
     foreach my $mount (@$self) {
         foreach (qw/mountpoint root vnode/) {
-            return $mount if $mount->{$_} == $node;
+            return $mount if $mount->{$_} eq $node;
         }
     }
 
@@ -55,17 +55,24 @@ sub mount {
 
     $data{'special'} ||= scalar $fs;
 
+    #
+    # Build the vnode from the data provided in the root inode; however,
+    # we do want to retain the mountpoint's parent reference within the
+    # vnode itself.
+    #
+    my $vnode = bless {
+        %{$fs->{'root'}}
+    }, ref $fs->{'root'};
+
+    $vnode->{'parent'} = $mountpoint->{'parent'};
+
     push @$self, {
         'mountpoint'    => $mountpoint,
         'root'          => $fs->{'root'},
+        'vnode'         => $vnode,
         'special'       => $data{'special'},
         'dev'           => $fs,
         'path'          => $path,
-
-        'vnode'         => bless({
-            %{$fs->{'root'}},
-            'parent'    => $mountpoint->{'parent'}
-        }, ref $fs->{'root'}),
 
         'flags'         => {
             map {
