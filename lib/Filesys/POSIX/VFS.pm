@@ -102,6 +102,15 @@ sub unmount {
     my ($self, $node) = @_;
     my $mount = $self->statfs($node, 'exact' => 1);
 
+    #
+    # First, check to see that the filesystem mount record found is a
+    # dependency for another mounted filesystem.
+    #
+    foreach (@$self) {
+        next if $_ == $mount;
+        die('Device or resource busy') if $_->{'mountpoint'}->{'dev'} == $mount->{'dev'};
+    }
+
     for (my $i=0; $self->[$i]; $i++) {
         next unless $self->[$i] eq $mount;
         splice @$self, $i;
