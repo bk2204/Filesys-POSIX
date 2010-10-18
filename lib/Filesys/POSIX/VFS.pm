@@ -6,49 +6,37 @@ use warnings;
 use Filesys::POSIX::Path;
 
 sub new {
-    return bless {}, shift;
-}
-
-sub _resolve_mountpoint {
-    my ($self, $node, %opts) = @_;
-
-    #
-    # Is the current inode a mount point?
-    #
-    return $node if exists $self->{$node};
-
-    unless ($opts{'exact'}) {
-        #
-        # Is the current inode's filesystem's root inode a mount point?
-        #
-        return $node->{'dev'}->{'root'} if exists $self->{$node->{'dev'}->{'root'}};
-
-        #
-        # Is the current inode's device currently mounted?
-        #
-        foreach (keys %$self) {
-            next unless $self->{$_}->{'dev'} eq $node->{'dev'};
-
-            return $_;
-        }
-    }
-
-    die('Not mounted');
+    return bless [], shift;
 }
 
 sub statfs {
-    my ($self, $node) = @_;
-    my $mountpoint = $self->_resolve_mountpoint($node);
+    my ($self, $node, %opts) = @_;
 
-    return $self->{$mountpoint};
+    unless ($opts{'exact'}) {
+        $node = $node->{'dev'}->{'root'};
+    }
+
+    unless ($node) {
+        die('No node');
+    }
+
+    foreach my $mount (@$self) {
+        foreach (qw/mountpoint root vnode/) {
+            return $mount if $mount->{$_} == $node;
+        }
+    }
+
+    die('Not mounted') unless $opts{'silent'};
+
+    return undef;
 }
 
 sub mountpoints {
     my ($self) = @_;
 
     return map {
-        $self->{$_}->{'node'}
-    } keys %$self;
+        $_->{'mountpoint'}
+    } @$self;
 }
 
 #
@@ -61,42 +49,58 @@ sub mountpoints {
 sub mount {
     my ($self, $fs, $path, $mountpoint, %data) = @_;
 
-    #
-    # Does the mount point passed already have a filesystem mounted?
-    #
-    die('Already mounted') if exists $self->{$mountpoint};
-
-    #
-    # Is the filesystem passed currently mounted?
-    #
-    foreach (keys %$self) {
-        die('Already mounted') if $self->{$_}->{'dev'} == $fs;
+    if ($self->statfs($mountpoint, 'exact' => 1, 'silent' => 1) || grep { $_->{'dev'} eq $fs } @$self ) {
+        die('Already mounted');
     }
 
     $data{'special'} ||= scalar $fs;
 
-    my %flags = map {
-        $_ => $data{$_}
-    } grep {
-        $_ ne 'special'
-    } keys %data;
+    push @$self, {
+        'mountpoint'    => $mountpoint,
+        'root'          => $fs->{'root'},
+        'special'       => $data{'special'},
+        'dev'           => $fs,
+        'path'          => $path,
 
-    $self->{$mountpoint} = {
-        'flags'     => \%flags,
-        'node'      => $mountpoint,
-        'special'   => $data{'special'},
-        'dev'       => $fs,
-        'path'      => $path
+        'vnode'         => bless({
+            %{$fs->{'root'}},
+            'parent'    => $mountpoint->{'parent'}
+        }, ref $fs->{'root'}),
+
+        'flags'         => {
+            map {
+                $_ => $data{$_}
+            } grep {
+                $_ ne 'special'
+            } keys %data
+        }
     };
 
     return $self;
 }
 
+sub vnode {
+    my ($self, $inode) = @_;
+
+    return undef unless $inode;
+
+    if (my $mount = $self->statfs($inode, 'exact' => 1, 'silent' => 1)) {
+        return $mount->{'vnode'};
+    }
+
+    return $inode;
+}
+
 sub unmount {
     my ($self, $node) = @_;
-    my $mountpoint = $self->_resolve_mountpoint($node, 'exact' => 1);
+    my $mount = $self->statfs($node, 'exact' => 1);
 
-    delete $self->{$mountpoint};
+    for (my $i=0; $self->[$i]; $i++) {
+        next unless $self->[$i] eq $mount;
+        splice @$self, $i;
+        last;
+    }
+
     return $self;
 }
 
