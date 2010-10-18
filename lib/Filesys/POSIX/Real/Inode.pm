@@ -8,7 +8,7 @@ use Fcntl;
 
 sub new {
     my ($class, $path, %opts) = @_;
-    my @st = stat $path or die("$path: $!");
+    my @st = lstat $path or die("$path: $!");
 
     my $inode = bless {
         'path'      => $path,

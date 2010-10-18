@@ -18,7 +18,7 @@ sub new {
 
 sub _update {
     my ($self, %opts) = @_;
-    my $mtime = (stat $self->{'path'})[9];
+    my $mtime = (lstat $self->{'path'})[9];
 
     unless ($opts{'force'}) {
         return unless $mtime > $self->{'mtime'};
