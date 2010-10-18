@@ -80,8 +80,8 @@ sub shift {
 }
 
 sub push {
-    my ($self, $part) = @_;
-    return push @$self, split(/\//, $part);
+    my ($self, @parts) = @_;
+    return push @$self, map { split /\// } @parts;
 }
 
 sub pop {
