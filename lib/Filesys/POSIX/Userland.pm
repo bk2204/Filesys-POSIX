@@ -17,7 +17,7 @@ sub _find_inode_path {
 
         dirent: foreach ($dir->{'dirent'}->list) {
             next if $_ eq '.' || $_ eq '..';
-            next dirent unless $self->{'vfs'}->vnode($dir->{'dirent'}->get($_)) == $node;
+            next dirent unless $self->{'vfs'}->vnode($dir->{'dirent'}->get($_)) == $self->{'vfs'}->vnode($node);
 
             push @ret, $_;
             $node = $dir;
