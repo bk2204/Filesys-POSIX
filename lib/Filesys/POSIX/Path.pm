@@ -84,6 +84,22 @@ sub push {
     return push @$self, map { split /\// } @parts;
 }
 
+sub concat {
+    my ($self, $path) = @_;
+    $path = __PACKAGE__->new($path) unless ref $path eq __PACKAGE__;
+    
+    $path->push(grep { $_ } $self->components);
+    return $path;
+}
+
+sub append {
+    my ($self, $path) = @_;
+    $path = __PACKAGE__->new($path) unless ref $path eq __PACKAGE__;
+
+    $self->push(grep { $_ } $path->components);
+    return $self;
+}
+
 sub pop {
     my ($self) = @_;
     return pop @$self;
