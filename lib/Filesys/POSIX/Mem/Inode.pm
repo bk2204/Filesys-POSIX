@@ -45,7 +45,7 @@ sub child {
         'parent'    => $self
     );
 
-    $self->{'dirent'}->set($name, $child);
+    $self->{'dirent'}->{$name} = $child;
 
     return $child;
 }

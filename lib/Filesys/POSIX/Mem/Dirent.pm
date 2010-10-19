@@ -13,11 +13,6 @@ sub get {
     return $self->{$name};
 }
 
-sub set {
-    my ($self, $name, $member) = @_;
-    $self->{$name} = $member;
-}
-
 sub exists {
     my ($self, $name) = @_;
     return exists $self->{$name};
@@ -36,6 +31,22 @@ sub list {
 sub count {
     my ($self) = @_;
     return scalar keys %$self;
+}
+
+sub rewind {
+    my ($self) = @_;
+
+    keys %$self;
+}
+
+sub read {
+    my ($self) = @_;
+
+    each %$self;
+}
+
+sub close {
+    return;
 }
 
 1;
