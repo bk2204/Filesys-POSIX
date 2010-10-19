@@ -32,12 +32,9 @@ sub statfs {
     return undef;
 }
 
-sub mountpoints {
+sub mountlist {
     my ($self) = @_;
-
-    return map {
-        $_->{'mountpoint'}
-    } @$self;
+    return @$self;
 }
 
 #
@@ -50,7 +47,7 @@ sub mountpoints {
 sub mount {
     my ($self, $fs, $path, $mountpoint, %data) = @_;
 
-    if ($self->statfs($mountpoint, 'exact' => 1, 'silent' => 1) || grep { $_->{'dev'} eq $fs } @$self ) {
+    if (grep { $_->{'dev'} eq $fs } @$self) {
         die('Already mounted');
     }
 
