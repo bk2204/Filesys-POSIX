@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use Filesys::POSIX::Bits;
+use Errno qw/ENOENT/;
 
 sub new {
     my ($class, $path, $node) = @_;
@@ -12,87 +13,130 @@ sub new {
         'path'      => $path,
         'node'      => $node,
         'mtime'     => 0,
-        'members'   => {}
+        'members'   => {
+            '.'     => $node,
+            '..'    => $node->{'parent'}? $node->{'parent'}: $node
+        }
     }, $class;
 }
 
-sub _update {
-    my ($self, %opts) = @_;
-    my $mtime = (lstat $self->{'path'})[9];
+sub _sync_all {
+    my ($self) = @_;
+    my $mtime = (lstat $self->{'path'})[9] or die $!;
 
-    unless ($opts{'force'}) {
-        return unless $mtime > $self->{'mtime'};
+    return unless $mtime > $self->{'mtime'};
+
+    $self->open;
+
+    while (my $item = $self->read) {
+        $self->_sync_member($item);
     }
 
-    opendir(my $dh, $self->{'path'}) or die $!;
-
-    my $node = $self->{'node'};
-    my $parent = $self->{'node'}->{'parent'};
+    $self->close;
 
     $self->{'mtime'} = $mtime;
-    $self->{'members'} = {
-        '.'     => $node,
-        '..'    => $parent? $parent: $node,
+}
 
-        map {
-            $_ => Filesys::POSIX::Real::Inode->new("$self->{'path'}/$_",
-                'dev'       => $self->{'node'}->{'dev'},
-                'parent'    => $self->{'node'}
-            )
-        } grep {
-            $_ ne '.' && $_ ne '..'
-        } readdir($dh)
-    };
+sub _sync_member {
+    my ($self, $name) = @_;
+    my $subpath = "$self->{'path'}/$name";
+    my @st = lstat "$self->{'path'}/$name";
 
-    closedir($dh);
+    if ($!{'ENOENT'}) {
+        delete $self->{'members'}->{$name};
+        return;
+    }
+
+    die $! unless @st;
+
+    if (exists $self->{'members'}->{$name}) {
+        $self->{'members'}->{$name}->_load_st_info(@st);
+    } else {
+        $self->{'members'}->{$name} = Filesys::POSIX::Real::Inode->new($subpath,
+            'st_info'   => \@st,
+            'dev'       => $self->{'node'}->{'dev'},
+            'parent'    => $self->{'node'}
+        );
+    }
 }
 
 sub get {
     my ($self, $name) = @_;
-    $self->_update;
-
+    $self->_sync_member($name);
     return $self->{'members'}->{$name};
-}
-
-sub set {
-    return;
 }
 
 sub exists {
     my ($self, $name) = @_;
-    $self->_update;
-
+    $self->_sync_member($name);
     return exists $self->{'members'}->{$name};
 }
 
 sub delete {
     my ($self, $name) = @_;
     my $member = $self->{'members'}->{$name} or return;
-    my $path = "$self->{'path'}/$name";
-
-    die('Invalid directory entry name') if $name =~ /\//;
+    my $subpath = "$self->{'path'}/$name";
 
     if ($member->{'mode'} & $S_IFDIR) {
-        rmdir($path) or die $!;
+        rmdir($subpath);
     } else {
-        unlink($path) or die $!;
+        unlink($subpath);
     }
 
-    $self->_update('force' => 1);
+    if ($!) {
+        die $! unless $!{'ENOENT'};
+    }
+
+    my $now = time;
+    @{$self->{'node'}}{qw/mtime ctime/} = ($now, $now);
+
+    delete $self->{'members'}->{$name};
 }
 
 sub list {
     my ($self, $name) = @_;
-    $self->_update;
+    $self->_sync_all;
 
     return keys %{$self->{'members'}};
 }
 
 sub count {
     my ($self) = @_;
-    $self->_update;
+    $self->_sync_all;
 
     return scalar keys %{$self->{'members'}};
+}
+
+sub open {
+    my ($self) = @_;
+
+    $self->close;
+    opendir($self->{'dh'}, $self->{'path'}) or die $!;
+}
+
+sub rewind {
+    my ($self) = @_;
+
+    if ($self->{'dh'}) {
+        rewinddir $self->{'dh'};
+    }
+}
+
+sub read {
+    my ($self) = @_;
+
+    if ($self->{'dh'}) {
+        readdir $self->{'dh'};
+    }
+}
+
+sub close {
+    my ($self) = @_;
+
+    if ($self->{'dh'}) {
+        closedir $self->{'dh'};
+        delete $self->{'dh'};
+    }
 }
 
 1;
