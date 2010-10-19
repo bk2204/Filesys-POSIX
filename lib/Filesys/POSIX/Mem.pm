@@ -8,16 +8,21 @@ use Filesys::POSIX::Mem::Inode;
 use Filesys::POSIX::Mem::Dirent;
 
 sub new {
-    return bless {}, shift;
+    my ($class) = @_;
+    my $fs = bless {}, $class;
+
+    $fs->{'root'} = Filesys::POSIX::Mem::Inode->new(
+        'mode'  => $S_IFDIR | 0755,
+        'dev'   => $fs
+    );
+
+    return $fs;
 }
 
 sub init {
-    my ($self) = @_;
+    my ($self, %data) = @_;
 
-    $self->{'root'} = Filesys::POSIX::Mem::Inode->new(
-        'mode'  => $S_IFDIR | 0755,
-        'dev'   => $self
-    );
+    $self->{'flags'} = \%data;
 
     return $self;
 }
