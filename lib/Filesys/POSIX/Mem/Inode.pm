@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use Filesys::POSIX::Bits;
+use Filesys::POSIX::Mem::Bucket;
 
 sub new {
     my ($class, %opts) = @_;
@@ -69,6 +70,28 @@ sub readlink {
     die('Not a symlink') unless $self->{'mode'} & $S_IFLNK;
 
     return $self->{'dest'};
+}
+
+sub open {
+    my ($self, $flags) = @_;
+    my $dev_flags = $self->{'dev'}->{'flags'};
+
+    unless ($self->{'bucket'}) {
+        $self->{'bucket'} = Filesys::POSIX::Mem::Bucket->new(
+            'max'   => $dev_flags->{'bucket_max'},
+            'dir'   => $dev_flags->{'bucket_dir'}
+        );
+    }
+
+    return $self->{'bucket'}->open($flags);
+}
+
+sub close {
+    my ($self) = @_;
+
+    if ($self->{'bucket'}) {
+        $self->{'bucket'}->close;
+    }
 }
 
 1;
