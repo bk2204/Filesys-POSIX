@@ -146,10 +146,12 @@ sub fchmod {
 
 sub mkdir {
     my ($self, $path, $mode) = @_;
+    my $hier = Filesys::POSIX::Path->new($path);
+    my $name = $hier->basename;
+    my $parent = $self->stat($hier->dirname);
     my $perm = $mode? $mode & ($S_IPERM | $S_IPROT): $S_IPERM ^ $self->{'umask'};
 
-    my $fd = $self->open($path, $O_CREAT, $perm | $S_IFDIR);
-    $self->close($fd);
+    $parent->child($name, $perm | $S_IFDIR);
 }
 
 sub link {
