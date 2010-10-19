@@ -16,12 +16,12 @@ sub new {
 
     $rootfs->init(%opts);
 
-    my $vfs = Filesys::POSIX::VFS->new;
-    $vfs->mount($rootfs, '/', $rootfs->{'root'}, %opts);
-
     return bless {
         'fds'   => Filesys::POSIX::FdTable->new,
-        'vfs'   => $vfs,
+        'vfs'   => Filesys::POSIX::VFS->new->mount(
+            $rootfs, '/', $rootfs->{'root'}, %opts
+        ),
+
         'cwd'   => $rootfs->{'root'},
         'root'  => $rootfs->{'root'},
         'umask' => 022,
