@@ -27,7 +27,7 @@ sub open {
 
         $inode = $parent->child($name, $format | $perms);
     } else {
-        my $inode = $self->stat($path);
+        $inode = $self->stat($path);
     }
 
     return $self->{'fds'}->open($inode, $flags);
@@ -61,7 +61,7 @@ sub seek {
 
 sub close {
     my ($self, $fd) = @_;
-    $self->{'fds'}->close;
+    $self->{'fds'}->close($fd);
 }
 
 1;
