@@ -8,6 +8,7 @@ use Filesys::POSIX::Bits;
 use Filesys::POSIX::FdTable;
 use Filesys::POSIX::Path;
 use Filesys::POSIX::VFS;
+use Filesys::POSIX::IO;
 
 sub new {
     my ($class, $rootfs, %opts) = @_;
@@ -100,36 +101,7 @@ sub lstat {
 
 sub fstat {
     my ($self, $fd) = @_;
-    return $self->{'fds'}->lookup($fd);
-}
-
-sub open {
-    my ($self, $path, $flags, $mode) = @_;
-    my $hier = Filesys::POSIX::Path->new($path);
-    my $name = $hier->basename;
-    my $inode;
-
-    if ($flags & $O_CREAT) {
-        my $parent = $self->stat($hier->dirname);
-        my $format = $mode? $mode & $S_IFMT: $S_IFREG;
-        my $perms = $mode? $mode & $S_IPERM: $S_IRW ^ $self->{'umask'};
-
-        die('Not a directory') unless $parent->{'mode'} & $S_IFDIR;
-        die('File exists') if $parent->{'dirent'}->exists($name);
-
-        if ($format & $S_IFDIR) {
-            $perms |= $S_IX ^ $self->{'umask'} unless $perms;
-        }
-
-        $inode = $parent->child($name, $format | $perms);
-    }
-
-    return $self->{'fds'}->alloc($inode);
-}
-
-sub close {
-    my ($self, $fd) = @_;
-    $self->{'fds'}->free($fd);
+    return $self->{'fds'}->lookup($fd)->{'inode'};
 }
 
 sub chdir {
