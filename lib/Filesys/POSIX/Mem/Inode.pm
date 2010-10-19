@@ -78,6 +78,7 @@ sub open {
 
     unless ($self->{'bucket'}) {
         $self->{'bucket'} = Filesys::POSIX::Mem::Bucket->new(
+            'inode' => $self,
             'max'   => $dev_flags->{'bucket_max'},
             'dir'   => $dev_flags->{'bucket_dir'}
         );
