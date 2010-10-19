@@ -53,11 +53,18 @@ sub mount {
 
     $data{'special'} ||= scalar $fs;
 
+    #
+    # Generate a generic BSD-style filesystem type string.
+    #
+    my $type = lc scalar $fs;
+    $type =~ s/^([a-z_][a-z0-9_]*::)*//;
+
     push @$self, {
         'mountpoint'    => $mountpoint,
         'root'          => $fs->{'root'},
         'special'       => $data{'special'},
         'dev'           => $fs,
+        'type'          => $type,
         'path'          => $path,
         'vnode'         => Filesys::POSIX::VFS::Inode->new($mountpoint, $fs->{'root'}),
 
