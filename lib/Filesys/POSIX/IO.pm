@@ -38,7 +38,7 @@ sub read {
     my $fd = shift;
     my $entry = $self->{'fds'}->lookup($fd);
 
-    die('Invalid argument') unless $entry->{'flags'} & ($O_RDONLY | $O_RDWR);
+    die('Invalid argument') if $entry->{'flags'} & $O_WRONLY;
 
     return $entry->{'handle'}->read(@_);
 }
