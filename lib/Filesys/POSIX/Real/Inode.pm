@@ -12,6 +12,7 @@ sub new {
 
     my $inode = bless {
         'path'      => $path,
+        'size'      => $st[7],
         'atime'     => $st[8],
         'mtime'     => $st[9],
         'ctime'     => $st[10],
