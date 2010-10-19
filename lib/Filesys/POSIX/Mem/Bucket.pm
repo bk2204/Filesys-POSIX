@@ -16,8 +16,8 @@ sub new {
     return bless {
         'fh'    => undef,
         'buf'   => '',
-        'max'   => $opts{'max'}? $opts{'max'}: $DEFAULT_MAX,
-        'dir'   => $opts{'dir'}? $opts{'dir'}: $DEFAULT_DIR,
+        'max'   => defined $opts{'max'}? $opts{'max'}: $DEFAULT_MAX,
+        'dir'   => defined $opts{'dir'}? $opts{'dir'}: $DEFAULT_DIR,
         'inode' => $opts{'inode'},
         'size'  => 0,
         'pos'   => 0
@@ -36,20 +36,37 @@ sub open {
     return $self;
 }
 
+sub _flush_to_disk {
+    my ($self, $len) = @_;
+
+    die('Already flushed to disk') if $self->{'file'};
+
+    my ($fh, $file) = mkstemp("$self->{'dir'}/.bucket-XXXXXX") or die("Unable to create disk bucket file: $!");
+    my $offset = 0;
+
+    for (my $left = $self->{'size'}; $left > 0; $left -= $len) {
+        my $wrlen = $left > $len? $len: $left;
+
+        syswrite($fh, substr($self->{'buf'}, $offset, $wrlen), $wrlen);
+
+        $offset += $wrlen;
+    }
+
+    sysseek($fh, 0, $SEEK_SET);
+
+    @{$self}{qw/fh file/} = ($fh, $file);
+}
+
 sub write {
     my ($self, $buf, $len) = @_;
     my $ret = 0;
 
     if ($self->{'size'} + $len > $self->{'max'}) {
-        my ($fd, $file) = mkstemp("$self->{'dir'}/.bucket-XXXXXX") or die("Unable to create bucket: $!");
+        $self->_flush_to_disk($len) unless $self->{'fh'};
+    }
 
-        syswrite($fd, $self->{'buf'}, $self->{'size'}) or die("Unable to flush bucket to disk: $!");
-        $ret = syswrite($fd, $buf) or die("Unable to flush buffer to disk: $!");
-        sysseek($fd, 0, 0);
-
-        @{$self}{qw/fd file/} = ($fd, $file);
-    } elsif ($self->{'fh'}) {
-        $ret = syswrite($self->{'fh'}, $buf) or die("Unable to flush buffer to disk: $!");
+    if ($self->{'fh'}) {
+        $ret = syswrite($self->{'fh'}, $buf) or die("Unable to write to disk bucket: $!");
     } else {
         $self->{'buf'} .= substr($buf, 0, $len);
         $ret = $len;
