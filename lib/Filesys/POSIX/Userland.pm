@@ -86,14 +86,8 @@ sub fstatfs {
     return $self->{'vfs'}->statfs($node);
 }
 
-sub mountpoints {
-    my ($self) = @_;
-
-    return sort {
-        $a cmp $b
-    } map {
-        $self->_find_inode_path($_)
-    } $self->{'vfs'}->mountpoints;
+sub mountlist {
+    shift->{'vfs'}->mountlist;
 }
 
 1;
