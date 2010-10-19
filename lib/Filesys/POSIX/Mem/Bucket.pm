@@ -29,8 +29,12 @@ sub open {
 
     $self->{'flags'} = $flags? $flags: $O_RDONLY;
 
+    die('Already opened') if $self->{'fh'};
+
     if (exists $self->{'file'}) {
         sysopen(my $fh, $self->{'file'}, $O_RDWR) or die("Unable to reopen bucket $self->{'file'}: $!");
+
+        $self->{'fh'} = $fh;
     }
 
     return $self;
@@ -61,8 +65,8 @@ sub write {
     my ($self, $buf, $len) = @_;
     my $ret = 0;
 
-    if ($self->{'size'} + $len > $self->{'max'}) {
-        $self->_flush_to_disk($len) unless $self->{'fh'};
+    unless ($self->{'fh'}) {
+        $self->_flush_to_disk($len) if $self->{'size'} + $len > $self->{'max'};
     }
 
     if ($self->{'fh'}) {
@@ -89,7 +93,8 @@ sub read {
     my $ret = 0;
 
     if ($self->{'fh'}) {
-        $ret = sysread($self->{'fh'}, $_[0], $len) or die("Unable to read bucket: $!");
+        $ret = sysread($self->{'fh'}, $_[0], $len);
+        die("Unable to read bucket: $!") if $ret == 0 && $!;
     } else {
         my $maxlen = $self->{'size'} - $self->{'pos'};
         $len = $maxlen if $len > $maxlen;
