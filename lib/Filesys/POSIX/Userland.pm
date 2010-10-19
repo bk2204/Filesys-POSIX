@@ -13,7 +13,7 @@ sub _find_inode_path {
     while (my $dir = $self->{'vfs'}->vnode($node->{'parent'})) {
         last if $dir eq $node;
 
-        die('Not a directory') unless $dir->{'mode'} & $S_IFDIR;
+        die('Not a directory') unless ($dir->{'mode'} & $S_IFMT) == $S_IFDIR;
 
         dirent: foreach ($dir->{'dirent'}->list) {
             next if $_ eq '.' || $_ eq '..';
