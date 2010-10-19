@@ -33,4 +33,9 @@ sub free {
     delete $self->{$fd};
 }
 
+sub list {
+    my ($self) = @_;
+    return keys %$self;
+}
+
 1;
