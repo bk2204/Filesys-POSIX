@@ -111,9 +111,6 @@ sub close {
         undef $self->{'fh'};
     }
 
-    delete $self->{'buf'};
-    $self->{'buf'} = '';
-    $self->{'size'} = 0;
     $self->{'pos'}  = 0;
 }
 
