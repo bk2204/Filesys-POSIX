@@ -77,7 +77,7 @@ sub delete {
     my $member = $self->{'members'}->{$name} or return;
     my $subpath = "$self->{'path'}/$name";
 
-    if ($member->{'mode'} & $S_IFMT == $S_IFDIR) {
+    if (($member->{'mode'} & $S_IFMT) == $S_IFDIR) {
         rmdir($subpath);
     } else {
         unlink($subpath);
