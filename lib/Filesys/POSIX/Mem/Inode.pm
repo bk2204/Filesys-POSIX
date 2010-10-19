@@ -10,8 +10,10 @@ sub new {
     my $now = time;
 
     my $inode = bless {
+        'size'      => 0,
         'atime'     => $now,
         'mtime'     => $now,
+        'ctime'     => $now,
         'uid'       => 0,
         'gid'       => 0,
         'mode'      => $opts{'mode'}? $opts{'mode'}: 0,
