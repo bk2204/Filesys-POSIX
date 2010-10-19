@@ -23,7 +23,7 @@ sub new {
         'parent'    => $opts{'parent'}
     }, $class;
 
-    if (exists $opts{'mode'} && $opts{'mode'} & $S_IFDIR) {
+    if (exists $opts{'mode'} && ($opts{'mode'} & $S_IFMT) == $S_IFDIR) {
         $inode->{'dirent'} = Filesys::POSIX::Mem::Dirent->new(
             '.'     => $inode,
             '..'    => $opts{'parent'}? $opts{'parent'}: $inode
@@ -36,7 +36,7 @@ sub new {
 sub child {
     my ($self, $name, $mode) = @_;
 
-    die('Not a directory') unless $self->{'mode'} & $S_IFDIR;
+    die('Not a directory') unless ($self->{'mode'} & $S_IFMT) == $S_IFDIR;
     die('Invalid directory entry name') if $name =~ /\//;
     die('File exists') if $self->{'dirent'}->exists($name);
 
@@ -67,7 +67,7 @@ sub chmod {
 sub readlink {
     my ($self) = @_;
 
-    die('Not a symlink') unless $self->{'mode'} & $S_IFLNK;
+    die('Not a symlink') unless ($self->{'mode'} & $S_IFMT) == $S_IFLNK;
 
     return $self->{'dest'};
 }
