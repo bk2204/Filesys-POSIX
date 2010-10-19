@@ -16,6 +16,8 @@ BEGIN {
         $S_IFWHT $S_IPROT $S_ISUID $S_ISGID $S_ISVTX $S_IPERM $S_IRWXU
         $S_IRUSR $S_IWUSR $S_IXUSR $S_IRWXG $S_IRGRP $S_IWGRP $S_IXGRP
         $S_IRWXO $S_IROTH $S_IWOTH $S_IXOTH $S_IRW $S_IX
+
+        $SEEK_SET $SEEK_CUR $SEEK_END
     );
 }
 
@@ -92,5 +94,12 @@ our $S_IRWXO    = 0000007;
 our $S_IROTH    = 0000004;
 our $S_IWOTH    = 0000002;
 our $S_IXOTH    = 0000001;
+
+#
+# seek() operations
+#
+our $SEEK_SET   = 0x00;
+our $SEEK_CUR   = 0x01;
+our $SEEK_END   = 0x02;
 
 1;
