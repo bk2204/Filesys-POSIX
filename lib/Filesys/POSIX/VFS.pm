@@ -56,7 +56,7 @@ sub mount {
     #
     # Generate a generic BSD-style filesystem type string.
     #
-    my $type = lc scalar $fs;
+    my $type = lc ref $fs;
     $type =~ s/^([a-z_][a-z0-9_]*::)*//;
 
     push @$self, {
