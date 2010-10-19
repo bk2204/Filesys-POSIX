@@ -26,6 +26,8 @@ sub open {
         }
 
         $inode = $parent->child($name, $format | $perms);
+    } else {
+        my $inode = $self->stat($path);
     }
 
     return $self->{'fds'}->open($inode, $flags);
@@ -33,7 +35,8 @@ sub open {
 
 sub read {
     my $self = shift;
-    my $entry = $self->{'fds'}->lookup($_[0]);
+    my $fd = shift;
+    my $entry = $self->{'fds'}->lookup($fd);
 
     die('Invalid argument') unless $entry->{'flags'} & ($O_RDONLY | $O_RDWR);
 
@@ -46,19 +49,19 @@ sub write {
 
     die('Invalid argument') unless $entry->{'flags'} & ($O_WRONLY | $O_RDWR);
 
-    return $entry->{'handle'}->write($fd, $buf, $len);
+    return $entry->{'handle'}->write($buf, $len);
 }
 
 sub seek {
     my ($self, $fd, $pos, $whence) = @_;
     my $entry = $self->{'fds'}->lookup($fd);
 
-    return $entry->{'handle'}->seek($fd, $pos, $whence);
+    return $entry->{'handle'}->seek($pos, $whence);
 }
 
 sub close {
     my ($self, $fd) = @_;
-    $self->{'fds'}->close($fd);
+    $self->{'fds'}->close;
 }
 
 1;
