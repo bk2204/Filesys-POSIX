@@ -8,27 +8,27 @@ use Fcntl;
 
 sub new {
     my ($class, $path, %opts) = @_;
-    my @st = lstat $path or die("$path: $!");
+    my @st = $opts{'st_info'}? @{$opts{'st_info'}}: lstat $path or die $!;
 
     my $inode = bless {
         'path'      => $path,
-        'size'      => $st[7],
-        'atime'     => $st[8],
-        'mtime'     => $st[9],
-        'ctime'     => $st[10],
-        'uid'       => $st[4],
-        'gid'       => $st[5],
-        'mode'      => $st[2],
         'dev'       => $opts{'dev'},
-        'rdev'      => $st[6],
         'parent'    => $opts{'parent'}
     }, $class;
+
+    $inode->_load_st_info(@st);
 
     if ($st[2] & $S_IFDIR) {
         $inode->{'dirent'} = Filesys::POSIX::Real::Dirent->new($path, $inode);
     }
 
     return $inode;
+}
+
+sub _load_st_info {
+    my ($self, @st) = @_;
+
+    @{$self}{qw/size atime mtime ctime uid gid mode rdev/} = (@st[7..10], @st[4..5], $st[2], $st[6]);
 }
 
 sub child {
@@ -57,11 +57,13 @@ sub child {
 sub chown {
     my ($self, $uid, $gid) = @_;
     CORE::chown($uid, $gid, $self->{'path'});
+    @{$self}{qw/uid gid/} = ($uid, $gid);
 }
 
 sub chmod {
     my ($self, $mode) = @_;
     CORE::chmod($mode, $self->{'path'});
+    $self->{'mode'} = $mode;
 }
 
 sub readlink {
