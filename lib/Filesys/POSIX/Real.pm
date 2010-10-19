@@ -18,6 +18,7 @@ sub init {
     my $path = $data{'special'};
     $path =~ s/^real:// or die('Invalid special path');
 
+    $self->{'flags'} = \%data;
     $self->{'path'} = Filesys::POSIX::Path->full($path);
     $self->{'root'} = Filesys::POSIX::Real::Inode->new($path,
         'dev' => $self
