@@ -18,7 +18,7 @@ sub new {
 
     $inode->_load_st_info(@st);
 
-    if ($st[2] & $S_IFDIR) {
+    if (($st[2] & $S_IFMT) == $S_IFDIR) {
         $inode->{'dirent'} = Filesys::POSIX::Real::Dirent->new($path, $inode);
     }
 
@@ -34,14 +34,14 @@ sub _load_st_info {
 sub child {
     my ($self, $name, $mode) = @_;
 
-    die('Not a directory') unless $self->{'mode'} & $S_IFDIR;
+    die('Not a directory') unless ($self->{'mode'} & $S_IFMT) == $S_IFDIR;
     die('Invalid directory entry name') if $name =~ /\//;
     die('File exists') if $self->{'dirent'}->exists($name);
 
     my $path = "$self->{'path'}/$name";
     my $child;
 
-    if ($mode & $S_IFDIR) {
+    if (($mode & $S_IFMT) == $S_IFDIR) {
         mkdir($path, $mode) or die $!;
     } else {
         sysopen(my $fh, $path, O_CREAT | O_TRUNC | O_WRONLY, $mode) or die $!;
@@ -68,7 +68,7 @@ sub chmod {
 
 sub readlink {
     my ($self) = @_;
-    die('Not a symlink') unless $self->{'mode'} & $S_IFLNK;
+    die('Not a symlink') unless ($self->{'mode'} & $S_IFMT) == $S_IFLNK;
 
     return CORE::readlink($self->{'path'});
 }
