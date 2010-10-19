@@ -42,6 +42,9 @@ our $O_CREAT    = 0x0200;
 our $O_TRUNC    = 0x0400;
 our $O_EXCL     = 0x0800;
 
+our $O_NONBLOCK = 0x0004;
+our $O_APPEND   = 0x0008;
+
 our $O_EVTONLY  = 0x8000;
 
 #
