@@ -64,4 +64,11 @@ sub close {
     $self->{'fds'}->close($fd);
 }
 
+sub fdopen {
+    my ($self, $fd, $mode) = @_;
+    my $entry = $self->{'fds'}->lookup($fd);
+
+    return $entry->{'handle'};
+}
+
 1;
