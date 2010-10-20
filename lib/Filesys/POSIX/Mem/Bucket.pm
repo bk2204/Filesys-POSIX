@@ -24,6 +24,18 @@ sub new {
     }, $class;
 }
 
+sub DESTROY {
+    my ($self) = @_;
+
+    if ($self->{'fh'}) {
+        close($self->{'fh'});
+    }
+
+    if ($self->{'file'} && -f $self->{'file'}) {
+        unlink $self->{'file'};
+    }
+}
+
 sub open {
     my ($self, $flags) = @_;
 
