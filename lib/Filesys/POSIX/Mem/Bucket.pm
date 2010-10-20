@@ -137,6 +137,10 @@ sub seek {
     }
 }
 
+sub tell {
+    return shift->{'pos'};
+}
+
 sub close {
     my ($self) = @_;
 
