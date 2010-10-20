@@ -23,7 +23,7 @@ sub find {
     while (my $path = pop @paths) {
         my $node = $self->lstat($path->full);
 
-        $callback->($path);
+        $callback->($path, $node);
 
         if (($node->{'mode'} & $S_IFMT) == $S_IFDIR) {
             push @paths, map {
