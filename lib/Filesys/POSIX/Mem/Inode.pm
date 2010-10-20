@@ -33,6 +33,12 @@ sub new {
     return $inode;
 }
 
+sub DESTROY {
+    my ($self) = @_;
+
+    $self->close;
+}
+
 sub child {
     my ($self, $name, $mode) = @_;
 

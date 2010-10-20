@@ -27,6 +27,12 @@ sub new {
     return $inode;
 }
 
+sub DESTROY {
+    my ($self) = @_;
+
+    $self->close;
+}
+
 sub _load_st_info {
     my ($self, @st) = @_;
 
@@ -69,6 +75,7 @@ sub close {
 
     if ($self->{'handle'}) {
         $self->{'handle'}->close;
+        delete $self->{'handle'};
     }
 }
 
