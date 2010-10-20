@@ -1,10 +1,14 @@
-package Filesys::POSIX;
+package Filesys::POSIX::Userland::Find;
 
 use Filesys::POSIX::Bits;
 use Filesys::POSIX::Path;
 
 use strict;
 use warnings;
+
+sub EXPORT {
+    qw/find/;
+}
 
 sub find {
     my ($self, $callback, @args) = @_;
