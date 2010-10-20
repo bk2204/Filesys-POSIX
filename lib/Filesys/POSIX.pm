@@ -10,6 +10,8 @@ use Filesys::POSIX::Path;
 use Filesys::POSIX::VFS;
 use Filesys::POSIX::IO;
 
+our $AUTOLOAD;
+
 sub new {
     my ($class, $rootfs, %opts) = @_;
 
@@ -18,15 +20,46 @@ sub new {
     $rootfs->init(%opts);
 
     return bless {
-        'fds'   => Filesys::POSIX::FdTable->new,
-        'vfs'   => Filesys::POSIX::VFS->new->mount(
-            $rootfs, '/', $rootfs->{'root'}, %opts
-        ),
+        'methods'   => {},
+        'umask'     => 022,
+        'fds'       => Filesys::POSIX::FdTable->new,
+        'cwd'       => $rootfs->{'root'},
+        'root'      => $rootfs->{'root'},
 
-        'cwd'   => $rootfs->{'root'},
-        'root'  => $rootfs->{'root'},
-        'umask' => 022,
+        'vfs'       => Filesys::POSIX::VFS->new->mount(
+            $rootfs, '/', $rootfs->{'root'}, %opts
+        )
     }, $class;
+}
+
+sub AUTOLOAD {
+    my ($self, @args) = @_;
+    my $method = $AUTOLOAD;
+    $method =~ s/^([a-z0-9_]+::)*//i;
+
+    my $module = $self->{'methods'}->{$method};
+
+    return if $method eq 'DESTROY';
+    die("No module imported for method '". __PACKAGE__ ."::$method()") unless $module;
+
+    return *{"$module\::$method"}->($self, @args);
+}
+
+sub import_module {
+    my ($self, $module, @args) = @_;
+
+    eval "use $module";
+    die $@ if $@;
+
+    no strict 'refs';
+
+    foreach (*{"$module\::EXPORT"}->()) {
+        if (my $imported = $self->{'methods'}->{$_}) {
+            die("Module $imported already imported method $_");
+        }
+
+        $self->{'methods'}->{$_} = $module;
+    }
 }
 
 sub umask {
