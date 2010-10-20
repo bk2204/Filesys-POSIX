@@ -11,25 +11,31 @@ sub new {
 }
 
 sub statfs {
-    my ($self, $node, %opts) = @_;
+    my ($self, $start, %opts) = @_;
+    my $node = $start;
+    my $found;
 
     unless ($opts{'exact'}) {
         $node = $node->{'dev'}->{'root'};
     }
 
-    unless ($node) {
-        die('No node');
-    }
+    die('No node') unless $node;
 
-    foreach my $mount (@$self) {
-        foreach (qw/mountpoint root vnode/) {
-            return $mount if $mount->{$_} eq $node;
+    mount: foreach my $mount (@$self) {
+        attr: foreach (qw/mountpoint root vnode/) {
+            if ($mount->{$_} eq $node) {
+                $found = $mount;
+                $node = $mount->{'vnode'};
+                next mount;
+            }
         }
     }
 
-    die('Not mounted') unless $opts{'silent'};
+    unless ($found) {
+        die('Not mounted') unless $opts{'silent'};
+    }
 
-    return undef;
+    return $found;
 }
 
 sub mountlist {
