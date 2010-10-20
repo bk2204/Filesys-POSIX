@@ -52,7 +52,8 @@ sub mount {
 
 sub unmount {
     my ($self, $path) = @_;
-    my $mount = $self->statfs($path);
+    my $mountpoint = $self->stat($path);
+    my $mount = $self->{'vfs'}->statfs($mountpoint, 'exact' => 1);
 
     #
     # First, check for open file descriptors held on the desired device.
