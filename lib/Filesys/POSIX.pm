@@ -57,7 +57,7 @@ sub import_module {
 
     foreach (*{"$module\::EXPORT"}->()) {
         if (my $imported = $self->{'methods'}->{$_}) {
-            die("Module $imported already imported method $_");
+            die("Module $imported already imported method $_") unless $module eq $imported;
         }
 
         $self->{'methods'}->{$_} = $module;
