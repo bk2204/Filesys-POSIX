@@ -3,8 +3,10 @@ package Filesys::POSIX::Real::Inode;
 use strict;
 use warnings;
 
-use Filesys::POSIX::Bits;
 use Fcntl;
+
+use Filesys::POSIX::Bits;
+use Filesys::POSIX::IO::Handle;
 
 sub new {
     my ($class, $path, %opts) = @_;
@@ -52,6 +54,22 @@ sub child {
         'dev'       => $self->{'dev'},
         'parent'    => $self
     );
+}
+
+sub open {
+    my ($self, $flags) = @_;
+
+    sysopen(my $fh, $self->{'path'}, $flags) or die $!;
+
+    return $self->{'handle'} = Filesys::POSIX::IO::Handle->new($fh);
+}
+
+sub close {
+    my ($self) = @_;
+
+    if ($self->{'handle'}) {
+        $self->{'handle'}->close;
+    }
 }
 
 sub chown {
