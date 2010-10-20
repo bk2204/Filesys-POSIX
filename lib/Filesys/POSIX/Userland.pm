@@ -1,13 +1,9 @@
-package Filesys::POSIX::Userland;
+package Filesys::POSIX;
 
 use strict;
 use warnings;
 
 use Filesys::POSIX::Bits;
-
-sub EXPORT {
-    qw/getcwd realpath mount unmount statfs fstatfs mountlist/;
-}
 
 sub _find_inode_path {
     my ($self, $start) = @_;
@@ -34,20 +30,20 @@ sub _find_inode_path {
 sub getcwd {
     my ($self) = @_;
 
-    return _find_inode_path($self, $self->{'cwd'});
+    return $self->_find_inode_path($self->{'cwd'});
 }
 
 sub realpath {
     my ($self, $path) = @_;
     my $node = $self->stat($path);
 
-    return _find_inode_path($self, $node);
+    return $self->_find_inode_path($node);
 }
 
 sub mount {
     my ($self, $fs, $path, %data) = @_;
     my $mountpoint = $self->stat($path);
-    my $realpath = _find_inode_path($self, $mountpoint);
+    my $realpath = $self->_find_inode_path($mountpoint);
 
     $fs->init(%data);
 
