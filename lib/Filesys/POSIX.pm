@@ -42,6 +42,8 @@ sub AUTOLOAD {
     return if $method eq 'DESTROY';
     die("No module imported for method '". __PACKAGE__ ."::$method()") unless $module;
 
+    no strict 'refs';
+
     return *{"$module\::$method"}->($self, @args);
 }
 
