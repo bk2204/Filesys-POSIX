@@ -80,7 +80,7 @@ sub _type {
     return 0;
 }
 
-sub header {
+sub _header {
     my ($inode, $dest) = @_;
     my %filename_parts = _split_filename($dest);
     my $header;
@@ -109,39 +109,49 @@ sub header {
     return pack("a$BLOCK_SIZE", $header);
 }
 
-sub tar {
-    my ($self, $handle, @paths) = @_;
+#
+# NOTE: I'm only using $inode->open() calls to save stat()s.  This is not
+# necessarily something that should be done by end user software.
+#
+sub _write_file {
+    my ($fs, $handle, $dest, $inode) = @_;
+    my $fh = $inode->open($O_RDONLY);
 
+    while (my $len = $fh->read(my $buf, 4096)) {
+        if ((my $padlen = $BLOCK_SIZE - ($len % $BLOCK_SIZE)) != $BLOCK_SIZE) {
+            $len += $padlen;
+            $buf .= "\x0" x $padlen;
+        }
+
+        $handle->write($buf, $len) == $len or die('Short write while dumping file buffer to handle');
+    }
+
+    $inode->close;
+}
+
+sub _archive {
+    my ($fs, $handle, $dest, $inode) = @_;
+    my $format = $inode->{'mode'} & $S_IFMT;
+
+    unless ($dest =~ /\/$/) {
+        $dest .= '/' if $format == $S_IFDIR;
+    }
+
+    my $header = _header($inode, $dest);
+    $handle->write($header, 512) == 512 or die('Short write while dumping tar header to file handle');
+
+    _write_file($fs, $handle, $dest, $inode) if $format == $S_IFREG;
+}
+
+sub tar {
+    my ($self, $handle, @items) = @_;
     $self->import_module('Filesys::POSIX::Userland::Find');
 
     $self->find(sub {
         my ($path, $inode) = @_;
-        my $format = $inode->{'mode'} & $S_IFMT;
-        my $dest = $path->full;
 
-        unless ($dest =~ /\/$/) {
-            $dest .= '/' if $format == $S_IFDIR;
-        }
-
-        my $header = header($inode, $dest);
-        $handle->write($header, 512) == 512 or die('Short write while dumping tar header to file handle');
-
-        if ($format == $S_IFREG) {
-            my $fd = $self->open($path->full, $O_RDONLY);
-            my $fh = $self->fdopen($fd);
-
-            while (my $len = $fh->read(my $buf, 4096)) {
-                if ((my $padlen = $BLOCK_SIZE - ($len % $BLOCK_SIZE)) != $BLOCK_SIZE) {
-                    $len += $padlen;
-                    $buf .= "\x0" x $padlen;
-                }
-
-                $handle->write($buf, $len) == $len or die('Short write while dumping file buffer to handle');
-            }
-
-            $self->close($fd);
-        }
-    }, @paths);
+        _archive($self, $handle, $path->full, $inode);
+    }, @items);
 }
 
 1;
