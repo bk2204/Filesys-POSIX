@@ -112,8 +112,8 @@ sub _find_inode {
             $node = $self->{'vfs'}->vnode($dir->{'dirent'}->get($item)) or die('No such file or directory');
         }
 
-        if ($opts{'resolve_symlinks'} && ($node->{'mode'} & $S_IFMT) == $S_IFLNK) {
-            $hier = $hier->concat($node->readlink);
+        if (($node->{'mode'} & $S_IFMT) == $S_IFLNK) {
+            $hier = $hier->concat($node->readlink) if $opts{'resolve_symlinks'} || $hier->count;
         } else {
             $dir = $node;
         }
