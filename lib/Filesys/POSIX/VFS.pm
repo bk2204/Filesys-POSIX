@@ -3,11 +3,15 @@ package Filesys::POSIX::VFS;
 use strict;
 use warnings;
 
+use Filesys::POSIX::Bits;
 use Filesys::POSIX::Path;
 use Filesys::POSIX::VFS::Inode;
 
 sub new {
-    return bless [], shift;
+    return bless {
+        'mounts'        => [],
+        'devices'       => {}
+    }, shift;
 }
 
 sub statfs {
@@ -21,7 +25,7 @@ sub statfs {
 
     die('No node') unless $node;
 
-    mount: foreach my $mount (@$self) {
+    mount: foreach my $mount (@{$self->{'mounts'}}) {
         attr: foreach (qw/mountpoint root vnode/) {
             if ($mount->{$_} eq $node) {
                 $found = $mount;
@@ -40,7 +44,7 @@ sub statfs {
 
 sub mountlist {
     my ($self) = @_;
-    return @$self;
+    return @{$self->{'mounts'}};
 }
 
 #
@@ -53,7 +57,7 @@ sub mountlist {
 sub mount {
     my ($self, $fs, $path, $mountpoint, %data) = @_;
 
-    if (grep { $_->{'dev'} eq $fs } @$self) {
+    if (grep { $_->{'dev'} eq $fs } @{$self->{'mounts'}}) {
         die('Already mounted');
     }
 
@@ -65,7 +69,10 @@ sub mount {
     my $type = lc ref $fs;
     $type =~ s/^([a-z_][a-z0-9_]*::)*//;
 
-    push @$self, {
+    #
+    # First, generate the mount record.
+    #
+    my $mount = {
         'mountpoint'    => $mountpoint,
         'root'          => $fs->{'root'},
         'special'       => $data{'special'},
@@ -83,19 +90,48 @@ sub mount {
         }
     };
 
+    #
+    # Store the mount record in the ordered mount list.
+    #
+    push @{$self->{'mounts'}}, $mount;
+
+    #
+    # Finally, associate the filesystem with the mount record.
+    #
+    $self->{'devices'}->{$fs} = $mount;
+
     return $self;
 }
 
 sub vnode {
     my ($self, $inode) = @_;
+    my $mount;
+    my $ret;
 
     return undef unless $inode;
 
-    if (my $mount = $self->statfs($inode, 'exact' => 1, 'silent' => 1)) {
-        return $mount->{'vnode'};
+    if ($mount = $self->statfs($inode, 'exact' => 1, 'silent' => 1)) {
+        $ret = $mount->{'vnode'};
+    } else {
+        $ret = $inode;
+        $mount = $self->{'devices'}->{$inode->{'dev'}};
     }
 
-    return $inode;
+    if ($mount->{'flags'}->{'noexec'}) {
+        $ret->{'mode'} &= ~$S_IX;
+    }
+
+    if ($mount->{'flags'}->{'nosuid'}) {
+        $ret->{'mode'} &= ~$S_ISUID;
+    }
+
+    foreach (qw/uid gid/) {
+        if (defined $mount->{'flags'}->{$_}) {
+            $ret->{$_} = $mount->{'flags'} = $mount->{'flags'}->{$_};
+        }
+    }
+
+    return $ret;
 }
 
 sub unmount {
