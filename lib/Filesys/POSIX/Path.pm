@@ -6,10 +6,17 @@ use warnings;
 sub new {
     my ($class, $path) = @_;
     my @components = split(/\//, $path);
+    my @ret;
 
-    my @ret = grep {
-        $_ && $_ ne '.'
-    } @components;
+    if (@components && $components[0]) {
+        push @ret, $components[0];
+    }
+
+    if (@components > 1) {
+        push @ret, grep {
+            $_ && $_ ne '.'
+        } @components[1..$#components]
+    }
 
     die('Empty path') unless @components || $path;
 
@@ -51,7 +58,7 @@ sub dirname {
     my $self = _proxy(@_);
     my @hier = @$self;
 
-    if ($#hier) {
+    if (scalar @hier > 1) {
         my @parts = @hier[0..$#hier-1];
 
         if (@parts == 1 && !$parts[0]) {
@@ -59,6 +66,8 @@ sub dirname {
         }
 
         return join('/', @parts);
+    } elsif (scalar @hier == 1) {
+        return $hier[0];
     }
 
     return '.';
