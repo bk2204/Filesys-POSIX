@@ -10,7 +10,6 @@ my $BLOCK_SIZE = 512;
 
 my %TYPES = (
     0   => $S_IFREG,
-    1   => $S_IFREG,
     2   => $S_IFLNK,
     3   => $S_IFCHR,
     4   => $S_IFBLK,
