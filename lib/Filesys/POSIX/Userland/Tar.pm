@@ -21,13 +21,6 @@ sub EXPORT {
     qw/tar/;
 }
 
-sub _pad_filename {
-    my ($filename, $len) = @_;
-    my $size = length $filename >= $len? $len + 1: $len;
-
-    return substr(pack("Z$size", $filename), 0, $len);
-}
-
 sub _split_filename {
     my ($filename) = @_;
 
@@ -46,17 +39,21 @@ sub _split_filename {
     );
 }
 
-sub _format_string {
+sub _pad_string {
     my ($string, $size) = @_;
-    return substr($string, 0, 1) if $size == 1;
-    return pack("Z$size", $string? $string: '');
+
+    return $string if length($string) == $size;
+    return pack("Z$size", $string);
 }
 
 sub _format_number {
-    my ($number, $size) = @_;
-    my $digits = $size <= 1? 1: $size - 1;
+    my ($number, $digits, $size) = @_;
+    my $string = sprintf("%.${digits}o", $number);
+    my $offset = length($string) - $digits;
+    my $substring = substr($string, $offset, $digits);
 
-    return _format_string(sprintf("%.${digits}o", $number), $size);
+    return $substring if $digits == $size;
+    return pack("Z$size", $substring);
 }
 
 sub _checksum {
@@ -85,32 +82,33 @@ sub _header {
     my %filename_parts = _split_filename($dest);
     my $header;
 
-    my $size = ($inode->{'mode'} & $S_IFMT) == $S_IFDIR? 0: $inode->{'size'};
+    my $size = ($inode->{'mode'} & $S_IFMT) == $S_IFREG? $inode->{'size'}: 0;
 
-    $header .= _pad_filename($filename_parts{'suffix'}, 100);
-    $header .= _format_number($inode->{'mode'} & $S_IPERM, 8);
-    $header .= _format_number($inode->{'uid'}, 8);
-    $header .= _format_number($inode->{'gid'}, 8);
-    $header .= _format_number($size, 12);
-    $header .= _format_number($inode->{'mtime'}, 12);
+    $header .= _pad_string($filename_parts{'suffix'}, 100);
+    $header .= _format_number($inode->{'mode'} & $S_IPERM, 7, 8);
+    $header .= _format_number($inode->{'uid'}, 7, 8);
+    $header .= _format_number($inode->{'gid'}, 7, 8);
+    $header .= _format_number($size, 12, 12);
+    $header .= _format_number($inode->{'mtime'}, 12, 12);
     $header .= ' ' x 8;
-    $header .= _format_number(_type($inode), 1);
+    $header .= _format_number(_type($inode), 1, 1);
 
     if (($inode->{'mode'} & $S_IFMT) == $S_IFLNK) {
-        $header .= _pad_filename($inode->readlink, 100);
+        $header .= _pad_string($inode->readlink, 100);
     } else {
         $header .= "\x00" x 100;
     }
 
-    $header .= 'ustar00';
-    $header .= ' ' x 32;
-    $header .= ' ' x 32;
-    $header .= _format_number(0, 8);
-    $header .= _format_number(0, 8);
-    $header .= _pad_filename($filename_parts{'prefix'}, 155);
+    $header .= _pad_string('ustar', 6);
+    $header .= _pad_string('00', 2);
+    $header .= "\x00" x 32;
+    $header .= "\x00" x 32;
+    $header .= _format_number(0, 7, 8);
+    $header .= _format_number(0, 7, 8);
+    $header .= _pad_string($filename_parts{'prefix'}, 155);
 
     my $checksum = _checksum($header);
-    substr($header, 148, 8) = _format_number($checksum, 8);
+    substr($header, 148, 8) = _format_number($checksum, 7, 8);
 
     return pack("a$BLOCK_SIZE", $header);
 }
