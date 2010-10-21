@@ -11,17 +11,16 @@ sub EXPORT {
 }
 
 sub find {
-    my ($self, $callback, @args) = @_;
-    my %opts;
-
-    if (ref $args[0] eq 'HASH') {
-        %opts = %{shift @args};
-    }
+    my $self = shift;
+    my %opts = ref $_[0] eq 'HASH'? %{(shift)}: ();
+    my $callback = shift;
+    my @args = @_;
 
     my @paths = map { Filesys::POSIX::Path->new($_) } @args;
 
     while (my $path = pop @paths) {
-        my $node = $self->lstat($path->full);
+        my $method = $opts{'follow'}? 'stat': 'lstat';
+        my $node = $self->$method($path->full);
 
         $callback->($path, $node);
 
