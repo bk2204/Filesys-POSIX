@@ -151,10 +151,14 @@ sub _archive {
 }
 
 sub tar {
-    my ($self, $handle, @items) = @_;
+    my $self = shift;
+    my $handle = shift;
+    my %opts = ref $_[0] eq 'HASH'? %{(shift)}: ();
+    my @items = @_;
+
     $self->import_module('Filesys::POSIX::Userland::Find');
 
-    $self->find(sub {
+    $self->find(\%opts, sub {
         my ($path, $inode) = @_;
 
         _archive($self, $handle, $path->full, $inode);
