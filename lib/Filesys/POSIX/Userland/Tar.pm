@@ -49,6 +49,7 @@ sub _split_filename {
 
 sub _format_string {
     my ($string, $size) = @_;
+    return substr($string, 0, 1) if $size == 1;
     return pack("Z$size", $string? $string: '');
 }
 
@@ -95,7 +96,13 @@ sub _header {
     $header .= _format_number($inode->{'mtime'}, 12);
     $header .= ' ' x 8;
     $header .= _format_number(_type($inode), 1);
-    $header .= "\x00" x 100;
+
+    if (($inode->{'mode'} & $S_IFMT) == $S_IFLNK) {
+        $header .= _pad_filename($inode->readlink, 100);
+    } else {
+        $header .= "\x00" x 100;
+    }
+
     $header .= 'ustar00';
     $header .= ' ' x 32;
     $header .= ' ' x 32;
