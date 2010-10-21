@@ -66,8 +66,8 @@ sub dirname {
         }
 
         return join('/', @parts);
-    } elsif (scalar @hier == 1) {
-        return $hier[0];
+    } elsif (@hier == 1 && $hier[0] eq '/') {
+        return '/'
     }
 
     return '.';
