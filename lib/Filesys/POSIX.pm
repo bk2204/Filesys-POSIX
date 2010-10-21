@@ -195,7 +195,7 @@ sub link {
     my ($self, $src, $dest) = @_;
     my $hier = Filesys::POSIX::Path->new($dest);
     my $name = $hier->basename;
-    my $node = $self->stat($src);
+    my $node = $self->lstat($src);
     my $parent = $node->{'parent'};
 
     die('Cross-device link') unless $node->{'dev'} == $parent->{'dev'};
@@ -209,23 +209,24 @@ sub link {
 sub symlink {
     my ($self, $src, $dest) = @_;
     my $perms = $S_IPERM ^ $self->{'umask'};
+    my $hier = Filesys::POSIX::Path->new($dest);
+    my $name = $hier->basename;
+    my $parent = $self->stat($hier->dirname);
 
-    my $fd = $self->open($dest, $O_CREAT | $O_WRONLY, $S_IFLNK | $perms);
-    $self->fstat($fd)->{'dest'} = Filesys::POSIX::Path->full($src);
-    $self->close($fd);
+    $parent->child($name, $S_IFLNK | $perms);
 }
 
 sub readlink {
     my ($self, $path) = @_;
 
-    return $self->stat($path)->readlink;
+    return $self->lstat($path)->readlink;
 }
 
 sub unlink {
     my ($self, $path) = @_;
     my $hier = Filesys::POSIX::Path->new($path);
     my $name = $hier->basename;
-    my $node = $self->stat($hier->full);
+    my $node = $self->lstat($hier->full);
     my $parent = $node->{'parent'};
 
     die('Is a directory') if ($node->{'mode'} & $S_IFMT) == $S_IFDIR;
@@ -239,7 +240,7 @@ sub rmdir {
     my ($self, $path) = @_;
     my $hier = Filesys::POSIX::Path->new($path);
     my $name = $hier->basename;
-    my $node = $self->stat($hier->full);
+    my $node = $self->lstat($hier->full);
     my $parent = $node->{'parent'};
 
     die('Not a directory') unless ($node->{'mode'} & $S_IFMT) == $S_IFDIR;
