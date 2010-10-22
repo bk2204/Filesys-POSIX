@@ -17,10 +17,14 @@ sub find {
     my @args = @_;
 
     my @paths = map { Filesys::POSIX::Path->new($_) } @args;
+    my @nodes = map { $self->stat($_) } @args;
 
-    while (my $path = pop @paths) {
-        my $method = $opts{'follow'}? 'stat': 'lstat';
-        my $node = $self->$method($path->full);
+    while (my $node = pop @nodes) {
+        my $path = pop @paths;
+
+        if (($node->{'mode'} & $S_IFMT) == $S_IFLNK) {
+            $node = $self->stat($node->readlink) if $opts{'follow'};
+        }
 
         $callback->($path, $node);
 
@@ -32,6 +36,7 @@ sub find {
             while (my $item = $dirent->read) {
                 next if $item eq '.' || $item eq '..';
                 push @paths, Filesys::POSIX::Path->new($path->full . "/$item");
+                push @nodes, $self->{'vfs'}->vnode($dirent->get($item));
             }
 
             $dirent->close;
