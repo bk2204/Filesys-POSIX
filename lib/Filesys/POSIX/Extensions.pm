@@ -18,8 +18,12 @@ sub attach {
     my $name = $hier->basename;
     my $parent = $self->stat($hier->dirname);
 
+    eval {
+        $self->stat($dest);
+    };
+
+    die('File exists') unless $@;
     die('Not a directory') unless ($parent->{'mode'} & $S_IFMT) == $S_IFDIR;
-    die('File exists') if $parent->{'dirent'}->exists($name);
 
     $parent->{'dirent'}->set($name, $node);
 }
@@ -30,8 +34,12 @@ sub map {
     my $name = $hier->basename;
     my $parent = $self->stat($hier->dirname);
 
+    eval {
+        $self->stat($dest);
+    };
+
+    die('File exists') unless $@;
     die('Not a directory') unless ($parent->{'mode'} & $S_IFMT) == $S_IFDIR;
-    die('File exists') if $parent->{'dirent'}->exists($name);
 
     my $node = Filesys::POSIX::Real::Inode->new($real_src,
         'dev'       => $parent->{'dev'},
@@ -43,12 +51,19 @@ sub map {
 
 sub alias {
     my ($self, $src, $dest) = @_;
-    my $hier = Filesys::POSIX::Path->new($dest);                                                                            my $name = $hier->basename;
-    my $node = $self->stat($src);                                                                                           my $parent = $self->stat($hier->dirname);
+    my $hier = Filesys::POSIX::Path->new($dest);
+    my $name = $hier->basename;
+    my $node = $self->stat($src);
+    my $parent = $self->stat($hier->dirname);
 
+    eval {
+        $self->stat($dest);
+    };
+
+    die('File exists') unless $@;
+    die('Device or resource busy') if $self->stat($dest) eq $parent;
     die('Is a directory') if ($node->{'mode'} & $S_IFMT) == $S_IFDIR;
     die('Not a directory') unless ($parent->{'mode'} & $S_IFMT) == $S_IFDIR;
-    die('File exists') if $parent->{'dirent'}->exists($name);
 
     $parent->{'dirent'}->set($name, $node);
 }
