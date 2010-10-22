@@ -100,7 +100,7 @@ sub _find_inode {
 
         die('Not a directory') unless ($dir->{'mode'} & $S_IFMT) == $S_IFDIR;
 
-        unless ($self->{'vfs'}->statfs($dir)->{'flags'}->{'noatime'}) {
+        unless ($dir->{'dev'}->{'flags'}->{'noatime'}) {
             $dir->{'atime'} = time;
         }
 
