@@ -229,10 +229,9 @@ sub unlink {
     my $node = $self->lstat($hier->full);
     my $parent = $node->{'parent'};
 
-    use Carp;
     die('Is a directory') if ($node->{'mode'} & $S_IFMT) == $S_IFDIR;
     die('Not a directory') unless ($parent->{'mode'} & $S_IFMT) == $S_IFDIR;
-    confess('No such file or directory') unless $parent->{'dirent'}->exists($name);
+    die('No such file or directory') unless $parent->{'dirent'}->exists($name);
 
     $parent->{'dirent'}->delete($name);
 }
