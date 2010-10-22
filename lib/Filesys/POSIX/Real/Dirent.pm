@@ -66,6 +66,10 @@ sub get {
     return $self->{'members'}->{$name};
 }
 
+sub set {
+    return;
+}
+
 sub exists {
     my ($self, $name) = @_;
     $self->_sync_member($name);

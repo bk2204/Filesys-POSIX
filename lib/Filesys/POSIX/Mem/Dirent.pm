@@ -13,6 +13,11 @@ sub get {
     return $self->{$name};
 }
 
+sub set {
+    my ($self, $name, $node) = @_;
+    $self->{$name} = $node;
+}
+
 sub exists {
     my ($self, $name) = @_;
     return exists $self->{$name};
