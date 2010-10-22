@@ -52,6 +52,28 @@ sub write {
     return $entry->{'handle'}->write($buf, $len);
 }
 
+sub print {
+    my ($self, $fd, @args) = @_;
+    my $entry = $self->{'fds'}->lookup($fd);
+
+    die('Invalid argument') unless $entry->{'flags'} & ($O_WRONLY | $O_RDWR);
+
+    my $buf = join($\, @args);
+
+    return $entry->{'handle'}->write($buf, length $buf);
+}
+
+sub printf {
+    my ($self, $fd, $format, @args) = @_;
+    my $entry = $self->{'fds'}->lookup($fd);
+
+    die('Invalid argument') unless $entry->{'flags'} & ($O_WRONLY | $O_RDWR);
+
+    my $buf = sprintf($format, @args);
+
+    return $entry->{'handle'}->write($buf, length $buf);
+}
+
 sub seek {
     my ($self, $fd, $pos, $whence) = @_;
     my $entry = $self->{'fds'}->lookup($fd);
