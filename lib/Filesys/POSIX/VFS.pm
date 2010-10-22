@@ -9,37 +9,27 @@ use Filesys::POSIX::VFS::Inode;
 
 sub new {
     return bless {
-        'mounts'        => [],
-        'devices'       => {}
+        'mounts'    => [],
+        'devices'   => {},
+        'vnodes'    => {}
     }, shift;
 }
 
 sub statfs {
     my ($self, $start, %opts) = @_;
-    my $node = $start;
-    my $found;
+    my $inode = $start;
 
-    unless ($opts{'exact'}) {
-        $node = $node->{'dev'}->{'root'};
+    while ($inode->{'vnode'}) {
+        $inode = $inode->{'vnode'};
     }
 
-    die('No node') unless $node;
-
-    mount: foreach my $mount (@{$self->{'mounts'}}) {
-        attr: foreach (qw/mountpoint root vnode/) {
-            if ($mount->{$_} eq $node) {
-                $found = $mount;
-                $node = $mount->{'vnode'};
-                next mount;
-            }
-        }
+    if ($opts{'exact'}) {
+        return $self->{'vnodes'}->{$inode};
+    } else {
+        return $self->{'devices'}->{$inode->{'dev'}};
     }
 
-    unless ($found) {
-        die('Not mounted') unless $opts{'silent'};
-    }
-
-    return $found;
+    die('Not mounted') unless $opts{'silent'};
 }
 
 sub mountlist {
@@ -70,7 +60,19 @@ sub mount {
     $type =~ s/^([a-z_][a-z0-9_]*::)*//;
 
     #
-    # First, generate the mount record.
+    # Create a vnode record munged from the mountpoint and new
+    # filesystem root.
+    #
+    my $vnode = Filesys::POSIX::VFS::Inode->new($mountpoint, $fs->{'root'});
+
+    #
+    # Associate the mountpoint and filesystem roots with this vnode.
+    #
+    $mountpoint->{'vnode'}      = $vnode;
+    $fs->{'root'}->{'vnode'}    = $vnode;
+
+    #
+    # Generate the mount record.
     #
     my $mount = {
         'mountpoint'    => $mountpoint,
@@ -79,7 +81,7 @@ sub mount {
         'dev'           => $fs,
         'type'          => $type,
         'path'          => $path,
-        'vnode'         => Filesys::POSIX::VFS::Inode->new($mountpoint, $fs->{'root'}),
+        'vnode'         => $vnode,
 
         'flags'         => {
             map {
@@ -96,6 +98,11 @@ sub mount {
     push @{$self->{'mounts'}}, $mount;
 
     #
+    # Associate the vnode with the mount rcord.
+    #
+    $self->{'vnodes'}->{$vnode} = $mount;
+
+    #
     # Finally, associate the filesystem with the mount record.
     #
     $self->{'devices'}->{$fs} = $mount;
@@ -104,54 +111,71 @@ sub mount {
 }
 
 sub vnode {
-    my ($self, $inode) = @_;
-    my $mount;
-    my $ret;
+    my ($self, $start) = @_;
+    my $inode = $start;
 
     return undef unless $inode;
 
-    if ($mount = $self->statfs($inode, 'exact' => 1, 'silent' => 1)) {
-        $ret = $mount->{'vnode'};
-    } else {
-        $ret = $inode;
-        $mount = $self->{'devices'}->{$inode->{'dev'}};
+    while ($inode->{'vnode'}) {
+        $inode = $inode->{'vnode'};
     }
 
+    my $mount = $self->{'devices'}->{$inode->{'dev'}};
+
     if ($mount->{'flags'}->{'noexec'}) {
-        $ret->{'mode'} &= ~$S_IX;
+        $inode->{'mode'} &= ~$S_IX;
     }
 
     if ($mount->{'flags'}->{'nosuid'}) {
-        $ret->{'mode'} &= ~$S_ISUID;
+        $inode->{'mode'} &= ~$S_ISUID;
     }
 
     foreach (qw/uid gid/) {
         if (defined $mount->{'flags'}->{$_}) {
-            $ret->{$_} = $mount->{'flags'} = $mount->{'flags'}->{$_};
+            $inode->{$_} = $mount->{'flags'} = $mount->{'flags'}->{$_};
         }
     }
 
-    return $ret;
+    return $inode;
 }
 
 sub unmount {
     my ($self, $object) = @_;
-    my $mount = exists $object->{'vnode'}? $object: $self->statfs($object, 'exact' => 1);
+    my $mount = $object->{'special'}? $object: $self->statfs($object, 'exact' => 1);
 
     #
     # First, check to see that the filesystem mount record found is a
     # dependency for another mounted filesystem.
     #
-    foreach (@$self) {
+    foreach (@{$self->{'mounts'}}) {
         next if $_ == $mount;
         die('Device or resource busy') if $_->{'mountpoint'}->{'dev'} == $mount->{'dev'};
     }
 
-    for (my $i=0; $self->[$i]; $i++) {
-        next unless $self->[$i] eq $mount;
-        splice @$self, $i;
+    #
+    # Pluck the filesystem from the mount list.
+    #
+    for (my $i=0; $self->{'mounts'}->[$i]; $i++) {
+        next unless $self->{'mounts'}->[$i] eq $mount;
+        splice @{$self->{'mounts'}}, $i;
         last;
     }
+
+    #
+    # Untie the vnode reference from its original mount point and root.
+    #
+    delete $mount->{'mountpoint'}->{'vnode'};
+    delete $mount->{'root'}->{'vnode'};
+
+    #
+    # Break references to the mount record from the per-vnode hash.
+    #
+    delete $self->{'vnodes'}->{$mount->{'vnode'}};
+
+    #
+    # Kill references to the mount record from the per-device hash.
+    #
+    delete $self->{'devices'}->{$mount->{'dev'}};
 
     return $self;
 }
