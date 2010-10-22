@@ -110,6 +110,19 @@ sub delete {
     delete $self->{'members'}->{$name};
 }
 
+sub unlink {
+    my ($self, $name) = @_;
+
+    if (exists $self->{'splices'}->{$name}) {
+        delete $self->{'splices'}->{$name};
+        return;
+    }
+
+    if (exists $self->{'members'}->{$name}) {
+        delete $self->{'splices'}->{$name};
+    }
+}
+
 sub list {
     my ($self, $name) = @_;
     $self->_sync_all;
