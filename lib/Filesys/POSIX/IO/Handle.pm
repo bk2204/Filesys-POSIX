@@ -15,18 +15,6 @@ sub flush {
     $|++;
 }
 
-sub print {
-    my ($self, @args) = @_;
-
-    return print {$$self} @args;
-}
-
-sub printf {
-    my ($self, @args) = @_;
-
-    return printf {$$self} @args;
-}
-
 sub write {
     my ($self, $buf, $len) = @_;
 
