@@ -9,7 +9,19 @@ use Filesys::POSIX::Real::Inode;
 use Filesys::POSIX::Real::Dirent;
 
 sub EXPORT {
-    qw/map alias/;
+    qw/attach map alias/;
+}
+
+sub attach {
+    my ($self, $node, $dest) = @_;
+    my $hier = Filesys::POSIX::Path->new($dest);
+    my $name = $hier->basename;
+    my $parent = $self->stat($hier->dirname);
+
+    die('Not a directory') unless ($parent->{'mode'} & $S_IFMT) == $S_IFDIR;
+    die('File exists') if $parent->{'dirent'}->exists($name);
+
+    $parent->{'dirent'}->set($name, $node);
 }
 
 sub map {
