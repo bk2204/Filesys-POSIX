@@ -38,6 +38,12 @@ sub count {
     return scalar keys %$self;
 }
 
+sub open {
+    my ($self) = @_;
+
+    $self->rewind;
+}
+
 sub rewind {
     my ($self) = @_;
 
