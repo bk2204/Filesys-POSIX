@@ -229,11 +229,34 @@ sub unlink {
     my $node = $self->lstat($hier->full);
     my $parent = $node->{'parent'};
 
+    use Carp;
     die('Is a directory') if ($node->{'mode'} & $S_IFMT) == $S_IFDIR;
     die('Not a directory') unless ($parent->{'mode'} & $S_IFMT) == $S_IFDIR;
-    die('No such file or directory') unless $parent->{'dirent'}->exists($name);
+    confess('No such file or directory') unless $parent->{'dirent'}->exists($name);
 
     $parent->{'dirent'}->delete($name);
+}
+
+sub rename {
+    my ($self, $old, $new) = @_;
+    my $hier = Filesys::POSIX::Path->new($new);
+    my $name = $hier->basename;
+    my $node = $self->lstat($old);
+    my $parent = $self->stat($hier->dirname);
+
+    die('Cross-device link') unless $node->{'dev'} eq $parent->{'dev'};
+    die('Not a directory') unless ($parent->{'mode'} & $S_IFMT) == $S_IFDIR;
+
+    if (my $existing = $parent->{'dirent'}->get($name)) {
+        if ($node->dir) {
+            die('Not a directory') unless $existing->dir;
+        } else {
+            die('Is a directory') if $existing->dir;
+        }
+    }
+
+    $self->unlink($old);
+    $parent->{'dirent'}->set($name, $node);
 }
 
 sub rmdir {
