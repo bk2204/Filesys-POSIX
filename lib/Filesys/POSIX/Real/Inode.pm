@@ -6,7 +6,10 @@ use warnings;
 use Fcntl;
 
 use Filesys::POSIX::Bits;
+use Filesys::POSIX::Inode;
 use Filesys::POSIX::IO::Handle;
+
+our @ISA = qw/Filesys::POSIX::Inode/;
 
 sub new {
     my ($class, $path, %opts) = @_;

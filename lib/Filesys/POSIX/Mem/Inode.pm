@@ -4,7 +4,10 @@ use strict;
 use warnings;
 
 use Filesys::POSIX::Bits;
+use Filesys::POSIX::Inode;
 use Filesys::POSIX::Mem::Bucket;
+
+our @ISA = qw/Filesys::POSIX::Inode/;
 
 sub new {
     my ($class, %opts) = @_;
