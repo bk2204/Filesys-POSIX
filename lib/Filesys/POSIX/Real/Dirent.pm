@@ -13,6 +13,8 @@ sub new {
         'path'      => $path,
         'node'      => $node,
         'mtime'     => 0,
+        'splices'   => {},
+        'skipped'   => {},
         'members'   => {
             '.'     => $node,
             '..'    => $node->{'parent'}? $node->{'parent'}: $node
@@ -62,23 +64,33 @@ sub _sync_member {
 
 sub get {
     my ($self, $name) = @_;
+    return $self->{'splices'}->{$name} if exists $self->{'splices'}->{$name};
+
     $self->_sync_member($name) unless exists $self->{'members'}->{$name};
     return $self->{'members'}->{$name};
 }
 
 sub set {
     my ($self, $name, $inode) = @_;
-    $self->{'members'}->{$name} = $inode;
+    $self->{'splices'}->{$name} = $inode;
 }
 
 sub exists {
     my ($self, $name) = @_;
+    return 1 if exists $self->{'splices'}->{$name};
+
     $self->_sync_member($name);
     return exists $self->{'members'}->{$name};
 }
 
 sub delete {
     my ($self, $name) = @_;
+
+    if (exists $self->{'splices'}->{$name}) {
+        delete $self->{'splices'}->{$name};
+        return;
+    }
+
     my $member = $self->{'members'}->{$name} or return;
     my $subpath = "$self->{'path'}/$name";
 
@@ -102,18 +114,22 @@ sub list {
     my ($self, $name) = @_;
     $self->_sync_all;
 
-    return keys %{$self->{'members'}};
+    my %union = (
+        %{$self->{'members'}},
+        %{$self->{'splices'}}
+    );
+
+    return keys %union;
 }
 
 sub count {
-    my ($self) = @_;
-    $self->_sync_all;
-
-    return scalar keys %{$self->{'members'}};
+    scalar(shift->list);
 }
 
 sub open {
     my ($self) = @_;
+
+    @{$self->{'skipped'}}{keys %{$self->{'splices'}}} = values %{$self->{'splices'}};
 
     $self->close;
     opendir($self->{'dh'}, $self->{'path'}) or die $!;
@@ -122,6 +138,8 @@ sub open {
 sub rewind {
     my ($self) = @_;
 
+    @{$self->{'skipped'}}{keys %{$self->{'splices'}}} = values %{$self->{'splices'}};
+
     if ($self->{'dh'}) {
         rewinddir $self->{'dh'};
     }
@@ -129,10 +147,19 @@ sub rewind {
 
 sub read {
     my ($self) = @_;
+    my $item;
 
     if ($self->{'dh'}) {
-        readdir $self->{'dh'};
+        $item = readdir $self->{'dh'};
     }
+
+    if ($item) {
+        delete $self->{'skipped'}->{$item};
+    } else {
+        $item = each %{$self->{'skipped'}};
+    }
+
+    return $item;
 }
 
 sub close {
