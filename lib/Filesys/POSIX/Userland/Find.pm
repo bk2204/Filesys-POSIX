@@ -25,11 +25,16 @@ sub find {
         $callback->($path, $node);
 
         if (($node->{'mode'} & $S_IFMT) == $S_IFDIR) {
-            push @paths, map {
-                Filesys::POSIX::Path->new($path->full . "/$_")
-            } grep {
-                $_ ne '.' && $_ ne '..'
-            } $node->{'dirent'}->list;
+            my $dirent = $node->{'dirent'};
+
+            $dirent->open;
+
+            while (my $item = $dirent->read) {
+                next if $item eq '.' || $item eq '..';
+                push @paths, Filesys::POSIX::Path->new($path->full . "/$item");
+            }
+
+            $dirent->close;
         }
     }
 }
