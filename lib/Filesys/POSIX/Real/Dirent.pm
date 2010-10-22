@@ -62,12 +62,13 @@ sub _sync_member {
 
 sub get {
     my ($self, $name) = @_;
-    $self->_sync_member($name);
+    $self->_sync_member($name) unless exists $self->{'members'}->{$name};
     return $self->{'members'}->{$name};
 }
 
 sub set {
-    return;
+    my ($self, $name, $inode) = @_;
+    $self->{'members'}->{$name} = $inode;
 }
 
 sub exists {
