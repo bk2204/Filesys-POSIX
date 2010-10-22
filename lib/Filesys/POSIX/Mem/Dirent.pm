@@ -23,15 +23,6 @@ sub exists {
     return exists $self->{$name};
 }
 
-sub rename {
-    my ($self, $old, $new) = @_;
-
-    if (exists $self->{$old}) {
-        $self->{$new} = $self->{$old};
-        delete $self->{$old};
-    }
-}
-
 sub delete {
     my ($self, $name) = @_;
     delete $self->{$name};
