@@ -109,7 +109,8 @@ sub _find_inode {
         } elsif ($item eq '.') {
             $node = $dir;
         } else {
-            $node = $self->{'vfs'}->vnode($dir->{'dirent'}->get($item)) or die('No such file or directory');
+            use Carp;
+            $node = $self->{'vfs'}->vnode($dir->{'dirent'}->get($item)) or confess('No such file or directory');
         }
 
         if (($node->{'mode'} & $S_IFMT) == $S_IFLNK) {
@@ -195,8 +196,8 @@ sub link {
     my ($self, $src, $dest) = @_;
     my $hier = Filesys::POSIX::Path->new($dest);
     my $name = $hier->basename;
-    my $node = $self->lstat($src);
-    my $parent = $node->{'parent'};
+    my $node = $self->stat($src);
+    my $parent = $self->stat($hier->dirname);
 
     die('Cross-device link') unless $node->{'dev'} == $parent->{'dev'};
     die('Is a directory') if ($node->{'mode'} & $S_IFMT) == $S_IFDIR;
