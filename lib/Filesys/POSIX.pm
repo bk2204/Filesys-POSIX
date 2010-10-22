@@ -109,8 +109,7 @@ sub _find_inode {
         } elsif ($item eq '.') {
             $node = $dir;
         } else {
-            use Carp;
-            $node = $self->{'vfs'}->vnode($dir->{'dirent'}->get($item)) or confess('No such file or directory');
+            $node = $self->{'vfs'}->vnode($dir->{'dirent'}->get($item)) or die('No such file or directory');
         }
 
         if (($node->{'mode'} & $S_IFMT) == $S_IFLNK) {
