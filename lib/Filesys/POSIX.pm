@@ -207,6 +207,20 @@ sub link {
     $parent->{'dirent'}->set($name, $node);
 }
 
+sub alias {
+    my ($self, $src, $dest) = @_;
+    my $hier = Filesys::POSIX::Path->new($dest);
+    my $name = $hier->basename;
+    my $node = $self->stat($src);
+    my $parent = $self->stat($hier->dirname);
+
+    die('Is a directory') if ($node->{'mode'} & $S_IFMT) == $S_IFDIR;
+    die('Not a directory') unless ($parent->{'mode'} & $S_IFMT) == $S_IFDIR;
+    die('File exists') if $parent->{'dirent'}->exists($name);
+
+    $parent->{'dirent'}->set($name, $node);
+}
+
 sub symlink {
     my ($self, $src, $dest) = @_;
     my $perms = $S_IPERM ^ $self->{'umask'};
