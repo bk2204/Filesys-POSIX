@@ -243,6 +243,7 @@ sub rename {
     my $node = $self->lstat($old);
     my $parent = $self->stat($hier->dirname);
 
+    die('Operation not permitted') if ref $node eq 'Filesys::POSIX::Real::Inode';
     die('Cross-device link') unless $node->{'dev'} eq $parent->{'dev'};
     die('Not a directory') unless ($parent->{'mode'} & $S_IFMT) == $S_IFDIR;
 
