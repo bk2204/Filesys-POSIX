@@ -42,9 +42,9 @@ sub _sync_all {
 sub _sync_member {
     my ($self, $name) = @_;
     my $subpath = "$self->{'path'}/$name";
-    my @st = lstat "$self->{'path'}/$name";
+    my @st = lstat $subpath;
 
-    if ($!{'ENOENT'}) {
+    if (scalar @st == 0 && $!{'ENOENT'}) {
         delete $self->{'members'}->{$name};
         return;
     }
