@@ -8,12 +8,14 @@ use Filesys::POSIX::Path;
 use Filesys::POSIX::Real::Inode;
 use Filesys::POSIX::Real::Dirent;
 
+use Carp;
+
 sub EXPORT {
     qw/attach map alias/;
 }
 
 sub attach {
-    my ($self, $node, $dest) = @_;
+    my ($self, $inode, $dest) = @_;
     my $hier = Filesys::POSIX::Path->new($dest);
     my $name = $hier->basename;
     my $parent = $self->stat($hier->dirname);
@@ -22,10 +24,10 @@ sub attach {
         $self->stat($dest);
     };
 
-    die('File exists') unless $@;
-    die('Not a directory') unless ($parent->{'mode'} & $S_IFMT) == $S_IFDIR;
+    confess('File exists') unless $@;
+    confess('Not a directory') unless ($parent->{'mode'} & $S_IFMT) == $S_IFDIR;
 
-    $parent->{'dirent'}->set($name, $node);
+    $parent->{'dirent'}->set($name, $inode);
 }
 
 sub map {
@@ -38,34 +40,34 @@ sub map {
         $self->stat($dest);
     };
 
-    die('File exists') unless $@;
-    die('Not a directory') unless ($parent->{'mode'} & $S_IFMT) == $S_IFDIR;
+    confess('File exists') unless $@;
+    confess('Not a directory') unless ($parent->{'mode'} & $S_IFMT) == $S_IFDIR;
 
-    my $node = Filesys::POSIX::Real::Inode->new($real_src,
+    my $inode = Filesys::POSIX::Real::Inode->new($real_src,
         'dev'       => $parent->{'dev'},
         'parent'    => $parent
     );
 
-    $parent->{'dirent'}->set($name, $node);
+    $parent->{'dirent'}->set($name, $inode);
 }
 
 sub alias {
     my ($self, $src, $dest) = @_;
     my $hier = Filesys::POSIX::Path->new($dest);
     my $name = $hier->basename;
-    my $node = $self->stat($src);
+    my $inode = $self->stat($src);
     my $parent = $self->stat($hier->dirname);
 
     eval {
         $self->stat($dest);
     };
 
-    die('File exists') unless $@;
-    die('Device or resource busy') if $self->stat($dest) eq $parent;
-    die('Is a directory') if ($node->{'mode'} & $S_IFMT) == $S_IFDIR;
-    die('Not a directory') unless ($parent->{'mode'} & $S_IFMT) == $S_IFDIR;
+    confess('File exists') unless $@;
+    confess('Device or resource busy') if $self->stat($dest) eq $parent;
+    confess('Is a directory') if ($inode->{'mode'} & $S_IFMT) == $S_IFDIR;
+    confess('Not a directory') unless ($parent->{'mode'} & $S_IFMT) == $S_IFDIR;
 
-    $parent->{'dirent'}->set($name, $node);
+    $parent->{'dirent'}->set($name, $inode);
 }
 
 1;

@@ -12,12 +12,14 @@ use Filesys::POSIX::VFS;
 use Filesys::POSIX::IO;
 use Filesys::POSIX::Userland;
 
+use Carp;
+
 our $AUTOLOAD;
 
 sub new {
     my ($class, $rootfs, %opts) = @_;
 
-    die('No root filesystem specified') unless $rootfs;
+    confess('No root filesystem specified') unless $rootfs;
 
     $rootfs->init(%opts);
 
@@ -42,7 +44,7 @@ sub AUTOLOAD {
     my $module = $self->{'methods'}->{$method};
 
     return if $method eq 'DESTROY';
-    die("No module imported for method '". __PACKAGE__ ."::$method()") unless $module;
+    confess("No module imported for method '". __PACKAGE__ ."::$method()") unless $module;
 
     no strict 'refs';
 
@@ -53,13 +55,13 @@ sub import_module {
     my ($self, $module, @args) = @_;
 
     eval "use $module";
-    die $@ if $@;
+    confess $@ if $@;
 
     no strict 'refs';
 
     foreach (*{"$module\::EXPORT"}->()) {
         if (my $imported = $self->{'methods'}->{$_}) {
-            die("Module $imported already imported method $_") unless $module eq $imported;
+            confess("Module $imported already imported method $_") unless $module eq $imported;
         }
 
         $self->{'methods'}->{$_} = $module;
@@ -77,7 +79,7 @@ sub _find_inode {
     my ($self, $path, %opts) = @_;
     my $hier = Filesys::POSIX::Path->new($path);
     my $dir = $self->{'cwd'};
-    my $node;
+    my $inode;
 
     return $self->{'root'} if $hier->full eq '/';
 
@@ -98,30 +100,30 @@ sub _find_inode {
         #
         $dir = $self->{'vfs'}->vnode($dir);
 
-        die('Not a directory') unless ($dir->{'mode'} & $S_IFMT) == $S_IFDIR;
+        confess('Not a directory') unless ($dir->{'mode'} & $S_IFMT) == $S_IFDIR;
 
         unless ($dir->{'dev'}->{'flags'}->{'noatime'}) {
             $dir->{'atime'} = time;
         }
 
         if ($item eq '..') {
-            $node = $dir->{'parent'}? $dir->{'parent'}: $dir;
+            $inode = $dir->{'parent'}? $dir->{'parent'}: $dir;
         } elsif ($item eq '.') {
-            $node = $dir;
+            $inode = $dir;
         } else {
-            $node = $self->{'vfs'}->vnode($dir->{'dirent'}->get($item)) or die('No such file or directory');
+            $inode = $self->{'vfs'}->vnode($dir->{'dirent'}->get($item)) or confess('No such file or directory');
         }
 
-        if (($node->{'mode'} & $S_IFMT) == $S_IFLNK) {
-            $hier = $hier->concat($node->readlink) if $opts{'resolve_symlinks'} || $hier->count;
+        if (($inode->{'mode'} & $S_IFMT) == $S_IFLNK) {
+            $hier = $hier->concat($inode->readlink) if $opts{'resolve_symlinks'} || $hier->count;
         } else {
-            $dir = $node;
+            $dir = $inode;
         }
     }
 
-    die('No such file or directory') unless $node;
+    confess('No such file or directory') unless $inode;
 
-    return $node;
+    return $inode;
 }
 
 sub stat {
@@ -195,15 +197,15 @@ sub link {
     my ($self, $src, $dest) = @_;
     my $hier = Filesys::POSIX::Path->new($dest);
     my $name = $hier->basename;
-    my $node = $self->stat($src);
+    my $inode = $self->stat($src);
     my $parent = $self->stat($hier->dirname);
 
-    die('Cross-device link') unless $node->{'dev'} == $parent->{'dev'};
-    die('Is a directory') if ($node->{'mode'} & $S_IFMT) == $S_IFDIR;
-    die('Not a directory') unless ($parent->{'mode'} & $S_IFMT) == $S_IFDIR;
-    die('File exists') if $parent->{'dirent'}->exists($name);
+    confess('Cross-device link') unless $inode->{'dev'} == $parent->{'dev'};
+    confess('Is a directory') if ($inode->{'mode'} & $S_IFMT) == $S_IFDIR;
+    confess('Not a directory') unless ($parent->{'mode'} & $S_IFMT) == $S_IFDIR;
+    confess('File exists') if $parent->{'dirent'}->exists($name);
 
-    $parent->{'dirent'}->set($name, $node);
+    $parent->{'dirent'}->set($name, $inode);
 }
 
 sub symlink {
@@ -226,12 +228,12 @@ sub unlink {
     my ($self, $path) = @_;
     my $hier = Filesys::POSIX::Path->new($path);
     my $name = $hier->basename;
-    my $node = $self->lstat($hier->full);
-    my $parent = $node->{'parent'};
+    my $inode = $self->lstat($hier->full);
+    my $parent = $inode->{'parent'};
 
-    die('Is a directory') if ($node->{'mode'} & $S_IFMT) == $S_IFDIR;
-    die('Not a directory') unless ($parent->{'mode'} & $S_IFMT) == $S_IFDIR;
-    die('No such file or directory') unless $parent->{'dirent'}->exists($name);
+    confess('Is a directory') if ($inode->{'mode'} & $S_IFMT) == $S_IFDIR;
+    confess('Not a directory') unless ($parent->{'mode'} & $S_IFMT) == $S_IFDIR;
+    confess('No such file or directory') unless $parent->{'dirent'}->exists($name);
 
     $parent->{'dirent'}->delete($name);
 }
@@ -240,36 +242,36 @@ sub rename {
     my ($self, $old, $new) = @_;
     my $hier = Filesys::POSIX::Path->new($new);
     my $name = $hier->basename;
-    my $node = $self->lstat($old);
+    my $inode = $self->lstat($old);
     my $parent = $self->stat($hier->dirname);
 
-    die('Operation not permitted') if ref $node eq 'Filesys::POSIX::Real::Inode';
-    die('Cross-device link') unless $node->{'dev'} eq $parent->{'dev'};
-    die('Not a directory') unless ($parent->{'mode'} & $S_IFMT) == $S_IFDIR;
+    confess('Operation not permitted') if ref $inode eq 'Filesys::POSIX::Real::Inode';
+    confess('Cross-device link') unless $inode->{'dev'} eq $parent->{'dev'};
+    confess('Not a directory') unless ($parent->{'mode'} & $S_IFMT) == $S_IFDIR;
 
     if (my $existing = $parent->{'dirent'}->get($name)) {
-        if ($node->dir) {
-            die('Not a directory') unless $existing->dir;
+        if ($inode->dir) {
+            confess('Not a directory') unless $existing->dir;
         } else {
-            die('Is a directory') if $existing->dir;
+            confess('Is a directory') if $existing->dir;
         }
     }
 
     $self->unlink($old);
-    $parent->{'dirent'}->set($name, $node);
+    $parent->{'dirent'}->set($name, $inode);
 }
 
 sub rmdir {
     my ($self, $path) = @_;
     my $hier = Filesys::POSIX::Path->new($path);
     my $name = $hier->basename;
-    my $node = $self->lstat($hier->full);
-    my $parent = $node->{'parent'};
+    my $inode = $self->lstat($hier->full);
+    my $parent = $inode->{'parent'};
 
-    die('Not a directory') unless ($node->{'mode'} & $S_IFMT) == $S_IFDIR;
-    die('Device or resource busy') if $node == $parent;
-    die('Directory not empty') unless $node->{'dirent'}->count == 2;
-    die('No such file or directory') unless $parent->{'dirent'}->exists($name);
+    confess('Not a directory') unless ($inode->{'mode'} & $S_IFMT) == $S_IFDIR;
+    confess('Device or resource busy') if $inode == $parent;
+    confess('Directory not empty') unless $inode->{'dirent'}->count == 2;
+    confess('No such file or directory') unless $parent->{'dirent'}->exists($name);
 
     $parent->{'dirent'}->delete($name);
 }

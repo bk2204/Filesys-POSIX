@@ -6,6 +6,8 @@ use warnings;
 use Filesys::POSIX::Path;
 use Filesys::POSIX::Bits;
 
+use Carp;
+
 my $BLOCK_SIZE = 512;
 
 my %TYPES = (
@@ -25,7 +27,7 @@ sub _split_filename {
     my ($filename) = @_;
 
     if (length $filename > 255) {
-        die('Filename too long');
+        confess('Filename too long');
     } elsif (length $filename > 100) {
         return (
             'prefix' => substr($filename, 0, 155),
@@ -127,7 +129,7 @@ sub _write_file {
             $buf .= "\x0" x $padlen;
         }
 
-        $handle->write($buf, $len) == $len or die('Short write while dumping file buffer to handle');
+        $handle->write($buf, $len) == $len or confess('Short write while dumping file buffer to handle');
     }
 
     $inode->close;
@@ -142,7 +144,7 @@ sub _archive {
     }
 
     my $header = _header($inode, $dest);
-    $handle->write($header, 512) == 512 or die('Short write while dumping tar header to file handle');
+    $handle->write($header, 512) == 512 or confess('Short write while dumping tar header to file handle');
 
     _write_file($fs, $handle, $dest, $inode) if $format == $S_IFREG;
 }

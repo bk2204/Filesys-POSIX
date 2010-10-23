@@ -7,6 +7,8 @@ use Filesys::POSIX::Bits;
 use Filesys::POSIX::Inode;
 use Filesys::POSIX::Mem::Bucket;
 
+use Carp;
+
 our @ISA = qw/Filesys::POSIX::Inode/;
 
 sub new {
@@ -45,9 +47,9 @@ sub DESTROY {
 sub child {
     my ($self, $name, $mode) = @_;
 
-    die('Not a directory') unless ($self->{'mode'} & $S_IFMT) == $S_IFDIR;
-    die('Invalid directory entry name') if $name =~ /\//;
-    die('File exists') if $self->{'dirent'}->exists($name);
+    confess('Not a directory') unless ($self->{'mode'} & $S_IFMT) == $S_IFDIR;
+    confess('Invalid directory entry name') if $name =~ /\//;
+    confess('File exists') if $self->{'dirent'}->exists($name);
 
     my $child = __PACKAGE__->new(
         'mode'      => $mode,
@@ -76,7 +78,7 @@ sub chmod {
 sub readlink {
     my ($self) = @_;
 
-    die('Not a symlink') unless ($self->{'mode'} & $S_IFMT) == $S_IFLNK;
+    confess('Not a symlink') unless ($self->{'mode'} & $S_IFMT) == $S_IFLNK;
 
     return $self->{'dest'};
 }

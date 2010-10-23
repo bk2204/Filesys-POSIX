@@ -4,8 +4,9 @@ use strict;
 use warnings;
 
 use Filesys::POSIX::Bits;
-
 use File::Temp qw/mkstemp/;
+
+use Carp;
 
 my $DEFAULT_MAX = 16384;
 my $DEFAULT_DIR = '/tmp';
@@ -41,10 +42,10 @@ sub open {
 
     $self->{'flags'} = $flags? $flags: $O_RDONLY;
 
-    die('Already opened') if $self->{'fh'};
+    confess('Already opened') if $self->{'fh'};
 
     if (exists $self->{'file'}) {
-        sysopen(my $fh, $self->{'file'}, $O_RDWR) or die("Unable to reopen bucket $self->{'file'}: $!");
+        sysopen(my $fh, $self->{'file'}, $O_RDWR) or confess("Unable to reopen bucket $self->{'file'}: $!");
 
         $self->{'fh'} = $fh;
     }
@@ -55,9 +56,9 @@ sub open {
 sub _flush_to_disk {
     my ($self, $len) = @_;
 
-    die('Already flushed to disk') if $self->{'file'};
+    confess('Already flushed to disk') if $self->{'file'};
 
-    my ($fh, $file) = mkstemp("$self->{'dir'}/.bucket-XXXXXX") or die("Unable to create disk bucket file: $!");
+    my ($fh, $file) = mkstemp("$self->{'dir'}/.bucket-XXXXXX") or confess("Unable to create disk bucket file: $!");
     my $offset = 0;
 
     for (my $left = $self->{'size'}; $left > 0; $left -= $len) {
@@ -82,7 +83,7 @@ sub write {
     }
 
     if ($self->{'fh'}) {
-        $ret = syswrite($self->{'fh'}, $buf) or die("Unable to write to disk bucket: $!");
+        $ret = syswrite($self->{'fh'}, $buf) or confess("Unable to write to disk bucket: $!");
     } else {
         $self->{'buf'} .= substr($buf, 0, $len);
         $ret = $len;
@@ -106,7 +107,7 @@ sub read {
 
     if ($self->{'fh'}) {
         $ret = sysread($self->{'fh'}, $_[0], $len);
-        die("Unable to read bucket: $!") if $ret == 0 && $!;
+        confess("Unable to read bucket: $!") if $ret == 0 && $!;
     } else {
         my $maxlen = $self->{'size'} - $self->{'pos'};
         $len = $maxlen if $len > $maxlen;
@@ -128,7 +129,7 @@ sub seek {
     } elsif ($whence == $SEEK_CUR) {
         $self->{'pos'} += $pos;
     } elsif ($whence == $SEEK_END) {
-        die('Invalid position') if $self->{'pos'} - $pos < 0;
+        confess('Invalid position') if $self->{'pos'} - $pos < 0;
         $self->{'pos'} -= $pos;
     }
 

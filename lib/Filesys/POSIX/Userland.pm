@@ -4,23 +4,24 @@ use strict;
 use warnings;
 
 use Filesys::POSIX::Bits;
+use Carp;
 
 sub _find_inode_path {
     my ($self, $start) = @_;
-    my $node = $self->{'vfs'}->vnode($start);
+    my $inode = $self->{'vfs'}->vnode($start);
     my @ret;
 
-    while (my $dir = $self->{'vfs'}->vnode($node->{'parent'})) {
-        last if $dir eq $node;
+    while (my $dir = $self->{'vfs'}->vnode($inode->{'parent'})) {
+        last if $dir eq $inode;
 
-        die('Not a directory') unless ($dir->{'mode'} & $S_IFMT) == $S_IFDIR;
+        confess('Not a directory') unless ($dir->{'mode'} & $S_IFMT) == $S_IFDIR;
 
         dirent: foreach ($dir->{'dirent'}->list) {
             next if $_ eq '.' || $_ eq '..';
-            next dirent unless $self->{'vfs'}->vnode($dir->{'dirent'}->get($_)) == $self->{'vfs'}->vnode($node);
+            next dirent unless $self->{'vfs'}->vnode($dir->{'dirent'}->get($_)) == $self->{'vfs'}->vnode($inode);
 
             push @ret, $_;
-            $node = $dir;
+            $inode = $dir;
         }
     }
 
@@ -35,9 +36,9 @@ sub getcwd {
 
 sub realpath {
     my ($self, $path) = @_;
-    my $node = $self->stat($path);
+    my $inode = $self->stat($path);
 
-    return $self->_find_inode_path($node);
+    return $self->_find_inode_path($inode);
 }
 
 sub mount {
@@ -59,32 +60,32 @@ sub unmount {
     # First, check for open file descriptors held on the desired device.
     #
     foreach ($self->{'fds'}->list) {
-        my $node = $self->{'fds'}->fetch($_);
+        my $inode = $self->{'fds'}->fetch($_);
 
-        die('Device or resource busy') if $mount->{'dev'} eq $node->{'dev'};
+        confess('Device or resource busy') if $mount->{'dev'} eq $inode->{'dev'};
     }
 
     #
     # Next, check to see if the current working directory's device inode
     # is the same device as the one being requested for unmounting.
     #
-    die('Device or resource busy') if $mount->{'dev'} eq $self->{'cwd'}->{'dev'};
+    confess('Device or resource busy') if $mount->{'dev'} eq $self->{'cwd'}->{'dev'};
 
     $self->{'vfs'}->unmount($mount);
 }
 
 sub statfs {
     my ($self, $path) = @_;
-    my $node = $self->stat($path);
+    my $inode = $self->stat($path);
 
-    return $self->{'vfs'}->statfs($node);
+    return $self->{'vfs'}->statfs($inode);
 }
 
 sub fstatfs {
     my ($self, $fd) = @_;
-    my $node = $self->fstat($fd);
+    my $inode = $self->fstat($fd);
 
-    return $self->{'vfs'}->statfs($node);
+    return $self->{'vfs'}->statfs($inode);
 }
 
 sub mountlist {

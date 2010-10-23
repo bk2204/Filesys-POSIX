@@ -6,25 +6,27 @@ use warnings;
 use Filesys::POSIX::Bits;
 use Errno qw/ENOENT/;
 
+use Carp;
+
 sub new {
-    my ($class, $path, $node) = @_;
+    my ($class, $path, $inode) = @_;
 
     return bless {
         'path'      => $path,
-        'node'      => $node,
+        'node'      => $inode,
         'mtime'     => 0,
         'splices'   => {},
         'skipped'   => {},
         'members'   => {
-            '.'     => $node,
-            '..'    => $node->{'parent'}? $node->{'parent'}: $node
+            '.'     => $inode,
+            '..'    => $inode->{'parent'}? $inode->{'parent'}: $inode
         }
     }, $class;
 }
 
 sub _sync_all {
     my ($self) = @_;
-    my $mtime = (lstat $self->{'path'})[9] or die $!;
+    my $mtime = (lstat $self->{'path'})[9] or confess $!;
 
     return unless $mtime > $self->{'mtime'};
 
@@ -49,7 +51,7 @@ sub _sync_member {
         return;
     }
 
-    die $! unless @st;
+    confess $! unless @st;
 
     if (exists $self->{'members'}->{$name}) {
         $self->{'members'}->{$name}->_load_st_info(@st);
@@ -101,7 +103,7 @@ sub delete {
     }
 
     if ($!) {
-        die $! unless $!{'ENOENT'};
+        confess $! unless $!{'ENOENT'};
     }
 
     my $now = time;
@@ -145,7 +147,7 @@ sub open {
     @{$self->{'skipped'}}{keys %{$self->{'splices'}}} = values %{$self->{'splices'}};
 
     $self->close;
-    opendir($self->{'dh'}, $self->{'path'}) or die $!;
+    opendir($self->{'dh'}, $self->{'path'}) or confess($!);
 }
 
 sub rewind {

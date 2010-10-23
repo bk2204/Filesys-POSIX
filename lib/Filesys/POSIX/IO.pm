@@ -7,6 +7,8 @@ use Filesys::POSIX::Bits;
 use Filesys::POSIX::FdTable;
 use Filesys::POSIX::Path;
 
+use Carp;
+
 sub open {
     my ($self, $path, $flags, $mode) = @_;
     my $hier = Filesys::POSIX::Path->new($path);
@@ -18,8 +20,8 @@ sub open {
         my $format = $mode? $mode & $S_IFMT: $S_IFREG;
         my $perms = $mode? $mode & $S_IPERM: $S_IRW ^ $self->{'umask'};
 
-        die('Not a directory') unless ($parent->{'mode'} & $S_IFMT) == $S_IFDIR;
-        die('File exists') if $parent->{'dirent'}->exists($name);
+        confess('Not a directory') unless ($parent->{'mode'} & $S_IFMT) == $S_IFDIR;
+        confess('File exists') if $parent->{'dirent'}->exists($name);
 
         if ($format == $S_IFDIR) {
             $perms |= $S_IX ^ $self->{'umask'} unless $perms;
@@ -38,7 +40,7 @@ sub read {
     my $fd = shift;
     my $entry = $self->{'fds'}->lookup($fd);
 
-    die('Invalid argument') if $entry->{'flags'} & $O_WRONLY;
+    confess('Invalid argument') if $entry->{'flags'} & $O_WRONLY;
 
     return $entry->{'handle'}->read(@_);
 }
@@ -47,7 +49,7 @@ sub write {
     my ($self, $fd, $buf, $len) = @_;
     my $entry = $self->{'fds'}->lookup($fd);
 
-    die('Invalid argument') unless $entry->{'flags'} & ($O_WRONLY | $O_RDWR);
+    confess('Invalid argument') unless $entry->{'flags'} & ($O_WRONLY | $O_RDWR);
 
     return $entry->{'handle'}->write($buf, $len);
 }
@@ -56,7 +58,7 @@ sub print {
     my ($self, $fd, @args) = @_;
     my $entry = $self->{'fds'}->lookup($fd);
 
-    die('Invalid argument') unless $entry->{'flags'} & ($O_WRONLY | $O_RDWR);
+    confess('Invalid argument') unless $entry->{'flags'} & ($O_WRONLY | $O_RDWR);
 
     my $buf = join($\, @args);
 
@@ -67,7 +69,7 @@ sub printf {
     my ($self, $fd, $format, @args) = @_;
     my $entry = $self->{'fds'}->lookup($fd);
 
-    die('Invalid argument') unless $entry->{'flags'} & ($O_WRONLY | $O_RDWR);
+    confess('Invalid argument') unless $entry->{'flags'} & ($O_WRONLY | $O_RDWR);
 
     my $buf = sprintf($format, @args);
 

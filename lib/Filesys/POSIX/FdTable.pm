@@ -3,6 +3,8 @@ package Filesys::POSIX::FdTable;
 use strict;
 use warnings;
 
+use Carp;
+
 sub new {
     return bless {}, shift;
 }
@@ -11,7 +13,7 @@ sub open {
     my ($self, $inode, $flags) = @_;
     my $fd = 3;
 
-    my $handle = $inode->open($flags) or die('Unable to open device-specific file handle');
+    my $handle = $inode->open($flags) or confess('Unable to open device-specific file handle');
 
     foreach (sort { $a <=> $b } keys %$self) {
         next if $self->{$fd = $_ + 1};
@@ -29,7 +31,7 @@ sub open {
 
 sub lookup {
     my ($self, $fd) = @_;
-    my $entry = $self->{$fd} or die('Invalid file descriptor');
+    my $entry = $self->{$fd} or confess('Invalid file descriptor');
 
     return $entry;
 }

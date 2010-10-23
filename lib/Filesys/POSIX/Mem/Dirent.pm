@@ -14,8 +14,8 @@ sub get {
 }
 
 sub set {
-    my ($self, $name, $node) = @_;
-    $self->{$name} = $node;
+    my ($self, $name, $inode) = @_;
+    $self->{$name} = $inode;
 }
 
 sub exists {

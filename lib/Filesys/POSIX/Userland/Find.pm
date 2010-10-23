@@ -19,17 +19,17 @@ sub find {
     my @paths = map { Filesys::POSIX::Path->new($_) } @args;
     my @nodes = map { $self->stat($_) } @args;
 
-    while (my $node = pop @nodes) {
+    while (my $inode = pop @nodes) {
         my $path = pop @paths;
 
-        if (($node->{'mode'} & $S_IFMT) == $S_IFLNK) {
-            $node = $self->stat($node->readlink) if $opts{'follow'};
+        if (($inode->{'mode'} & $S_IFMT) == $S_IFLNK) {
+            $inode = $self->stat($inode->readlink) if $opts{'follow'};
         }
 
-        $callback->($path, $node);
+        $callback->($path, $inode);
 
-        if (($node->{'mode'} & $S_IFMT) == $S_IFDIR) {
-            my $dirent = $node->{'dirent'};
+        if (($inode->{'mode'} & $S_IFMT) == $S_IFDIR) {
+            my $dirent = $inode->{'dirent'};
 
             $dirent->open;
 

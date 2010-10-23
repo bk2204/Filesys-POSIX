@@ -9,11 +9,13 @@ use Filesys::POSIX::Bits;
 use Filesys::POSIX::Inode;
 use Filesys::POSIX::IO::Handle;
 
+use Carp;
+
 our @ISA = qw/Filesys::POSIX::Inode/;
 
 sub new {
     my ($class, $path, %opts) = @_;
-    my @st = $opts{'st_info'}? @{$opts{'st_info'}}: lstat $path or die $!;
+    my @st = $opts{'st_info'}? @{$opts{'st_info'}}: lstat $path or confess $!;
 
     my $inode = bless {
         'path'      => $path,
@@ -45,17 +47,17 @@ sub _load_st_info {
 sub child {
     my ($self, $name, $mode) = @_;
 
-    die('Not a directory') unless ($self->{'mode'} & $S_IFMT) == $S_IFDIR;
-    die('Invalid directory entry name') if $name =~ /\//;
-    die('File exists') if $self->{'dirent'}->exists($name);
+    confess('Not a directory') unless ($self->{'mode'} & $S_IFMT) == $S_IFDIR;
+    confess('Invalid directory entry name') if $name =~ /\//;
+    confess('File exists') if $self->{'dirent'}->exists($name);
 
     my $path = "$self->{'path'}/$name";
     my $child;
 
     if (($mode & $S_IFMT) == $S_IFDIR) {
-        mkdir($path, $mode) or die $!;
+        mkdir($path, $mode) or confess $!;
     } else {
-        sysopen(my $fh, $path, O_CREAT | O_TRUNC | O_WRONLY, $mode) or die $!;
+        sysopen(my $fh, $path, O_CREAT | O_TRUNC | O_WRONLY, $mode) or confess $!;
         close($fh);
     }
 
@@ -68,7 +70,7 @@ sub child {
 sub open {
     my ($self, $flags) = @_;
 
-    sysopen(my $fh, $self->{'path'}, $flags) or die $!;
+    sysopen(my $fh, $self->{'path'}, $flags) or confess $!;
 
     return $self->{'handle'} = Filesys::POSIX::IO::Handle->new($fh);
 }
@@ -96,7 +98,7 @@ sub chmod {
 
 sub readlink {
     my ($self) = @_;
-    die('Not a symlink') unless ($self->{'mode'} & $S_IFMT) == $S_IFLNK;
+    confess('Not a symlink') unless ($self->{'mode'} & $S_IFMT) == $S_IFLNK;
 
     return CORE::readlink($self->{'path'});
 }

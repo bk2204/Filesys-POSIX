@@ -7,6 +7,8 @@ use Filesys::POSIX::Bits;
 use Filesys::POSIX::Path;
 use Filesys::POSIX::VFS::Inode;
 
+use Carp;
+
 sub new {
     return bless {
         'mounts'    => [],
@@ -29,7 +31,7 @@ sub statfs {
         return $self->{'devices'}->{$inode->{'dev'}};
     }
 
-    die('Not mounted') unless $opts{'silent'};
+    confess('Not mounted') unless $opts{'silent'};
 }
 
 sub mountlist {
@@ -48,7 +50,7 @@ sub mount {
     my ($self, $fs, $path, $mountpoint, %data) = @_;
 
     if (grep { $_->{'dev'} eq $fs } @{$self->{'mounts'}}) {
-        die('Already mounted');
+        confess('Already mounted');
     }
 
     $data{'special'} ||= scalar $fs;
@@ -149,7 +151,7 @@ sub unmount {
     #
     foreach (@{$self->{'mounts'}}) {
         next if $_ == $mount;
-        die('Device or resource busy') if $_->{'mountpoint'}->{'dev'} == $mount->{'dev'};
+        confess('Device or resource busy') if $_->{'mountpoint'}->{'dev'} == $mount->{'dev'};
     }
 
     #
