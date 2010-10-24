@@ -63,7 +63,6 @@ sub alias {
     };
 
     confess('File exists') unless $@;
-    confess('Device or resource busy') if $self->stat($dest) eq $parent;
     confess('Is a directory') if ($inode->{'mode'} & $S_IFMT) == $S_IFDIR;
     confess('Not a directory') unless ($parent->{'mode'} & $S_IFMT) == $S_IFDIR;
 
