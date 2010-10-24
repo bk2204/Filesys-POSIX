@@ -4,6 +4,8 @@ use strict;
 use warnings;
 
 use Filesys::POSIX::Bits;
+use Filesys::POSIX::Path;
+
 use Carp;
 
 sub _find_inode_path {
@@ -26,6 +28,28 @@ sub _find_inode_path {
     }
 
     return '/' . join('/', reverse @ret);
+}
+
+sub mkpath {
+    my ($self, $path, $mode) = @_;
+    my $perm = $mode? $mode & ($S_IPERM | $S_IPROT): $S_IPERM ^ $self->{'umask'};
+    my $hier = Filesys::POSIX::Path->new($path);
+    my $dir = $self->{'cwd'};
+
+    while (my $item = $hier->shift) {
+        unless ($item) {
+            $dir = $self->{'root'};
+        }
+
+        my $node = $self->{'vfs'}->vnode($dir->{'dirent'}->get($item));
+
+        if ($node) {
+            die('Not a directory') unless ($node->{'mode'} & $S_IFMT) == $S_IFDIR;
+            $dir = $node;
+        } else {
+            $dir = $dir->child($item, $perm | $S_IFDIR);
+        }
+    }
 }
 
 sub getcwd {
