@@ -15,7 +15,7 @@ sub new {
         'path'      => $path,
         'node'      => $inode,
         'mtime'     => 0,
-        'splices'   => {},
+        'overlays'  => {},
         'skipped'   => {},
         'members'   => {
             '.'     => $inode,
@@ -66,7 +66,7 @@ sub _sync_member {
 
 sub get {
     my ($self, $name) = @_;
-    return $self->{'splices'}->{$name} if exists $self->{'splices'}->{$name};
+    return $self->{'overlays'}->{$name} if exists $self->{'overlays'}->{$name};
 
     $self->_sync_member($name) unless exists $self->{'members'}->{$name};
     return $self->{'members'}->{$name};
@@ -74,12 +74,12 @@ sub get {
 
 sub set {
     my ($self, $name, $inode) = @_;
-    $self->{'splices'}->{$name} = $inode;
+    $self->{'overlays'}->{$name} = $inode;
 }
 
 sub exists {
     my ($self, $name) = @_;
-    return 1 if exists $self->{'splices'}->{$name};
+    return 1 if exists $self->{'overlays'}->{$name};
 
     $self->_sync_member($name);
     return exists $self->{'members'}->{$name};
@@ -88,8 +88,8 @@ sub exists {
 sub delete {
     my ($self, $name) = @_;
 
-    if (exists $self->{'splices'}->{$name}) {
-        delete $self->{'splices'}->{$name};
+    if (exists $self->{'overlays'}->{$name}) {
+        delete $self->{'overlays'}->{$name};
         return;
     }
 
@@ -115,13 +115,13 @@ sub delete {
 sub unlink {
     my ($self, $name) = @_;
 
-    if (exists $self->{'splices'}->{$name}) {
-        delete $self->{'splices'}->{$name};
+    if (exists $self->{'overlays'}->{$name}) {
+        delete $self->{'overlays'}->{$name};
         return;
     }
 
     if (exists $self->{'members'}->{$name}) {
-        delete $self->{'splices'}->{$name};
+        delete $self->{'overlays'}->{$name};
     }
 }
 
@@ -131,7 +131,7 @@ sub list {
 
     my %union = (
         %{$self->{'members'}},
-        %{$self->{'splices'}}
+        %{$self->{'overlays'}}
     );
 
     return keys %union;
@@ -144,7 +144,7 @@ sub count {
 sub open {
     my ($self) = @_;
 
-    @{$self->{'skipped'}}{keys %{$self->{'splices'}}} = values %{$self->{'splices'}};
+    @{$self->{'skipped'}}{keys %{$self->{'overlays'}}} = values %{$self->{'overlays'}};
 
     $self->close;
     opendir($self->{'dh'}, $self->{'path'}) or confess($!);
@@ -153,7 +153,7 @@ sub open {
 sub rewind {
     my ($self) = @_;
 
-    @{$self->{'skipped'}}{keys %{$self->{'splices'}}} = values %{$self->{'splices'}};
+    @{$self->{'skipped'}}{keys %{$self->{'overlays'}}} = values %{$self->{'overlays'}};
 
     if ($self->{'dh'}) {
         rewinddir $self->{'dh'};
