@@ -23,7 +23,7 @@ sub new {
         'parent'    => $opts{'parent'}
     }, $class;
 
-    $inode->_load_st_info(@st);
+    $inode->update(@st);
 
     if (($st[2] & $S_IFMT) == $S_IFDIR) {
         $inode->{'dirent'} = Filesys::POSIX::Real::Dirent->new($path, $inode);
@@ -36,12 +36,6 @@ sub DESTROY {
     my ($self) = @_;
 
     $self->close;
-}
-
-sub _load_st_info {
-    my ($self, @st) = @_;
-
-    @{$self}{qw/size atime mtime ctime uid gid mode rdev/} = (@st[7..10], @st[4..5], $st[2], $st[6]);
 }
 
 sub child {

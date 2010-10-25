@@ -54,7 +54,7 @@ sub _sync_member {
     confess $! unless @st;
 
     if (exists $self->{'members'}->{$name}) {
-        $self->{'members'}->{$name}->_load_st_info(@st);
+        $self->{'members'}->{$name}->update(@st);
     } else {
         $self->{'members'}->{$name} = Filesys::POSIX::Real::Inode->new($subpath,
             'st_info'   => \@st,
