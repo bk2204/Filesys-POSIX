@@ -209,13 +209,13 @@ sub link {
 }
 
 sub symlink {
-    my ($self, $src, $dest) = @_;
+    my ($self, $path, $dest) = @_;
     my $perms = $S_IPERM ^ $self->{'umask'};
     my $hier = Filesys::POSIX::Path->new($dest);
     my $name = $hier->basename;
     my $parent = $self->stat($hier->dirname);
 
-    $parent->child($name, $S_IFLNK | $perms)->symlink($dest);
+    $parent->child($name, $S_IFLNK | $perms)->symlink($path);
 }
 
 sub readlink {
