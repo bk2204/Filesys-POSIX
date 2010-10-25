@@ -54,11 +54,7 @@ sub alias {
     my $inode = $self->stat($src);
     my $parent = $self->stat($hier->dirname);
 
-    eval {
-        $self->stat($dest);
-    };
-
-    confess('File exists') unless $@;
+    confess('File exists') if exists $parent->{'dirent'}->get($name);
     confess('Not a directory') unless $parent->dir;
 
     $parent->{'dirent'}->set($name, $inode);
