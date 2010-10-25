@@ -26,19 +26,29 @@ sub EXPORT {
 sub _split_filename {
     my ($filename) = @_;
     my $len = length $filename;
+    my $path = Filesys::POSIX::Path->new($filename);
 
     if ($len > 255) {
         confess('Filename too long');
-    } elsif ($len > 100) {
-        return (
-            'prefix' => substr($filename, 0, $len - 100),
-            'suffix' => substr($filename, $len - 100, 100)
-        );
+    }
+
+    my $got = 0;
+    my (@prefix_items, @suffix_items);
+
+    while ($path->count) {
+        my $item = $path->pop;
+        $got += length($item) + 1;
+
+        if ($got >= 100) {
+            push @prefix_items, $item;
+        } else {
+            push @suffix_items, $item;
+        }
     }
 
     return (
-        'prefix' => '',
-        'suffix' => $filename
+        'prefix'    => join('/', reverse @prefix_items),
+        'suffix'    => join('/', reverse @suffix_items)
     );
 }
 
