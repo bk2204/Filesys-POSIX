@@ -5,6 +5,7 @@ use warnings;
 
 use Filesys::POSIX::Bits;
 use File::Temp qw/mkstemp/;
+use Fcntl;
 
 use Carp;
 
@@ -44,10 +45,23 @@ sub open {
 
     confess('Already opened') if $self->{'fh'};
 
+    if ($flags & $O_APPEND) {
+        $self->{'pos'} = $self->{'size'};
+    } elsif ($flags & $O_TRUNC) {
+        $self->{'pos'} = 0;
+    }
+
     if (exists $self->{'file'}) {
-        sysopen(my $fh, $self->{'file'}, $O_RDWR) or confess("Unable to reopen bucket $self->{'file'}: $!");
+        my $realflags = 0;
+
+        sysopen(my $fh, $self->{'file'}, $flags) or confess("Unable to reopen bucket $self->{'file'}: $!");
 
         $self->{'fh'} = $fh;
+    } else {
+        if ($flags & $O_TRUNC) {
+            $self->{'size'} = 0;
+            undef $self->{'buf'};
+        }
     }
 
     return $self;
