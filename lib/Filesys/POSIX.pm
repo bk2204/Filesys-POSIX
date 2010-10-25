@@ -106,9 +106,7 @@ sub _find_inode {
             $dir->{'atime'} = time;
         }
 
-        if ($item eq '..') {
-            $inode = $dir->{'parent'}? $dir->{'parent'}: $dir;
-        } elsif ($item eq '.') {
+        if ($item eq '.') {
             $inode = $dir;
         } else {
             $inode = $self->{'vfs'}->vnode($dir->{'dirent'}->get($item)) or confess('No such file or directory');
@@ -228,12 +226,12 @@ sub unlink {
     my ($self, $path) = @_;
     my $hier = Filesys::POSIX::Path->new($path);
     my $name = $hier->basename;
-    my $inode = $self->lstat($hier->full);
-    my $parent = $inode->{'parent'};
+    my $parent = $self->lstat($hier->dirname);
+    my $inode = $parent->{'dirent'}->get($name);
 
-    confess('Is a directory') if $inode->dir;
     confess('Not a directory') unless $parent->dir;
-    confess('No such file or directory') unless $parent->{'dirent'}->exists($name);
+    confess('No such file or directory') unless $inode;
+    confess('Is a directory') if $inode->dir;
 
     $parent->{'dirent'}->delete($name);
 }
@@ -265,13 +263,13 @@ sub rmdir {
     my ($self, $path) = @_;
     my $hier = Filesys::POSIX::Path->new($path);
     my $name = $hier->basename;
-    my $inode = $self->lstat($hier->full);
-    my $parent = $inode->{'parent'};
+    my $parent = $self->lstat($hier->dirname);
+    my $inode = $parent->{'dirent'}->get($name);
 
+    confess('No such file or directory') unless $inode;
     confess('Not a directory') unless $inode->dir;
     confess('Device or resource busy') if $inode == $parent;
     confess('Directory not empty') unless $inode->{'dirent'}->count == 2;
-    confess('No such file or directory') unless $parent->{'dirent'}->exists($name);
 
     $parent->{'dirent'}->delete($name);
 }
