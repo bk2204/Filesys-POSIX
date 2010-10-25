@@ -20,7 +20,7 @@ sub open {
 
         confess('Not a directory') unless ($parent->{'mode'} & $S_IFMT) == $S_IFDIR;
 
-        if ($inode = $parent->get($name)) {
+        if ($inode = $parent->{'dirent'}->get($name)) {
             confess('File exists') if $flags & $O_EXCL;
         } else {
             my $format = $mode? $mode & $S_IFMT: $S_IFREG;
