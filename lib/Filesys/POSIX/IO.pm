@@ -60,7 +60,7 @@ sub print {
 
     confess('Invalid argument') unless $entry->{'flags'} & ($O_WRONLY | $O_RDWR);
 
-    my $buf = join($\, @args);
+    my $buf = join($/, @args);
 
     return $entry->{'handle'}->write($buf, length $buf);
 }
