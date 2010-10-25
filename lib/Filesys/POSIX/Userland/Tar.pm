@@ -26,7 +26,7 @@ sub EXPORT {
 sub _split_filename {
     my ($filename) = @_;
     my $len = length $filename;
-    my $path = Filesys::POSIX::Path->new($filename);
+    my @parts = split(/\//, $filename);
 
     if ($len > 255) {
         confess('Filename too long');
@@ -35,8 +35,8 @@ sub _split_filename {
     my $got = 0;
     my (@prefix_items, @suffix_items);
 
-    while ($path->count) {
-        my $item = $path->pop;
+    while (@parts) {
+        my $item = pop @parts;
         $got += length($item) + 1;
 
         if ($got >= 100) {
