@@ -215,7 +215,7 @@ sub symlink {
     my $name = $hier->basename;
     my $parent = $self->stat($hier->dirname);
 
-    $parent->child($name, $S_IFLNK | $perms);
+    $parent->child($name, $S_IFLNK | $perms)->symlink($dest);
 }
 
 sub readlink {
