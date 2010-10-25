@@ -46,9 +46,14 @@ sub _split_filename {
         }
     }
 
+    my $prefix = join('/', reverse @prefix_items);
+    my $suffix = join('/', reverse @suffix_items);
+
+    $suffix .= '/' if $filename =~ /\/$/;
+
     return (
-        'prefix'    => join('/', reverse @prefix_items),
-        'suffix'    => join('/', reverse @suffix_items)
+        'prefix'    => $prefix,
+        'suffix'    => $suffix
     );
 }
 
