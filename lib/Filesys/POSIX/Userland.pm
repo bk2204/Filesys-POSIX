@@ -16,7 +16,7 @@ sub _find_inode_path {
     while (my $dir = $self->{'vfs'}->vnode($inode->{'parent'})) {
         last if $dir eq $inode;
 
-        confess('Not a directory') unless ($dir->{'mode'} & $S_IFMT) == $S_IFDIR;
+        confess('Not a directory') unless $dir->dir;
 
         dirent: foreach ($dir->{'dirent'}->list) {
             next if $_ eq '.' || $_ eq '..';
@@ -41,11 +41,11 @@ sub mkpath {
             $dir = $self->{'root'};
         }
 
-        my $node = $self->{'vfs'}->vnode($dir->{'dirent'}->get($item));
+        my $inode = $self->{'vfs'}->vnode($dir->{'dirent'}->get($item));
 
-        if ($node) {
-            die('Not a directory') unless ($node->{'mode'} & $S_IFMT) == $S_IFDIR;
-            $dir = $node;
+        if ($inode) {
+            die('Not a directory') unless $inode->dir;
+            $dir = $inode;
         } else {
             $dir = $dir->child($item, $perm | $S_IFDIR);
         }

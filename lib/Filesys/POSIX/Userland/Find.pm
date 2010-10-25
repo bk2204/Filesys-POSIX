@@ -22,13 +22,13 @@ sub find {
     while (my $inode = pop @nodes) {
         my $path = pop @paths;
 
-        if (($inode->{'mode'} & $S_IFMT) == $S_IFLNK) {
+        if ($inode->link) {
             $inode = $self->stat($inode->readlink) if $opts{'follow'};
         }
 
         $callback->($path, $inode);
 
-        if (($inode->{'mode'} & $S_IFMT) == $S_IFDIR) {
+        if ($inode->dir) {
             my $dirent = $inode->{'dirent'};
 
             $dirent->open;

@@ -100,7 +100,7 @@ sub _header {
     my %filename_parts = _split_filename($dest);
     my $header;
 
-    my $size = ($inode->{'mode'} & $S_IFMT) == $S_IFREG? $inode->{'size'}: 0;
+    my $size = $inode->file? $inode->{'size'}: 0;
 
     $header .= _pad_string($filename_parts{'suffix'}, 100);
     $header .= _format_number($inode->{'mode'} & $S_IPERM, 7, 8);
@@ -111,7 +111,7 @@ sub _header {
     $header .= ' ' x 8;
     $header .= _format_number(_type($inode), 1, 1);
 
-    if (($inode->{'mode'} & $S_IFMT) == $S_IFLNK) {
+    if ($inode->link) {
         $header .= _pad_string($inode->readlink, 100);
     } else {
         $header .= "\x00" x 100;
@@ -153,16 +153,15 @@ sub _write_file {
 
 sub _archive {
     my ($fs, $handle, $dest, $inode) = @_;
-    my $format = $inode->{'mode'} & $S_IFMT;
 
     unless ($dest =~ /\/$/) {
-        $dest .= '/' if $format == $S_IFDIR;
+        $dest .= '/' if $inode->dir;
     }
 
     my $header = _header($inode, $dest);
     $handle->write($header, 512) == 512 or confess('Short write while dumping tar header to file handle');
 
-    _write_file($fs, $handle, $dest, $inode) if $format == $S_IFREG;
+    _write_file($fs, $handle, $dest, $inode) if $inode->file;
 }
 
 sub tar {
