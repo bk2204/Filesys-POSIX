@@ -83,6 +83,14 @@ sub readlink {
     return $self->{'dest'};
 }
 
+sub symlink {
+    my ($self, $dest) = @_;
+    confess('Not a symlink') unless ($self->{'mode'} & $S_IFMT) == $S_IFLNK;
+
+    $self->{'dest'} = $dest;
+    return $self;
+}
+
 sub open {
     my ($self, $flags) = @_;
     my $dev_flags = $self->{'dev'}->{'flags'};
