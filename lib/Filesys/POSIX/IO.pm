@@ -21,7 +21,10 @@ sub open {
         my $perms = $mode? $mode & $S_IPERM: $S_IRW ^ $self->{'umask'};
 
         confess('Not a directory') unless ($parent->{'mode'} & $S_IFMT) == $S_IFDIR;
-        confess('File exists') if $parent->{'dirent'}->exists($name);
+
+        if ($flags & $O_EXCL) {
+            confess('File exists') if $parent->{'dirent'}->exists($name);
+        }
 
         if ($format == $S_IFDIR) {
             $perms |= $S_IX ^ $self->{'umask'} unless $perms;
