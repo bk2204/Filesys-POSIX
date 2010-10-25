@@ -25,13 +25,14 @@ sub EXPORT {
 
 sub _split_filename {
     my ($filename) = @_;
+    my $len = length $filename;
 
-    if (length $filename > 255) {
+    if ($len > 255) {
         confess('Filename too long');
-    } elsif (length $filename > 100) {
+    } elsif ($len > 100) {
         return (
-            'prefix' => substr($filename, 0, 155),
-            'suffix' => substr($filename, 155, 100)
+            'prefix' => substr($filename, 0, $len - 100),
+            'suffix' => substr($filename, $len - 100, 100)
         );
     }
 
