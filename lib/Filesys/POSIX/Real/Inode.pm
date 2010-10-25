@@ -15,7 +15,7 @@ our @ISA = qw/Filesys::POSIX::Inode/;
 
 sub new {
     my ($class, $path, %opts) = @_;
-    my @st = $opts{'st_info'}? @{$opts{'st_info'}}: lstat $path or confess $!;
+    my @st = $opts{'st_info'}? @{$opts{'st_info'}}: lstat $path or confess($!);
 
     my $inode = bless {
         'path'      => $path,
@@ -101,6 +101,14 @@ sub readlink {
     confess('Not a symlink') unless ($self->{'mode'} & $S_IFMT) == $S_IFLNK;
 
     return CORE::readlink($self->{'path'});
+}
+
+sub symlink {
+    my ($self, $dest) = @_;
+    confess('Not a symlink') unless -l $self->{'path'};
+
+    CORE::unlink($self->{'path'}) or confess($!);
+    symlink($self->{'path'}, $dest) or confess($!);
 }
 
 1;
