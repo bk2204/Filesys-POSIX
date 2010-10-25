@@ -17,20 +17,21 @@ sub open {
 
     if ($flags & $O_CREAT) {
         my $parent = $self->stat($hier->dirname);
-        my $format = $mode? $mode & $S_IFMT: $S_IFREG;
-        my $perms = $mode? $mode & $S_IPERM: $S_IRW ^ $self->{'umask'};
 
         confess('Not a directory') unless ($parent->{'mode'} & $S_IFMT) == $S_IFDIR;
 
-        if ($flags & $O_EXCL) {
-            confess('File exists') if $parent->{'dirent'}->exists($name);
-        }
+        if ($inode = $parent->get($name)) {
+            confess('File exists') if $flags & $O_EXCL;
+        } else {
+            my $format = $mode? $mode & $S_IFMT: $S_IFREG;
+            my $perms = $mode? $mode & $S_IPERM: $S_IRW ^ $self->{'umask'};
 
-        if ($format == $S_IFDIR) {
-            $perms |= $S_IX ^ $self->{'umask'} unless $perms;
-        }
+            if ($format == $S_IFDIR) {
+                $perms |= $S_IX ^ $self->{'umask'} unless $perms;
+            }
 
-        $inode = $parent->child($name, $format | $perms);
+            $inode = $parent->child($name, $format | $perms);
+        }
     } else {
         $inode = $self->stat($path);
     }
