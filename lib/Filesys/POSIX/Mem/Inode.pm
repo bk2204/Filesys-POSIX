@@ -47,7 +47,7 @@ sub DESTROY {
 sub child {
     my ($self, $name, $mode) = @_;
 
-    confess('Not a directory') unless ($self->{'mode'} & $S_IFMT) == $S_IFDIR;
+    confess('Not a directory') unless $self->dir;
     confess('Invalid directory entry name') if $name =~ /\//;
     confess('File exists') if $self->{'dirent'}->exists($name);
 
@@ -77,15 +77,14 @@ sub chmod {
 
 sub readlink {
     my ($self) = @_;
-
-    confess('Not a symlink') unless ($self->{'mode'} & $S_IFMT) == $S_IFLNK;
+    confess('Not a symlink') unless $self->link;
 
     return $self->{'dest'};
 }
 
 sub symlink {
     my ($self, $dest) = @_;
-    confess('Not a symlink') unless ($self->{'mode'} & $S_IFMT) == $S_IFLNK;
+    confess('Not a symlink') unless $self->link;
 
     $self->{'dest'} = $dest;
     return $self;

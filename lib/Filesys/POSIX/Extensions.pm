@@ -20,12 +20,8 @@ sub attach {
     my $name = $hier->basename;
     my $parent = $self->stat($hier->dirname);
 
-    eval {
-        $self->stat($dest);
-    };
-
-    confess('File exists') unless $@;
-    confess('Not a directory') unless ($parent->{'mode'} & $S_IFMT) == $S_IFDIR;
+    confess('File exists') unless $parent->{'dirent'}->get($name);
+    confess('Not a directory') unless $parent->dir;
 
     $parent->{'dirent'}->set($name, $inode);
 }
@@ -41,7 +37,7 @@ sub map {
     };
 
     confess('File exists') unless $@;
-    confess('Not a directory') unless ($parent->{'mode'} & $S_IFMT) == $S_IFDIR;
+    confess('Not a directory') unless $parent->dir;
 
     my $inode = Filesys::POSIX::Real::Inode->new($real_src,
         'dev'       => $parent->{'dev'},
@@ -63,7 +59,7 @@ sub alias {
     };
 
     confess('File exists') unless $@;
-    confess('Not a directory') unless ($parent->{'mode'} & $S_IFMT) == $S_IFDIR;
+    confess('Not a directory') unless $parent->dir;
 
     $parent->{'dirent'}->set($name, $inode);
 }
@@ -89,6 +85,7 @@ sub replace {
     die('Not a directory') unless $parent->dir;
     die('No such file or directory') unless $parent->{'dirent'}->exists($name);
 
+    $parent->{'dirent'}->unlink($name);
     $parent->{'dirent'}->set($name, $inode);
 }
 

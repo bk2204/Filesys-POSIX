@@ -100,7 +100,7 @@ sub _find_inode {
         #
         $dir = $self->{'vfs'}->vnode($dir);
 
-        confess('Not a directory') unless ($dir->{'mode'} & $S_IFMT) == $S_IFDIR;
+        confess('Not a directory') unless $dir->dir;
 
         unless ($dir->{'dev'}->{'flags'}->{'noatime'}) {
             $dir->{'atime'} = time;
@@ -114,7 +114,7 @@ sub _find_inode {
             $inode = $self->{'vfs'}->vnode($dir->{'dirent'}->get($item)) or confess('No such file or directory');
         }
 
-        if (($inode->{'mode'} & $S_IFMT) == $S_IFLNK) {
+        if ($inode->link) {
             $hier = $hier->concat($inode->readlink) if $opts{'resolve_symlinks'} || $hier->count;
         } else {
             $dir = $inode;
@@ -201,8 +201,8 @@ sub link {
     my $parent = $self->stat($hier->dirname);
 
     confess('Cross-device link') unless $inode->{'dev'} == $parent->{'dev'};
-    confess('Is a directory') if ($inode->{'mode'} & $S_IFMT) == $S_IFDIR;
-    confess('Not a directory') unless ($parent->{'mode'} & $S_IFMT) == $S_IFDIR;
+    confess('Is a directory') if $inode->dir;
+    confess('Not a directory') unless $parent->dir;
     confess('File exists') if $parent->{'dirent'}->exists($name);
 
     $parent->{'dirent'}->set($name, $inode);
@@ -231,8 +231,8 @@ sub unlink {
     my $inode = $self->lstat($hier->full);
     my $parent = $inode->{'parent'};
 
-    confess('Is a directory') if ($inode->{'mode'} & $S_IFMT) == $S_IFDIR;
-    confess('Not a directory') unless ($parent->{'mode'} & $S_IFMT) == $S_IFDIR;
+    confess('Is a directory') if $inode->dir;
+    confess('Not a directory') unless $parent->dir;
     confess('No such file or directory') unless $parent->{'dirent'}->exists($name);
 
     $parent->{'dirent'}->delete($name);
@@ -247,7 +247,7 @@ sub rename {
 
     confess('Operation not permitted') if ref $inode eq 'Filesys::POSIX::Real::Inode';
     confess('Cross-device link') unless $inode->{'dev'} eq $parent->{'dev'};
-    confess('Not a directory') unless ($parent->{'mode'} & $S_IFMT) == $S_IFDIR;
+    confess('Not a directory') unless $parent->dir;
 
     if (my $existing = $parent->{'dirent'}->get($name)) {
         if ($inode->dir) {
@@ -268,7 +268,7 @@ sub rmdir {
     my $inode = $self->lstat($hier->full);
     my $parent = $inode->{'parent'};
 
-    confess('Not a directory') unless ($inode->{'mode'} & $S_IFMT) == $S_IFDIR;
+    confess('Not a directory') unless $inode->dir;
     confess('Device or resource busy') if $inode == $parent;
     confess('Directory not empty') unless $inode->{'dirent'}->count == 2;
     confess('No such file or directory') unless $parent->{'dirent'}->exists($name);

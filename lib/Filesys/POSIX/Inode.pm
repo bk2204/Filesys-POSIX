@@ -9,7 +9,7 @@ sub dir {
     (shift->{'mode'} & $S_IFMT) == $S_IFDIR;
 }
 
-sub symlink {
+sub link {
     (shift->{'mode'} & $S_IFMT) == $S_IFLNK;
 }
 
