@@ -68,4 +68,16 @@ sub alias {
     $parent->{'dirent'}->set($name, $inode);
 }
 
+sub detach {
+    my ($self, $path) = @_;
+    my $hier = Filesys::POSIX::Path->new($path);
+    my $name = $hier->basename;
+    my $parent = $self->stat($hier->dirname);
+
+    die('Not a directory') unless $parent->dir;
+    die('No such file or directory') unless $parent->{'dirent'}->exists($name);
+
+    $parent->{'dirent'}->unlink($name);
+}
+
 1;
