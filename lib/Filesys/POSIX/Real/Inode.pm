@@ -51,7 +51,7 @@ sub child {
     if (($mode & $S_IFMT) == $S_IFDIR) {
         mkdir($path, $mode) or confess $!;
     } else {
-        sysopen(my $fh, $path, O_CREAT | O_TRUNC | O_WRONLY, $mode) or confess $!;
+        sysopen(my $fh, $path, O_CREAT | O_EXCL | O_WRONLY, $mode) or confess $!;
         close($fh);
     }
 
