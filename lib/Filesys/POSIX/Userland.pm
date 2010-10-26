@@ -36,7 +36,9 @@ sub mkpath {
     my $hier = Filesys::POSIX::Path->new($path);
     my $dir = $self->{'cwd'};
 
-    while (my $item = $hier->shift) {
+    while ($hier->count) {
+        my $item = $hier->shift;
+
         unless ($item) {
             $dir = $self->{'root'};
         }
