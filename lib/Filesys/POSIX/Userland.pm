@@ -41,6 +41,7 @@ sub mkpath {
 
         unless ($item) {
             $dir = $self->{'root'};
+            next;
         }
 
         my $inode = $self->{'vfs'}->vnode($dir->{'dirent'}->get($item));
