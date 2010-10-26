@@ -134,7 +134,7 @@ sub vnode {
 
     foreach (qw/uid gid/) {
         if (defined $mount->{'flags'}->{$_}) {
-            $inode->{$_} = $mount->{'flags'} = $mount->{'flags'}->{$_};
+            $inode->{$_} = $mount->{'flags'}->{$_};
         }
     }
 
