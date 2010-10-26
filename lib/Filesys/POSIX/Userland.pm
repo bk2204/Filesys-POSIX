@@ -47,7 +47,7 @@ sub mkpath {
         my $inode = $self->{'vfs'}->vnode($dir->{'dirent'}->get($item));
 
         if ($inode) {
-            die('Not a directory') unless $inode->dir;
+            confess('Not a directory') unless $inode->dir;
             $dir = $inode;
         } else {
             $dir = $dir->child($item, $perm | $S_IFDIR);

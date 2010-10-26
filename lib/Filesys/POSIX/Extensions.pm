@@ -66,8 +66,8 @@ sub detach {
     my $name = $hier->basename;
     my $parent = $self->stat($hier->dirname);
 
-    die('Not a directory') unless $parent->dir;
-    die('No such file or directory') unless $parent->{'dirent'}->exists($name);
+    confess('Not a directory') unless $parent->dir;
+    confess('No such file or directory') unless $parent->{'dirent'}->exists($name);
 
     $parent->{'dirent'}->unlink($name);
 }
@@ -78,8 +78,8 @@ sub replace {
     my $name = $hier->basename;
     my $parent = $self->stat($hier->dirname);
 
-    die('Not a directory') unless $parent->dir;
-    die('No such file or directory') unless $parent->{'dirent'}->exists($name);
+    confess('Not a directory') unless $parent->dir;
+    confess('No such file or directory') unless $parent->{'dirent'}->exists($name);
 
     $parent->{'dirent'}->unlink($name);
     $parent->{'dirent'}->set($name, $inode);
