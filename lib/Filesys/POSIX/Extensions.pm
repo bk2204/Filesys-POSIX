@@ -20,8 +20,8 @@ sub attach {
     my $name = $hier->basename;
     my $parent = $self->stat($hier->dirname);
 
-    confess('File exists') unless $parent->{'dirent'}->get($name);
     confess('Not a directory') unless $parent->dir;
+    confess('File exists') if $parent->{'dirent'}->exists($name);
 
     $parent->{'dirent'}->set($name, $inode);
 }
