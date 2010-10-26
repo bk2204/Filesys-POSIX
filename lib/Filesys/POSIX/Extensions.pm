@@ -11,7 +11,7 @@ use Filesys::POSIX::Real::Dirent;
 use Carp;
 
 sub EXPORT {
-    qw/attach map alias/;
+    qw/attach map alias detach replace/;
 }
 
 sub attach {
