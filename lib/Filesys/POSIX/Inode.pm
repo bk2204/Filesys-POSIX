@@ -29,6 +29,18 @@ sub fifo {
     (shift->{'mode'} & $S_IFMT) == $S_IFIFO;
 }
 
+sub readable {
+    (shift->{'mode'} & $S_IR) != 0;
+}
+
+sub writable {
+    (shift->{'mode'} & $S_IW) != 0;
+}
+
+sub executable {
+    (shift->{'mode'} & $S_IX) != 0;
+}
+
 sub update {
     my ($self, @st) = @_;
 
