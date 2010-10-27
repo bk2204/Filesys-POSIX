@@ -29,6 +29,10 @@ sub fifo {
     (shift->{'mode'} & $S_IFMT) == $S_IFIFO;
 }
 
+sub perms {
+    shift->{'mode'} & $S_IPERM;
+}
+
 sub readable {
     (shift->{'mode'} & $S_IR) != 0;
 }
