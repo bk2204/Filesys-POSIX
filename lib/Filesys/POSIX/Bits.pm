@@ -76,7 +76,7 @@ our $S_ISVTX    = 0001000;
 our $S_IR       = 0000444;
 our $S_IW       = 0000222;
 our $S_IX       = 0000111;
-our $S_IRW      = 0000666;
+our $S_IRW      = $S_IR | $S_IW;
 our $S_IPERM    = $S_IRW | $S_IX;
 
 # Per assigned user
