@@ -10,6 +10,7 @@ use Filesys::POSIX::Path;
 use Filesys::POSIX::VFS;
 
 use Filesys::POSIX::IO;
+use Filesys::POSIX::Mount;
 use Filesys::POSIX::Userland;
 
 use Carp;
