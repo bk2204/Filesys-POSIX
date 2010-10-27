@@ -99,6 +99,10 @@ sub write {
     if ($self->{'fh'}) {
         $ret = syswrite($self->{'fh'}, $buf) or confess("Unable to write to disk bucket: $!");
     } else {
+        if ((my $gap = $self->{'pos'} - $self->{'size'}) > 0) {
+            $self->{'buf'} .= "\x00" x $gap;
+        }
+
         substr($self->{'buf'}, $self->{'pos'}, $len) = substr($buf, 0, $len);
         $ret = $len;
     }
@@ -113,6 +117,8 @@ sub write {
     if ($self->{'inode'}) {
         $self->{'inode'}->{'size'} = $self->{'size'};
     }
+
+    return $ret;
 }
 
 sub read {
