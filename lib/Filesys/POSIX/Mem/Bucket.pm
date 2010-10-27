@@ -149,8 +149,10 @@ sub seek {
     }
 
     if ($self->{'fh'}) {
-        sysseek($self->{'fh'}, $pos, $whence);
+        return sysseek($self->{'fh'}, $pos, $whence);
     }
+
+    return $self->{'pos'};
 }
 
 sub tell {
