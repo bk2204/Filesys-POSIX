@@ -93,13 +93,13 @@ sub write {
     my $ret = 0;
 
     unless ($self->{'fh'}) {
-        $self->_flush_to_disk($len) if $self->{'size'} + $len > $self->{'max'};
+        $self->_flush_to_disk($len) if $self->{'pos'} + $len > $self->{'max'};
     }
 
     if ($self->{'fh'}) {
         $ret = syswrite($self->{'fh'}, $buf) or confess("Unable to write to disk bucket: $!");
     } else {
-        $self->{'buf'} .= substr($buf, 0, $len);
+        substr($self->{'buf'}, $self->{'pos'}, $len) = substr($buf, 0, $len);
         $ret = $len;
     }
 
