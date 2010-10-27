@@ -41,6 +41,14 @@ sub executable {
     (shift->{'mode'} & $S_IX) != 0;
 }
 
+sub setuid {
+    (shift->{'mode'} & $S_ISUID) != 0;
+}
+
+sub setgid {
+    (shift->{'mode'} & $S_ISGID) != 0;
+}
+
 sub update {
     my ($self, @st) = @_;
 
