@@ -24,10 +24,10 @@ sub open {
             confess('File exists') if $flags & $O_EXCL;
         } else {
             my $format = $mode? ($mode & $S_IFMT? $mode & $S_IFMT: $S_IFREG): $S_IFREG;
-            my $perms = $mode? $mode & $S_IPERM: $S_IRW;
+            my $perms = $mode? ($mode & $S_IPERM? $mode & $S_IPERM: $S_IRW): $S_IRW;
 
             if ($format == $S_IFDIR) {
-                $perms |= $S_IX unless $mode;
+                $perms |= $S_IX unless $mode & $S_IPERM;
             }
 
             $perms &= ~$self->{'umask'};
@@ -80,6 +80,13 @@ sub printf {
     my $buf = sprintf($format, @args);
 
     return $entry->{'handle'}->write($buf, length $buf);
+}
+
+sub tell {
+    my ($self, $fd) = @_;
+    my $entry = $self->{'fds'}->lookup($fd);
+
+    return $entry->{'handle'}->tell;
 }
 
 sub seek {
