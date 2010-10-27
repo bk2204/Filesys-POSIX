@@ -103,6 +103,7 @@ sub write {
         $ret = $len;
     }
 
+    $self->{'pos'} += $ret;
     $self->{'size'} += $ret;
 
     #
