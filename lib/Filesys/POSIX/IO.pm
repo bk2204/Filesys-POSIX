@@ -23,7 +23,7 @@ sub open {
         if ($inode = $parent->{'dirent'}->get($name)) {
             confess('File exists') if $flags & $O_EXCL;
         } else {
-            my $format = $mode? $mode & $S_IFMT: $S_IFREG;
+            my $format = $mode? ($mode & $S_IFMT? $mode & $S_IFMT: $S_IFREG): $S_IFREG;
             my $perms = $mode? $mode & $S_IPERM: $S_IRW;
 
             if ($format == $S_IFDIR) {
