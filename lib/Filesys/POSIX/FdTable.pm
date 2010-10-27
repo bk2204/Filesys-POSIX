@@ -11,11 +11,11 @@ sub new {
 
 sub open {
     my ($self, $inode, $flags) = @_;
-    my $fd = 3;
+    my $fd = 2;
 
     my $handle = $inode->open($flags) or confess('Unable to open device-specific file handle');
 
-    foreach (sort { $a <=> $b } keys %$self) {
+    foreach (sort { $a <=> $b } ($fd, keys %$self)) {
         next if $self->{$fd = $_ + 1};
         last;
     }
