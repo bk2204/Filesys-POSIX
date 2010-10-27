@@ -68,4 +68,35 @@ sub realpath {
     return $self->_find_inode_path($inode);
 }
 
+sub opendir {
+    my ($self, $path) = @_;
+    my $inode = $self->stat($path);
+
+    die('Not a directory') unless $inode->dir;
+
+    my $dirent = $self->stat($path)->{'dirent'};
+    $dirent->open;
+
+    return $dirent;
+}
+
+sub readdir {
+    my ($self, $dirent) = @_;
+
+    return $dirent->read unless wantarray;
+
+    my @ret;
+
+    while (my $item = $dirent->read) {
+        push @ret, $item;
+    }
+
+    return @ret;
+}
+
+sub closedir {
+    my ($self, $dirent) = @_;
+    return $dirent->close;
+}
+
 1;
