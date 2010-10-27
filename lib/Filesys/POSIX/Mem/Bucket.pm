@@ -83,8 +83,6 @@ sub _flush_to_disk {
         $offset += $wrlen;
     }
 
-    sysseek($fh, 0, $SEEK_SET);
-
     @{$self}{qw/fh file/} = ($fh, $file);
 }
 
