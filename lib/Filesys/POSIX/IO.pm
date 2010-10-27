@@ -24,11 +24,13 @@ sub open {
             confess('File exists') if $flags & $O_EXCL;
         } else {
             my $format = $mode? $mode & $S_IFMT: $S_IFREG;
-            my $perms = $mode? $mode & $S_IPERM: $S_IRW ^ $self->{'umask'};
+            my $perms = $mode? $mode & $S_IPERM: $S_IRW;
 
             if ($format == $S_IFDIR) {
-                $perms |= $S_IX ^ $self->{'umask'} unless $perms;
+                $perms |= $S_IX unless $mode;
             }
+
+            $perms &= ~$self->{'umask'};
 
             $inode = $parent->child($name, $format | $perms);
         }
