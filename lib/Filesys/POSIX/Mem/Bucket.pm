@@ -110,6 +110,10 @@ sub write {
     $self->{'pos'} += $ret;
     $self->{'size'} += $ret;
 
+    if ($self->{'pos'} > $self->{'size'}) {
+        $self->{'size'} = $self->{'pos'};
+    }
+
     #
     # If we happen to have a reference to the inode this bucket was
     # opened for, we should update its 'size' attribute as well.
