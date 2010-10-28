@@ -5,15 +5,16 @@ use Filesys::POSIX;
 use Filesys::POSIX::Mem;
 use Filesys::POSIX::Bits;
 
-use Test::More ('tests' => 13);
+use Test::More ('tests' => 18);
 use Test::Exception;
 
-my $fs = Filesys::POSIX->new(Filesys::POSIX::Mem->new);
-
-$fs->mkdir('/mnt');
-$fs->mount(Filesys::POSIX::Mem->new, '/mnt');
 
 {
+    my $fs = Filesys::POSIX->new(Filesys::POSIX::Mem->new);
+
+    $fs->mkdir('/mnt');
+    $fs->mount(Filesys::POSIX::Mem->new, '/mnt');
+
     ok($fs->stat('/..') eq $fs->{'root'}, "Filesys::POSIX->stat('/..') returns the root vnode");
 
     my $fd = $fs->open('foo', $O_CREAT | $O_WRONLY);
@@ -35,15 +36,32 @@ $fs->mount(Filesys::POSIX::Mem->new, '/mnt');
     $fs->link('foo', 'bar');
     ok($inode eq $fs->stat('bar'), "Filesys::POSIX->link() copies inode reference into directory entry");
 
+    lives_ok {
+        $fs->link('bar', 'eins');
+        $fs->rename('eins', 'bar');
+    } "Filesys::POSIX->rename() can replace non-directory entries with other non-directory entries";
+
+    throws_ok {
+        $fs->link('foo', 'bar')
+    } qr/^File exists/, "Filesys::POSIX->link() dies when destination already exists";
+
     $fs->rename('bar', 'baz');
     ok($inode eq $fs->stat('baz'), "Filesys::POSIX->rename() does not modify inode reference in directory entry");
 
+    throws_ok {
+        $fs->rename('baz', '/mnt/boo')
+    } qr/^Cross-device link/, "Filesys::POSIX->rename() dies whe renaming inodes across different devices";
+
     $fs->unlink('baz');
-    
+
     throws_ok {
         $fs->stat('baz')
     } qr/^No such file or directory/, "Filesys::POSIX->unlink() removes reference to inode from directory entry";
 
+    throws_ok {
+        $fs->unlink('baz')
+    } qr/^No such file or directory/, "Filesys::POSIX->unlink() dies when its target does not exist";
+    
     ok($inode eq $fs->stat('foo'), "Filesys::POSIX->unlink() does not actually destroy inode");
 
     throws_ok {
@@ -52,6 +70,7 @@ $fs->mount(Filesys::POSIX::Mem->new, '/mnt');
 }
 
 {
+    my $fs = Filesys::POSIX->new(Filesys::POSIX::Mem->new);
     $fs->mkdir('meow');
     my $inode = $fs->stat('meow');
 
@@ -65,9 +84,13 @@ $fs->mount(Filesys::POSIX::Mem->new, '/mnt');
         $fs->link('meow', 'cats')
     } qr/^Is a directory/, "Filesys::POSIX->link() prevents linking of directory inodes";
 
-    $fs->rmdir('meow');
-
     throws_ok {
-        $fs->stat('meow')
+        $fs->rmdir('meow');
+        $fs->stat('meow');
     } qr/^No such file or directory/, "Filesys::POSIX->rmdir() actually functions";
+
+    lives_ok {
+        $fs->mkdir('cats');
+        $fs->rename('cats', 'meow');
+    } "Filesys::POSIX->rename() can replace empty directories with other empty directories";
 }
