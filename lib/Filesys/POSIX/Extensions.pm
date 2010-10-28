@@ -19,11 +19,11 @@ sub attach {
     my $hier = Filesys::POSIX::Path->new($dest);
     my $name = $hier->basename;
     my $parent = $self->stat($hier->dirname);
+    my $dirent = $parent->dirent;
 
-    confess('Not a directory') unless $parent->dir;
-    confess('File exists') if $parent->{'dirent'}->exists($name);
+    confess('File exists') if $dirent->exists($name);
 
-    $parent->{'dirent'}->set($name, $inode);
+    $dirent->set($name, $inode);
 }
 
 sub map {
@@ -31,20 +31,20 @@ sub map {
     my $hier = Filesys::POSIX::Path->new($dest);
     my $name = $hier->basename;
     my $parent = $self->stat($hier->dirname);
+    my $dirent = $parent->dirent;
 
     eval {
         $self->stat($dest);
     };
 
     confess('File exists') unless $@;
-    confess('Not a directory') unless $parent->dir;
 
     my $inode = Filesys::POSIX::Real::Inode->new($real_src,
         'dev'       => $parent->{'dev'},
         'parent'    => $parent
     );
 
-    $parent->{'dirent'}->set($name, $inode);
+    $dirent->set($name, $inode);
 }
 
 sub alias {
@@ -53,11 +53,11 @@ sub alias {
     my $name = $hier->basename;
     my $inode = $self->stat($src);
     my $parent = $self->stat($hier->dirname);
+    my $dirent = $parent->dirent;
 
-    confess('File exists') if $parent->{'dirent'}->exists($name);
-    confess('Not a directory') unless $parent->dir;
+    confess('File exists') if $dirent->exists($name);
 
-    $parent->{'dirent'}->set($name, $inode);
+    $dirent->set($name, $inode);
 }
 
 sub detach {
@@ -65,11 +65,11 @@ sub detach {
     my $hier = Filesys::POSIX::Path->new($path);
     my $name = $hier->basename;
     my $parent = $self->stat($hier->dirname);
+    my $dirent = $parent->dirent;
 
-    confess('Not a directory') unless $parent->dir;
-    confess('No such file or directory') unless $parent->{'dirent'}->exists($name);
+    confess('No such file or directory') unless $dirent->exists($name);
 
-    $parent->{'dirent'}->unlink($name);
+    $dirent->unlink($name);
 }
 
 sub replace {
@@ -77,12 +77,12 @@ sub replace {
     my $hier = Filesys::POSIX::Path->new($path);
     my $name = $hier->basename;
     my $parent = $self->stat($hier->dirname);
+    my $dirent = $parent->dirent;
 
-    confess('Not a directory') unless $parent->dir;
-    confess('No such file or directory') unless $parent->{'dirent'}->exists($name);
+    confess('No such file or directory') unless $dirent->exists($name);
 
-    $parent->{'dirent'}->unlink($name);
-    $parent->{'dirent'}->set($name, $inode);
+    $dirent->unlink($name);
+    $dirent->set($name, $inode);
 }
 
 1;
