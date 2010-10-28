@@ -5,13 +5,13 @@ use Filesys::POSIX;
 use Filesys::POSIX::Mem;
 use Filesys::POSIX::Bits;
 
-use Test::More ('tests' => 23);
+use Test::More ('tests' => 27);
 use Test::Exception;
 
-my $fs = Filesys::POSIX->new(Filesys::POSIX::Mem->new);
-$fs->umask(022);
-
 {
+    my $fs = Filesys::POSIX->new(Filesys::POSIX::Mem->new);
+    $fs->umask(022);
+
     my $fd = $fs->open('foo', $O_CREAT, 0600);
 
     ok($fd == 3, 'Filesys::POSIX->open() for new file returns file descriptor 3 upon first call');
@@ -35,6 +35,31 @@ $fs->umask(022);
 }
 
 {
+    my $fs = Filesys::POSIX->new(Filesys::POSIX::Mem->new);
+
+    throws_ok {
+        my $fd = $fs->open('foo', $O_CREAT | $O_WRONLY);
+        $fs->read($fd, my $buf, 0)
+    } qr/^Invalid argument/, "Filesys::POSIX->read() throws 'Invalid argument' when reading on write-only fd";
+
+    throws_ok {
+        my $fd = $fs->open('foo', $O_CREAT | $O_RDONLY);
+        $fs->write($fd, 'foo', 3)
+    } qr/^Invalid argument/, "Filesys::POSIX->write() throws 'Invalid argument' when writing on read-only fd";
+
+    throws_ok {
+        my $fd = $fs->open('foo', $O_CREAT | $O_RDONLY);
+        $fs->print($fd, 'foo');
+    } qr/^Invalid argument/, "Filesys::POSIX->print() throws 'Invalid argument' when writing on read-only fd";
+
+    throws_ok {
+        my $fd = $fs->open('foo', $O_CREAT | $O_RDONLY);
+        $fs->printf($fd, "Foo: %d\n", 1024);
+    } qr/^Invalid argument/, "Filesys::POSIX->printf() throws 'Invalid argument' when writing on read-only fd";
+}
+
+{
+    my $fs = Filesys::POSIX->new(Filesys::POSIX::Mem->new);
     my $fd    = $fs->open('baz', $O_CREAT, $S_IFDIR);
     my $inode = $fs->fstat($fd);
 
@@ -45,6 +70,7 @@ $fs->umask(022);
 }
 
 {
+    my $fs = Filesys::POSIX->new(Filesys::POSIX::Mem->new);
     my $fd = $fs->open('meow', $O_CREAT | $O_RDWR);
 
     ok($fs->tell($fd) == 0, 'Filesys::POSIX->tell() reports position 0 on newly-created files');
