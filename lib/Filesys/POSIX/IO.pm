@@ -19,8 +19,8 @@ sub open {
         my $parent = $self->stat($hier->dirname);
         my $dirent = $parent->dirent;
 
-        if ($inode = $dirent->get($name)) {
-            confess('File exists') if $flags & $O_EXCL;
+        if ($inode = $dirent->get($name) && $flags & $O_EXCL) {
+            confess('File exists');
         } else {
             my $format = $mode? ($mode & $S_IFMT? $mode & $S_IFMT: $S_IFREG): $S_IFREG;
             my $perms = $mode? ($mode & $S_IPERM? $mode & $S_IPERM: $S_IRW): $S_IRW;
