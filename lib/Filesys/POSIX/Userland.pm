@@ -97,4 +97,11 @@ sub closedir {
     return $dirent->close;
 }
 
+sub touch {
+    my ($self, $path) = @_;
+    my $fd = $self->open($path, $O_CREAT | $O_WRONLY);
+
+    $self->close($fd);
+}
+
 1;
