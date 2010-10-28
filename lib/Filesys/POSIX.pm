@@ -17,6 +17,13 @@ use Carp;
 
 our $AUTOLOAD;
 
+BEGIN {
+    use Exporter ();
+    use vars qw/$VERSION/;
+
+    our $VERSION = '0.9';
+}
+
 sub new {
     my ($class, $rootfs, %opts) = @_;
 
