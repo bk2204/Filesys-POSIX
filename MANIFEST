@@ -23,3 +23,14 @@ lib/Filesys/POSIX/VFS/Inode.pm
 lib/Filesys/POSIX/VFS.pm
 lib/Filesys/POSIX.pm
 t/001_load.t
+t/bucket.t
+t/file.t
+t/inode_tests.t
+t/io.t
+t/mount.t
+t/mountflags.t
+t/path.t
+t/stat.t
+t/stub.t
+t/umask.t
+t/userland.t
