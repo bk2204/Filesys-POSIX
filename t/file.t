@@ -5,11 +5,16 @@ use Filesys::POSIX;
 use Filesys::POSIX::Mem;
 use Filesys::POSIX::Bits;
 
-use Test::More ('tests' => 10);
+use Test::More ('tests' => 12);
 
 my $fs = Filesys::POSIX->new(Filesys::POSIX::Mem->new);
 
+$fs->mkdir('/mnt');
+$fs->mount(Filesys::POSIX::Mem->new, '/mnt');
+
 {
+    ok($fs->stat('/..') eq $fs->{'root'}, "Filesys::POSIX->stat('/..') returns the root vnode");
+
     my $fd = $fs->open('foo', $O_CREAT | $O_WRONLY);
     my $inode = $fs->fstat($fd);
     $fs->close($fd);
@@ -25,6 +30,12 @@ my $fs = Filesys::POSIX->new(Filesys::POSIX::Mem->new);
     };
 
     ok($@ =~ /^Not a directory/, "Filesys::POSIX->open() prevents attaching children to non-directory inodes");
+
+    eval {
+        $fs->link('foo', '/mnt/bar');
+    };
+
+    ok($@ =~ /^Cross-device link/, "Filesys::POSIX->link() prevents cross-device links");
 
     $fs->link('foo', 'bar');
     ok($inode eq $fs->stat('bar'), "Filesys::POSIX->link() copies inode reference into directory entry");
