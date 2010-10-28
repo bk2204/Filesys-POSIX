@@ -5,7 +5,7 @@ use Filesys::POSIX;
 use Filesys::POSIX::Mem;
 use Filesys::POSIX::Bits;
 
-use Test::More ('tests' => 20);
+use Test::More ('tests' => 24);
 
 my $mounts = {
     '/'             => Filesys::POSIX::Mem->new,
@@ -65,6 +65,20 @@ foreach (sort keys %$mounts) {
     ok($fs->fstatfs($fd) eq $mount, "Filesys::POSIX->fstatfs() on open file descriptor returns expected mount object");
 
     $fs->close($fd);
+}
+
+{
+    $fs->chdir('/mnt/mem/tmp');
+    ok($fs->getcwd eq '/mnt/mem/tmp', "Filesys::POSIX->getcwd() reports /mnt/mem/tmp after a chdir()");
+
+    $fs->chdir('..');
+    ok($fs->getcwd eq '/mnt/mem', "Filesys::POSIX->getcwd() reports /mnt/mem after a chdir('..')");
+
+    $fs->chdir('..');
+    ok($fs->getcwd eq '/mnt', "Filesys::POSIX->getcwd() reports /mnt after a chdir('..')");
+
+    $fs->chdir('..');
+    ok($fs->getcwd eq '/', "Filesys::POSIX->getcwd() reports / after a chdir('..')");
 }
 
 {
