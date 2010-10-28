@@ -6,6 +6,7 @@ use Filesys::POSIX::Mem;
 use Filesys::POSIX::Bits;
 
 use Test::More ('tests' => 23);
+use Test::Exception;
 
 my $fs = Filesys::POSIX->new(Filesys::POSIX::Mem->new);
 $fs->umask(022);
@@ -25,14 +26,9 @@ $fs->umask(022);
     ok($fs->open('bar', $O_RDONLY) == 3, 'Filesys::POSIX->open() reclaims old file descriptors');
     $fs->close($fd);
 
-    eval {
-        $fs->read($fd, my $buf, 512);
-    };
-
-    ok(
-        $@ =~ /^Invalid file descriptor/,
-        'Filesys::POSIX->read() throws "Invalid file descriptor" exception on closed fd'
-    );
+    throws_ok {
+        $fs->read($fd, my $buf, 512)
+    } qr/^Invalid file descriptor/, 'Filesys::POSIX->read() throws "Invalid file descriptor" exception on closed fd';
 
     $fs->close($fd);
     $fs->close($new_fd);

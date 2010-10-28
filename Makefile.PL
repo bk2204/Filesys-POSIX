@@ -6,6 +6,7 @@ WriteMakefile(
     'AUTHOR'        => 'Erin Schoenhals (erin@cpanel.net)',
     'ABSTRACT'      => 'Provides POSIX filesystem semantics in pure Perl',
     'PREREQ_PM'     => {
-        'Test::Simple' => 0.44
+        'Test::Simple'      => '0.44',
+        'Test::Exception'   => '0.26'
     }
 );

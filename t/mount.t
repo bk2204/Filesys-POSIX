@@ -6,6 +6,7 @@ use Filesys::POSIX::Mem;
 use Filesys::POSIX::Bits;
 
 use Test::More ('tests' => 24);
+use Test::Exception;
 
 my $mounts = {
     '/'             => Filesys::POSIX::Mem->new,
@@ -18,26 +19,20 @@ my $fs = Filesys::POSIX->new($mounts->{'/'});
 $fs->mkpath('/mnt/mem/hidden');
 
 foreach (grep { $_ ne '/' } sort keys %$mounts) {
-    eval {
-        $fs->mkpath($_);
-    };
+    lives_ok {
+        $fs->mkpath($_)
+    } "Able to create mount point $_";
 
-    ok(!$@, "Able to create mount point $_");
-
-    eval {
+    lives_ok {
         $fs->mount($mounts->{$_}, $_,
             'noatime' => 1
-        );
-    };
-
-    ok(!$@, "Able to mount $mounts->{$_} to $_");
+        )
+    } "Able to mount $mounts->{$_} to $_";
 }
 
-eval {
-    $fs->stat('/mnt/mem/hidden');
-};
-
-ok($@ =~ /^No such file or directory/, "Mounting /mnt/mem sweeps /mnt/mem/hidden under the rug");
+throws_ok {
+    $fs->stat('/mnt/mem/hidden')
+} qr/^No such file or directory/, "Mounting /mnt/mem sweeps /mnt/mem/hidden under the rug";
 
 {
     my $expected    = $mounts->{'/'};
@@ -82,20 +77,16 @@ foreach (sort keys %$mounts) {
 }
 
 {
-    eval {
-        $fs->unmount('/mnt/mem');
-    };
-
-    ok($@ =~ /^Device or resource busy/, "Filesys::POSIX->unmount() prevents unmounting busy filesystem /mnt/mem");
+    throws_ok {
+        $fs->unmount('/mnt/mem')
+    } qr/^Device or resource busy/, "Filesys::POSIX->unmount() prevents unmounting busy filesystem /mnt/mem";
 }
 
 {
     $fs->unmount('/mnt/mem/tmp');
     $fs->unmount('/mnt/mem');
 
-    eval {
-        $fs->stat('/mnt/mem/tmp');
-    };
-
-    ok($@ =~ /^No such file or directory/, "/mnt/mem/tmp can no longer be accessed after unmounting /mnt/mem");
+    throws_ok {
+        $fs->stat('/mnt/mem/tmp')
+    } qr/^No such file or directory/, "/mnt/mem/tmp can no longer be accessed after unmounting /mnt/mem";
 }
