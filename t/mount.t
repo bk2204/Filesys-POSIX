@@ -5,7 +5,7 @@ use Filesys::POSIX;
 use Filesys::POSIX::Mem;
 use Filesys::POSIX::Bits;
 
-use Test::More qw/no_plan/;
+use Test::More ('tests' => 20);
 
 my $mounts = {
     '/'             => Filesys::POSIX::Mem->new,
@@ -58,8 +58,13 @@ foreach (sort keys %$mounts) {
         $fs->statfs($_);
     };
 
+    my $fd = $fs->open("$_/emptyfile", $O_CREAT);
+
     ok(!$@, "Filesys::POSIX->statfs('$_/') returns mount information");
     ok($mount->{'dev'} eq $expected, "Mount object for $_ lists expected device");
+    ok($fs->fstatfs($fd) eq $mount, "Filesys::POSIX->fstatfs() on open file descriptor returns expected mount object");
+
+    $fs->close($fd);
 }
 
 {
