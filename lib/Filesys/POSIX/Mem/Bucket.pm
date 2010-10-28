@@ -41,8 +41,6 @@ sub DESTROY {
 sub open {
     my ($self, $flags) = @_;
 
-    $self->{'flags'} = $flags? $flags: $O_RDONLY;
-
     confess('Already opened') if $self->{'fh'};
 
     if ($flags & $O_APPEND) {
