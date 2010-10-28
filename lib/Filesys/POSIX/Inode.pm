@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use Filesys::POSIX::Bits;
+use Carp;
 
 sub dir {
     (shift->{'mode'} & $S_IFMT) == $S_IFDIR;
@@ -57,6 +58,13 @@ sub update {
     my ($self, @st) = @_;
 
     @{$self}{qw/size atime mtime ctime uid gid mode rdev/} = (@st[7..10], @st[4..5], $st[2], $st[6]);
+}
+
+sub dirent {
+    my ($self) = @_;
+    confess('Not a directory') unless $self->dir;
+
+    return $self->{'dirent'};
 }
 
 1;
