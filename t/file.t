@@ -5,7 +5,7 @@ use Filesys::POSIX;
 use Filesys::POSIX::Mem;
 use Filesys::POSIX::Bits;
 
-use Test::More ('tests' => 8);
+use Test::More ('tests' => 10);
 
 my $fs = Filesys::POSIX->new(Filesys::POSIX::Mem->new);
 
@@ -13,6 +13,18 @@ my $fs = Filesys::POSIX->new(Filesys::POSIX::Mem->new);
     my $fd = $fs->open('foo', $O_CREAT | $O_WRONLY);
     my $inode = $fs->fstat($fd);
     $fs->close($fd);
+
+    eval {
+        $fs->stat('foo/bar');
+    };
+
+    ok($@ =~ /Not a directory/, "Filesys::POSIX->stat() will not walk a path with non-directory parent components");
+
+    eval {
+        $fs->open('foo/bar', $O_CREAT | $O_WRONLY);
+    };
+
+    ok($@ =~ /^Not a directory/, "Filesys::POSIX->open() prevents attaching children to non-directory inodes");
 
     $fs->link('foo', 'bar');
     ok($inode eq $fs->stat('bar'), "Filesys::POSIX->link() copies inode reference into directory entry");
