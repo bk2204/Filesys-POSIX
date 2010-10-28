@@ -17,10 +17,9 @@ sub open {
 
     if ($flags & $O_CREAT) {
         my $parent = $self->stat($hier->dirname);
+        my $dirent = $parent->dirent;
 
-        confess('Not a directory') unless $parent->dir;
-
-        if ($inode = $parent->{'dirent'}->get($name)) {
+        if ($inode = $dirent->get($name)) {
             confess('File exists') if $flags & $O_EXCL;
         } else {
             my $format = $mode? ($mode & $S_IFMT? $mode & $S_IFMT: $S_IFREG): $S_IFREG;
