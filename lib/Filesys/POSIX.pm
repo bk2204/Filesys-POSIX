@@ -109,6 +109,8 @@ sub _find_inode {
 
         if ($item eq '.') {
             $inode = $dir;
+        } elsif ($item eq '..') {
+            $inode = $self->{'vfs'}->vnode($dir)->{'parent'};
         } else {
             $inode = $self->{'vfs'}->vnode($dir->{'dirent'}->get($item)) or confess('No such file or directory');
         }
