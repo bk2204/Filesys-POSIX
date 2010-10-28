@@ -31,6 +31,5 @@ t/mount.t
 t/mountflags.t
 t/path.t
 t/stat.t
-t/stub.t
 t/umask.t
 t/userland.t
