@@ -5,7 +5,7 @@ use Filesys::POSIX;
 use Filesys::POSIX::Mem;
 use Filesys::POSIX::Bits;
 
-use Test::More ('tests' => 12);
+use Test::More ('tests' => 13);
 use Test::Exception;
 
 my $fs = Filesys::POSIX->new(Filesys::POSIX::Mem->new);
@@ -60,6 +60,10 @@ $fs->mount(Filesys::POSIX::Mem->new, '/mnt');
     throws_ok {
         $fs->unlink('meow')
     } qr/^Is a directory/, "Filesys::POSIX->unlink() prevents removal of directory inodes";
+
+    throws_ok {
+        $fs->link('meow', 'cats')
+    } qr/^Is a directory/, "Filesys::POSIX->link() prevents linking of directory inodes";
 
     $fs->rmdir('meow');
 
