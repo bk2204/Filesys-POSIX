@@ -5,7 +5,7 @@ use Filesys::POSIX;
 use Filesys::POSIX::Mem;
 use Filesys::POSIX::Bits;
 
-use Test::More ('tests' => 27);
+use Test::More ('tests' => 29);
 use Test::Exception;
 
 {
@@ -56,6 +56,16 @@ use Test::Exception;
         my $fd = $fs->open('foo', $O_CREAT | $O_RDONLY);
         $fs->printf($fd, "Foo: %d\n", 1024);
     } qr/^Invalid argument/, "Filesys::POSIX->printf() throws 'Invalid argument' when writing on read-only fd";
+
+    lives_ok {
+        my $fd = $fs->open('foo', $O_CREAT | $O_WRONLY);
+        $fs->print($fd, "Hello, world\n");
+    } "Filesys::POSIX->print() allows writing to writable fds";
+
+    lives_ok {
+        my $fd = $fs->open('foo', $O_CREAT | $O_WRONLY);
+        $fs->printf($fd, "Hello, world: %d\n", 1024);
+    } "Filesys::POSIX->print() allows writing to writable fds";
 }
 
 {
