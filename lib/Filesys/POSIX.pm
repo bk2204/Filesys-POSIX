@@ -285,7 +285,7 @@ sub rmdir {
     my $inode = $dirent->get($name);
 
     confess('No such file or directory') unless $inode;
-    confess('Device or resource busy') if $inode == $parent;
+    confess('Device or resource busy') if $self->{'vfs'}->statfs($self->stat($path), 'exact' => 1);
     confess('Directory not empty') unless $inode->dirent->count == 2;
 
     $dirent->delete($name);
