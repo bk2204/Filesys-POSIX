@@ -6,7 +6,7 @@ use Filesys::POSIX::Mem::Inode;
 use Filesys::POSIX::Mem::Bucket;
 use Filesys::POSIX::Bits;
 
-use Test::More qw/no_plan/;
+use Test::More ('tests' => 11);
 
 {
     my $inode = Filesys::POSIX::Mem::Inode->new(
