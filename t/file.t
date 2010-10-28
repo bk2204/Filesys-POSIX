@@ -5,7 +5,7 @@ use Filesys::POSIX;
 use Filesys::POSIX::Mem;
 use Filesys::POSIX::Bits;
 
-use Test::More ('tests' => 35);
+use Test::More ('tests' => 36);
 use Test::Exception;
 
 {
@@ -109,6 +109,10 @@ use Test::Exception;
     } "Filesys::POSIX->rename() can replace empty directories with other empty directories";
 
     $fs->touch('foo');
+
+    throws_ok {
+        $fs->open('foo', $O_CREAT | $O_WRONLY | $O_EXCL)
+    } qr/^File exists/, "Filesys::POSIX->open() prevents clobbering existing inodes with \$O_CREAT | \$O_EXCL";
 
     throws_ok {
         $fs->rename('meow', 'foo')
