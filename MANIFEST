@@ -28,7 +28,7 @@ t/file.t
 t/inode_tests.t
 t/io.t
 t/mount.t
-t/mountflags.t
+t/mount_flags.t
 t/path.t
 t/stat.t
 t/umask.t
