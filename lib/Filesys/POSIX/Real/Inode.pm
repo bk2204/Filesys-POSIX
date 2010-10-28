@@ -40,10 +40,10 @@ sub DESTROY {
 
 sub child {
     my ($self, $name, $mode) = @_;
+    my $dirent = $self->dirent;
 
-    confess('Not a directory') unless ($self->{'mode'} & $S_IFMT) == $S_IFDIR;
     confess('Invalid directory entry name') if $name =~ /\//;
-    confess('File exists') if $self->{'dirent'}->exists($name);
+    confess('File exists') if $dirent->exists($name);
 
     my $path = "$self->{'path'}/$name";
     my $child;
@@ -55,10 +55,12 @@ sub child {
         close($fh);
     }
 
-    return __PACKAGE__->new($path,
+    my $inode = __PACKAGE__->new($path,
         'dev'       => $self->{'dev'},
         'parent'    => $self
     );
+
+    $dirent->set($name, $inode);
 }
 
 sub open {
