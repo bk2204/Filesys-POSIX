@@ -109,19 +109,22 @@ sub _find_inode {
         #
         $dir = $self->{'vfs'}->vnode($dir);
 
-        confess('Not a directory') unless $dir->dir;
-
         unless ($dir->{'dev'}->{'flags'}->{'noatime'}) {
             $dir->{'atime'} = time;
         }
+
+        #
+        # From this point, deal with the directory in terms of a directory entry.
+        #
+        my $dirent = $dir->dirent;
 
         if ($item eq '.') {
             $inode = $dir;
         } elsif ($item eq '..') {
             my $vnode = $self->{'vfs'}->vnode($dir);
-            $inode = $vnode->{'parent'}? $vnode->{'parent'}: $self->{'vfs'}->vnode($dir->{'dirent'}->get('..'));
+            $inode = $vnode->{'parent'}? $vnode->{'parent'}: $self->{'vfs'}->vnode($dirent->get('..'));
         } else {
-            $inode = $self->{'vfs'}->vnode($dir->{'dirent'}->get($item));
+            $inode = $self->{'vfs'}->vnode($dirent->get($item));
         }
 
         confess('No such file or directory') unless $inode;
@@ -209,13 +212,13 @@ sub link {
     my $name = $hier->basename;
     my $inode = $self->stat($src);
     my $parent = $self->stat($hier->dirname);
+    my $dirent = $parent->dirent;
 
     confess('Cross-device link') unless $inode->{'dev'} == $parent->{'dev'};
     confess('Is a directory') if $inode->dir;
-    confess('Not a directory') unless $parent->dir;
-    confess('File exists') if $parent->{'dirent'}->exists($name);
+    confess('File exists') if $dirent->exists($name);
 
-    $parent->{'dirent'}->set($name, $inode);
+    $dirent->set($name, $inode);
 }
 
 sub symlink {
@@ -239,13 +242,13 @@ sub unlink {
     my $hier = Filesys::POSIX::Path->new($path);
     my $name = $hier->basename;
     my $parent = $self->lstat($hier->dirname);
-    my $inode = $parent->{'dirent'}->get($name);
+    my $dirent = $parent->dirent;
+    my $inode = $dirent->get($name);
 
-    confess('Not a directory') unless $parent->dir;
     confess('No such file or directory') unless $inode;
     confess('Is a directory') if $inode->dir;
 
-    $parent->{'dirent'}->delete($name);
+    $dirent->delete($name);
 }
 
 sub rename {
@@ -254,12 +257,12 @@ sub rename {
     my $name = $hier->basename;
     my $inode = $self->lstat($old);
     my $parent = $self->stat($hier->dirname);
+    my $dirent = $parent->dirent;
 
     confess('Operation not permitted') if ref $inode eq 'Filesys::POSIX::Real::Inode';
     confess('Cross-device link') unless $inode->{'dev'} eq $parent->{'dev'};
-    confess('Not a directory') unless $parent->dir;
 
-    if (my $existing = $parent->{'dirent'}->get($name)) {
+    if (my $existing = $dirent->get($name)) {
         if ($inode->dir) {
             confess('Not a directory') unless $existing->dir;
         } else {
@@ -268,7 +271,7 @@ sub rename {
     }
 
     $self->unlink($old);
-    $parent->{'dirent'}->set($name, $inode);
+    $dirent->set($name, $inode);
 }
 
 sub rmdir {
@@ -276,14 +279,14 @@ sub rmdir {
     my $hier = Filesys::POSIX::Path->new($path);
     my $name = $hier->basename;
     my $parent = $self->lstat($hier->dirname);
-    my $inode = $parent->{'dirent'}->get($name);
+    my $dirent = $parent->dirent;
+    my $inode = $dirent->get($name);
 
     confess('No such file or directory') unless $inode;
-    confess('Not a directory') unless $inode->dir;
     confess('Device or resource busy') if $inode == $parent;
-    confess('Directory not empty') unless $inode->{'dirent'}->count == 2;
+    confess('Directory not empty') unless $inode->dirent->count == 2;
 
-    $parent->{'dirent'}->delete($name);
+    $dirent->delete($name);
 }
 
 1;
