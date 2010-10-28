@@ -31,16 +31,17 @@ sub new {
 
     $rootfs->init(%opts);
 
+    my $vfs = Filesys::POSIX::VFS->new->mount($rootfs, '/', $rootfs->{'root'}, %opts);
+
     return bless {
         'methods'   => {},
         'umask'     => 022,
         'fds'       => Filesys::POSIX::FdTable->new,
         'cwd'       => $rootfs->{'root'},
         'root'      => $rootfs->{'root'},
-
-        'vfs'       => Filesys::POSIX::VFS->new->mount(
-            $rootfs, '/', $rootfs->{'root'}, %opts
-        )
+        'vfs'       => $vfs,
+        'cwd'       => $vfs->vnode($rootfs->{'root'}),
+        'root'      => $vfs->vnode($rootfs->{'root'})
     }, $class;
 }
 
@@ -117,10 +118,13 @@ sub _find_inode {
         if ($item eq '.') {
             $inode = $dir;
         } elsif ($item eq '..') {
-            $inode = $self->{'vfs'}->vnode($dir)->{'parent'};
+            my $vnode = $self->{'vfs'}->vnode($dir);
+            $inode = $vnode->{'parent'}? $vnode->{'parent'}: $self->{'vfs'}->vnode($dir->{'dirent'}->get('..'));
         } else {
-            $inode = $self->{'vfs'}->vnode($dir->{'dirent'}->get($item)) or confess('No such file or directory');
+            $inode = $self->{'vfs'}->vnode($dir->{'dirent'}->get($item));
         }
+
+        confess('No such file or directory') unless $inode;
 
         if ($inode->link) {
             $hier = $hier->concat($inode->readlink) if $opts{'resolve_symlinks'} || $hier->count;
@@ -128,8 +132,6 @@ sub _find_inode {
             $dir = $inode;
         }
     }
-
-    confess('No such file or directory') unless $inode;
 
     return $inode;
 }
