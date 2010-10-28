@@ -5,7 +5,7 @@ use Filesys::POSIX;
 use Filesys::POSIX::Mem;
 use Filesys::POSIX::Bits;
 
-use Test::More ('tests' => 18);
+use Test::More ('tests' => 20);
 use Test::Exception;
 
 
@@ -72,6 +72,7 @@ use Test::Exception;
 {
     my $fs = Filesys::POSIX->new(Filesys::POSIX::Mem->new);
     $fs->mkdir('meow');
+
     my $inode = $fs->stat('meow');
 
     ok($inode->dir, "Filesys::POSIX->mkdir() creates directory inodes in the expected manner");
@@ -93,4 +94,14 @@ use Test::Exception;
         $fs->mkdir('cats');
         $fs->rename('cats', 'meow');
     } "Filesys::POSIX->rename() can replace empty directories with other empty directories";
+
+    $fs->touch('foo');
+
+    throws_ok {
+        $fs->rename('meow', 'foo')
+    } qr/^Not a directory/, "Filesys::POSIX->rename() prevents replacing directories with non-directories";
+
+    throws_ok {
+        $fs->rename('foo', 'meow')
+    } qr/^Is a directory/, "Filesys::POSIX->rename() prevents replacing non-directories with directories";
 }
