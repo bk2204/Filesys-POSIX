@@ -5,9 +5,8 @@ use Filesys::POSIX;
 use Filesys::POSIX::Mem;
 use Filesys::POSIX::Bits;
 
-use Test::More ('tests' => 20);
+use Test::More ('tests' => 35);
 use Test::Exception;
-
 
 {
     my $fs = Filesys::POSIX->new(Filesys::POSIX::Mem->new);
@@ -67,6 +66,14 @@ use Test::Exception;
     throws_ok {
         $fs->rmdir('foo')
     } qr/^Not a directory/, "Filesys::POSIX->rmdir() prevents removal of non-directory inodes";
+
+    throws_ok {
+        $fs->rmdir('cats')
+    } qr/^No such file or directory/, "Filesys::POSIX->rmdir() dies when target does not exist in its parent";
+
+    throws_ok {
+        $fs->rmdir('/mnt')
+    } qr/^Device or resource busy/, "Filesys::POSIX->rmdir() dies when removing a mount point";
 }
 
 {
@@ -90,6 +97,12 @@ use Test::Exception;
         $fs->stat('meow');
     } qr/^No such file or directory/, "Filesys::POSIX->rmdir() actually functions";
 
+    throws_ok {
+        $fs->mkdir('meow');
+        $fs->touch('meow/poo');
+        $fs->rmdir('meow');
+    } qr/^Directory not empty/, "Filesys::POSIX->rmdir() prevents removing populated directories";
+
     lives_ok {
         $fs->mkdir('cats');
         $fs->rename('cats', 'meow');
@@ -104,4 +117,43 @@ use Test::Exception;
     throws_ok {
         $fs->rename('foo', 'meow')
     } qr/^Is a directory/, "Filesys::POSIX->rename() prevents replacing non-directories with directories";
+}
+
+{
+    my $fs = Filesys::POSIX->new(Filesys::POSIX::Mem->new);
+    my $fd = $fs->open('foo', $O_CREAT | $O_WRONLY, 0644);
+    my $inode = $fs->fstat($fd);
+    $fs->close($fd);
+
+    $fs->symlink('foo', 'bar');
+    my $link = $fs->lstat('bar');
+
+    ok($inode eq $fs->stat('bar'), "Filesys::POSIX->stat() works on symlinks");
+    ok($fs->readlink('bar') eq 'foo', "Filesys::POSIX->readlink() returns expected result");
+
+    $fs->lchmod('bar', 0600);
+    ok(($link->{'mode'} & $S_IPERM) == 0600, "Filesys::POSIX->lchmod() updated symlink inode's permissions properly");
+    ok(($inode->{'mode'} & $S_IPERM) == 0644, "Filesys::POSIX->lchown() does not update symlink dest's permissions");
+
+    $fs->lchown('bar', 500, 500);
+    ok($link->{'uid'} == 500, "Filesys::POSIX->lchown() updated symlink uid properly");
+    ok($inode->{'uid'} == 0, "Filesys::POSIX->lchown() does not update symlink dest's permissions");
+    ok($link->{'gid'} == 500, "Filesys::POSIX->lchown() updated symlink gid properly");
+    ok($inode->{'gid'} == 0, "Filesys::POSIX->lchown() does not update symlink dest's permissions");
+}
+
+{
+    my $fs = Filesys::POSIX->new(Filesys::POSIX::Mem->new);
+    my $fd = $fs->open('/foo', $O_CREAT, $S_IFDIR | 0755);
+    my $inode = $fs->fstat($fd);
+
+    $fs->fchdir($fd);
+    ok($fs->getcwd eq '/foo', "Filesys::POSIX->fchdir() changes current directory when passed a directory fd");
+
+    $fs->fchown($fd, 500, 500);
+    ok($inode->{'uid'} == 500, "Filesys::POSIX->fchown() updates inode's uid properly");
+    ok($inode->{'gid'} == 500, "Filesys::POSIX->fchown() updates inode's gid properly");
+
+    $fs->fchmod($fd, 0700);
+    ok(($inode->{'mode'} & $S_IPERM) == 0700, "Filesys::POSIX->fchmod() updates inode's permissions properly");
 }
