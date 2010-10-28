@@ -72,7 +72,7 @@ sub opendir {
     my ($self, $path) = @_;
     my $inode = $self->stat($path);
 
-    die('Not a directory') unless $inode->dir;
+    confess('Not a directory') unless $inode->dir;
 
     my $dirent = $self->stat($path)->{'dirent'};
     $dirent->open;
