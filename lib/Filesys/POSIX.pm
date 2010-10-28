@@ -270,7 +270,9 @@ sub rename {
         }
     }
 
-    $self->unlink($old);
+    my $remove = $inode->dir? 'rmdir': 'unlink';
+    $self->$remove($old);
+
     $dirent->set($name, $inode);
 }
 
