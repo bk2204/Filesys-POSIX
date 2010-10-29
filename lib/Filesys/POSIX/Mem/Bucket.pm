@@ -40,6 +40,7 @@ sub DESTROY {
 
 sub open {
     my ($self, $flags) = @_;
+    $flags ||= 0;
 
     confess('Already opened') if $self->{'fh'};
 
