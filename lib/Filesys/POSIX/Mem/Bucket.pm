@@ -51,9 +51,7 @@ sub open {
         $self->{'size'} = 0;
     }
 
-    if (exists $self->{'file'}) {
-        my $realflags = 0;
-
+    if ($self->{'file'}) {
         sysopen(my $fh, $self->{'file'}, $flags) or confess("Unable to reopen bucket $self->{'file'}: $!");
 
         $self->{'fh'} = $fh;
@@ -63,6 +61,8 @@ sub open {
             undef $self->{'buf'};
         }
     }
+
+    $self->{'inode'}->{'size'} = 0 if $flags & $O_TRUNC;
 
     return $self;
 }
@@ -112,13 +112,7 @@ sub write {
         $self->{'size'} = $self->{'pos'};
     }
 
-    #
-    # If we happen to have a reference to the inode this bucket was
-    # opened for, we should update its 'size' attribute as well.
-    #
-    if ($self->{'inode'}) {
-        $self->{'inode'}->{'size'} = $self->{'size'};
-    }
+    $self->{'inode'}->{'size'} = $self->{'size'};
 
     return $ret;
 }
