@@ -5,7 +5,7 @@ use Filesys::POSIX;
 use Filesys::POSIX::Mem;
 use Filesys::POSIX::Bits;
 
-use Test::More ('tests' => 29);
+use Test::More ('tests' => 30);
 use Test::Exception;
 
 {
@@ -66,6 +66,9 @@ use Test::Exception;
         my $fd = $fs->open('foo', $O_CREAT | $O_WRONLY);
         $fs->printf($fd, "Hello, world: %d\n", 1024);
     } "Filesys::POSIX->print() allows writing to writable fds";
+
+    my $fd = $fs->open('foo', $O_CREAT | $O_WRONLY);
+    ok($fs->fdopen($fd), "Filesys::POSIX->fdopen() returns a raw file handle for an open file descriptor");
 }
 
 {
