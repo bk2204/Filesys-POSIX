@@ -47,6 +47,7 @@ sub open {
         $self->{'pos'} = $self->{'size'};
     } elsif ($flags & $O_TRUNC) {
         $self->{'pos'} = 0;
+        $self->{'size'} = 0;
     }
 
     if (exists $self->{'file'}) {
