@@ -6,7 +6,7 @@ use Filesys::POSIX::Mem::Inode;
 use Filesys::POSIX::Mem::Bucket;
 use Filesys::POSIX::Bits;
 
-use Test::More ('tests' => 20);
+use Test::More ('tests' => 23);
 use Test::Exception;
 
 {
@@ -165,4 +165,33 @@ use Test::Exception;
     if ($uid == 0) {
         $> = $uid;
     }
+}
+
+{
+    my $bucket = Filesys::POSIX::Mem::Bucket->new(
+        'max' => 1024
+    );
+
+    foreach (1..192) {
+        $bucket->write('meowcats', 8);
+    }
+
+    ok($bucket->{'size'} == 192 * 8, "Filesys::POSIX::Mem::Bucket->_flush_to_disk() flushes when size exceeds max");
+
+    {
+        my $read = 0;
+
+        $bucket->seek(0, $SEEK_SET);
+
+        while (my $len = $bucket->read(my $buf, 8)) {
+            $read += $len if $buf eq 'meowcats';
+        }
+
+        ok($read == 192 * 8, "Filesys::POSIX::Mem::Bucket->read() fetches bucket data correctly after seek(0, 0)");
+    }
+
+    dies_ok {
+        close($bucket->{'fh'});
+        $bucket->write('foo', 3);
+    } "Filesys::POSIX::Mem::Bucket->write() will die if syswrite() dies";
 }
