@@ -100,7 +100,8 @@ sub write {
     }
 
     if ($self->{'fh'}) {
-        $ret = syswrite($self->{'fh'}, $buf) or confess("Unable to write to disk bucket: $!");
+        confess("Unable to write to disk bucket") unless fileno($self->{'fh'});
+        $ret = syswrite($self->{'fh'}, $buf);
     } else {
         if ((my $gap = $self->{'pos'} - $self->{'size'}) > 0) {
             $self->{'buf'} .= "\x00" x $gap;
