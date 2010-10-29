@@ -72,7 +72,12 @@ sub _flush_to_disk {
 
     confess('Already flushed to disk') if $self->{'file'};
 
-    my ($fh, $file) = mkstemp("$self->{'dir'}/.bucket-XXXXXX") or confess("Unable to create disk bucket file: $!");
+    my ($fh, $file) = eval {
+        mkstemp("$self->{'dir'}/.bucket-XXXXXX")
+    };
+
+    confess("mkstemp() failure: $@") if $@;
+
     my $offset = 0;
 
     for (my $left = $self->{'size'}; $left > 0; $left -= $len) {
