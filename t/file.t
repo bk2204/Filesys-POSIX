@@ -5,7 +5,7 @@ use Filesys::POSIX;
 use Filesys::POSIX::Mem;
 use Filesys::POSIX::Bits;
 
-use Test::More ('tests' => 36);
+use Test::More ('tests' => 37);
 use Test::Exception;
 
 {
@@ -128,6 +128,11 @@ use Test::Exception;
     my $fd = $fs->open('foo', $O_CREAT | $O_WRONLY, 0644);
     my $inode = $fs->fstat($fd);
     $fs->close($fd);
+
+    $fs->mkpath('eins/zwei/drei');
+    $fs->symlink('zwei', 'eins/foo');
+
+    ok($fs->stat('eins/zwei/drei') eq $fs->lstat('eins/foo/drei'), "Filesys::POSIX->lstat() resolves symlinks in tree");
 
     $fs->symlink('foo', 'bar');
     my $link = $fs->lstat('bar');
