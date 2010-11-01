@@ -24,6 +24,64 @@ BEGIN {
     our $VERSION = '0.9';
 }
 
+=head1 NAME
+
+Filesys::POSIX - Provide POSIX-like filesystem semantics in pure Perl
+
+=head1 SYNOPSIS
+
+    use Filesys::POSIX
+    use Filesys::POSIX::Mem;
+
+    my $fs = Filesys::POSIX->new(Filesys::POSIX::Mem->new,
+        'noatime' => 1
+    );
+
+    $fs->umask(0700);
+    $fs->mkdir('foo');
+
+    my $fd = $fs->open('/foo/bar', $O_CREAT | $O_WRONLY);
+    my $inode = $fs->fstat($fd);
+    $fs->printf("I have mode 0%o\n", $inode->{'mode'});
+    $fs->close($fd);
+
+=head1 DESCRIPTION
+
+Filesys::POSIX provides a fairly complete suite of tools comprising the
+semantics of a POSIX filesystem, with path resolution, mount points, inodes,
+a VFS, and some common utilities found in the userland.  Some features not
+found in a normal POSIX environment include the ability to perform cross-
+mountpoint hard links (aliasing), mapping portions of the real filesystem into
+an instance of a virtual filesystem, and allowing the developer to attach and
+replace inodes at arbitrary points with replacements of their own
+specification.
+
+Two filesystem types are provided out-of-the-box: A filesystem that lives in
+memory completely, and a filesystem that provides a "portal" to any given
+portion of the real underlying filesystem.
+
+By and large, the manner in which data is structured is quite similar to a
+real kernel filesystem implementation, with some differences: VFS inodes are
+not created for EVERY disk inode (only mount points); inodes are not referred
+to numerically, but rather by Perl reference; and, directory entries can be
+implemented in a device-specific manner, as long as they adhere to the normal
+interface specified within.
+
+=head1 INSTANTIATING THE FILESYSTEM ENVIRONMENT
+
+=over
+
+=item Filesys::POSIX->new($rootfs, %opts)
+
+Create a new filesystem environment, specifying a reference to an
+uninitialized instance of a filesystem type object to be mounted at the root
+of the virtual filesystem.  Options passed will be passed to the filesystem
+initialization method $rootfs->init() in flat hash form, and passed on again
+to the VFS, where the options will be stored for later retrieval.
+
+=back
+
+=cut
 sub new {
     my ($class, $rootfs, %opts) = @_;
 
@@ -60,8 +118,22 @@ sub AUTOLOAD {
     return *{"$module\::$method"}->($self, @args);
 }
 
+=head1 IMPORTING MODULES FOR ADDITIONAL FUNCTIONALITY
+
+=over
+
+=item $fs->import_module($module);
+
+Import each method from the module specified into the namespace of the current
+filesystem object instance.  The module to be imported should be specified in
+the usual form of a Perl package name.  Only the methods returned by its
+EXPORT() function will be imported.
+
+=back
+
+=cut
 sub import_module {
-    my ($self, $module, @args) = @_;
+    my ($self, $module) = @_;
 
     eval "use $module";
     confess $@ if $@;
@@ -77,10 +149,23 @@ sub import_module {
     }
 }
 
+=head1 SYSTEM CALLS
+
+=over
+
+=item $fs->umask()
+
+=item $fs->umask($mode)
+
+When called without an argument, the current umask value is returned.  When a
+value is specified, the current umask is modified to that value, and is
+returned once set.
+
+=cut
 sub umask {
     my ($self, $umask) = @_;
 
-    return $self->{'umask'} = $umask if $umask;
+    return $self->{'umask'} = $umask if defined $umask;
     return $self->{'umask'};
 }
 
@@ -139,6 +224,17 @@ sub _find_inode {
     return $inode;
 }
 
+=item $fs->stat($path)
+
+Resolve the given path for an inode in the filesystem.  If the inode found is
+a symlink, the path of that symlink will be resolved in turn until the desired
+inode is located.
+
+Paths will be resolved relative to the current working directory when not
+prefixed with a slash ('/'), and will be resolved relative to the root
+directory when prefixed with a slash ('/').
+
+=cut
 sub stat {
     my ($self, $path) = @_;
     return $self->_find_inode($path,
@@ -146,56 +242,138 @@ sub stat {
     );
 }
 
+=item $fs->lstat($path)
+
+Resolve the given path for an inode in the filesystem.  Unlinke $fs->stat(),
+the inode found will be returned literally in the case of a symlink.
+
+=cut
 sub lstat {
     my ($self, $path) = @_;
     return $self->_find_inode($path);
 }
 
+=item $fs->fstat($fd)
+
+Return the inode corresponding to the open file descriptor passed.  An
+exception will be thrown by the file descriptor lookup module if the file
+descriptor passed does not correspond to an open file.
+
+=cut
 sub fstat {
     my ($self, $fd) = @_;
     return $self->{'fds'}->lookup($fd)->{'inode'};
 }
 
+=item $fs->chdir($path)
+
+Change the current working directory to the path specified.  An $fs->stat()
+call will be used internally to lookup the inode for that path; an exception
+"Not a directory" will be thrown unless the inode found is a directory.  The
+internal current working directory pointer will be updated with the directory
+inode found.
+
+=cut
 sub chdir {
     my ($self, $path) = @_;
-    $self->{'cwd'} = $self->stat($path);
+    my $inode = $self->stat($path);
+    die('Not a directory') unless $inode->dir;
+
+    $self->{'cwd'} = $inode;
 }
 
+=item $fs->chdir($fd)
+
+When passed a file descriptor for a directory, return a reference to the
+corresponding directory inode.  If the inode is not a directory, an exception
+"Not a directory" will be thrown.
+
+=cut
 sub fchdir {
     my ($self, $fd) = @_;
-    $self->{'cwd'} = $self->fstat($fd);
+    my $inode = $self->fstat($fd);
+    die('Not a directory') unless $inode->dir;
+
+    $self->{'cwd'} = $inode;
 }
 
+=item $fs->chown($path, $uid, $gid)
+
+Using $fs->stat() to locate the inode of the path specified, update that inode
+object's 'uid' and 'gid' fields with the values specified.
+
+=cut
 sub chown {
     my ($self, $path, $uid, $gid) = @_;
     $self->stat($path)->chown($uid, $gid);
 }
 
+=item $fs->lchown($path, $uid, $gid)
+
+Using $fs->lstat() to locate the inode of the path specified, update that inode
+object's 'uid' and 'gid' fields with the values specified.
+
+=cut
 sub lchown {
     my ($self, $path, $uid, $gid) = @_;
     $self->lstat($path)->chown($uid, $gid);
 }
 
+=item $fs->fchown($fd, $uid, $gid)
+
+Using $fs->fstat() to locate the inode of the file descriptor specified, update
+that inode object's 'uid' and 'gid' fields with the values specified.
+
+=cut
 sub fchown {
     my ($self, $fd, $uid, $gid) = @_;
     $self->fstat($fd)->chown($uid, $gid);
 }
 
+=item $fs->chmod($path, $mode)
+
+Using $fs->stat() to locate the inode of the path specified, update that inode
+object's 'mode' field with the value specified.
+
+=cut
 sub chmod {
     my ($self, $path, $mode) = @_;
     $self->stat($path)->chmod($mode);
 }
 
+=item $fs->lchmod($path, $mode)
+
+Using $fs->lstat() to locate the inode of the path specified, update that inode
+object's 'mode' field with the value specified.
+
+=cut
 sub lchmod {
     my ($self, $path, $mode) = @_;
     $self->lstat($path)->chmod($mode);
 }
 
+=item $fs->fchmod($fd, $mode)
+
+Using $fs->fstat() to locate the inode of the file descriptor specified, update
+that inode object's 'mode' field with the value specified.
+
+=cut
 sub fchmod {
     my ($self, $fd, $mode) = @_;
     $self->fstat($fd)->chmod($mode);
 }
 
+=item $fs->mkdir($path)
+
+=item $fs->mkdir($path, $mode)
+
+Create a new directory at the path specified, applying the permissions field in
+the mode value specified.  If no mode is specified, the default permissions of
+0777 will be modified by the current umask value.  A "Not a directory"
+exception will be thrown in case the intended parent of the directory to be
+created is not actually a directory itself.
+
+=cut
 sub mkdir {
     my ($self, $path, $mode) = @_;
     my $hier = Filesys::POSIX::Path->new($path);
@@ -206,6 +384,22 @@ sub mkdir {
     $parent->child($name, $perm | $S_IFDIR);
 }
 
+=item $fs->link($src, $dest)
+
+Using $fs->stat() to resolve the path of the link source, and the parent of the
+link destination, $fs->link() place a reference to the source inode in the
+location specified by the destination.
+
+If a destination inode already exists, it will only be able to be replaced by
+the source if both are either directories or non-directories.  If the source
+and destination are both directories, the destination will only be replaced if
+the directory entry for the destination is empty.
+
+Links traversing filesystem mount points are not allowed.  This functionality
+is provided in the alias() call provided by the Filesys::POSIX::Extensions
+module, which can be imported by $fs->import_module() at runtime.
+
+=cut
 sub link {
     my ($self, $src, $dest) = @_;
     my $hier = Filesys::POSIX::Path->new($dest);
