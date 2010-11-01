@@ -67,4 +67,11 @@ sub dirent {
     return $self->{'dirent'};
 }
 
+sub empty {
+    my ($self) = @_;
+    my $dirent = $self->dirent;
+
+    return $dirent->count == 2 && $dirent->get('.') && $dirent->get('..');
+}
+
 1;
