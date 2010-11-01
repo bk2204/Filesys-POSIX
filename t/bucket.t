@@ -6,7 +6,7 @@ use Filesys::POSIX::Mem::Inode;
 use Filesys::POSIX::Mem::Bucket;
 use Filesys::POSIX::Bits;
 
-use Test::More ('tests' => 23);
+use Test::More ('tests' => 26);
 use Test::Exception;
 
 {
@@ -20,6 +20,8 @@ use Test::Exception;
         'max'   => 0,
         'dir'   => '.'
     );
+
+    $bucket->open($O_RDWR);
 
     ok($bucket->write('foo', 3) == 3, "Filesys::POSIX::Mem::Bucket->write() returns expected write length");
 
@@ -190,8 +192,37 @@ use Test::Exception;
         ok($read == 192 * 8, "Filesys::POSIX::Mem::Bucket->read() fetches bucket data correctly after seek(0, 0)");
     }
 
-    dies_ok {
-        close($bucket->{'fh'});
+    {
+        $bucket->seek(0, $SEEK_SET);
+
+        ok(
+          $bucket->read(my $buf, 192 * 9) == 192 * 8,
+          "Filesys::POSIX::Mem::Bucket->read() restricts read max to position, minus size"
+        );
+    }
+
+    close($bucket->{'fh'});
+
+    throws_ok {
+        $bucket->read(my $buf, 3);
+    } qr/^Unable to read bucket/, "Filesys::POSIX::Mem::Bucket->read() will die if sysread() dies";
+
+    throws_ok {
         $bucket->write('foo', 3);
-    } "Filesys::POSIX::Mem::Bucket->write() will die if syswrite() dies";
+    } qr/^Unable to write to disk bucket/, "Filesys::POSIX::Mem::Bucket->write() will die if syswrite() dies";
+}
+
+{
+    my $bucket = Filesys::POSIX::Mem::Bucket->new(
+        'max' => 1024
+    );
+
+    $bucket->open($O_RDWR);
+    $bucket->seek(2048, $SEEK_SET);
+
+    ok(
+        $bucket->read(my $buf, 3) == 0,
+        "Filesys::POSIX::Mem::Bucket->read() returns 0 when reading beyond size in memory buckets"
+    );
+    
 }
