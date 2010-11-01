@@ -81,6 +81,11 @@ to the VFS, where the options will be stored for later retrieval.
 
 =back
 
+=head1 ERROR HANDLING
+
+Errors are emitted in the form of exceptions thrown by Carp::confess(), with
+full stack traces.
+
 =cut
 sub new {
     my ($class, $rootfs, %opts) = @_;
@@ -277,7 +282,7 @@ inode found.
 sub chdir {
     my ($self, $path) = @_;
     my $inode = $self->stat($path);
-    die('Not a directory') unless $inode->dir;
+    confess('Not a directory') unless $inode->dir;
 
     $self->{'cwd'} = $inode;
 }
@@ -292,7 +297,7 @@ corresponding directory inode.  If the inode is not a directory, an exception
 sub fchdir {
     my ($self, $fd) = @_;
     my $inode = $self->fstat($fd);
-    die('Not a directory') unless $inode->dir;
+    confess('Not a directory') unless $inode->dir;
 
     $self->{'cwd'} = $inode;
 }
@@ -399,6 +404,26 @@ Links traversing filesystem mount points are not allowed.  This functionality
 is provided in the alias() call provided by the Filesys::POSIX::Extensions
 module, which can be imported by $fs->import_module() at runtime.
 
+Exceptions thrown:
+
+=over
+
+=item Cross-device link
+
+The inode resolved for the link source is not associated with the same device
+as the inode of the destination's parent directory.
+
+=item Is a directory
+
+Thrown if the source inode is a directory.  Hard links can only be made for
+non-directory inodes.
+
+=item File exists
+
+Thrown if an entry at the destination path already exists.
+
+=back
+
 =cut
 sub link {
     my ($self, $src, $dest) = @_;
@@ -415,6 +440,14 @@ sub link {
     $dirent->set($name, $inode);
 }
 
+=item $fs->symlink($path, $dest)
+
+The path in the first argument specified, $path, is cleaned up using
+Filesys::POSIX::Path->full(), and stored in a new symlink inode created in the
+location specified by $dest.  An exception will be thrown if the destination
+exists.
+
+=cut
 sub symlink {
     my ($self, $path, $dest) = @_;
     my $perms = $S_IPERM ^ $self->{'umask'};
@@ -422,15 +455,45 @@ sub symlink {
     my $name = $hier->basename;
     my $parent = $self->stat($hier->dirname);
 
-    $parent->child($name, $S_IFLNK | $perms)->symlink($path);
+    $parent->child($name, $S_IFLNK | $perms)->symlink(Filesys::POSIX::Path->full($path));
 }
 
+=item $fs->readlink($path)
+
+Using $fs->lstat() to resolve the given path for an inode, the symlink
+destination path associated with the inode is returned as a string.  A "Not a
+symlink" exception is thrown unless the inode found is indeed a symlink.
+
+=cut
 sub readlink {
     my ($self, $path) = @_;
+    my $inode = $fs->lstat($path);
+    confess('Not a symlink') unless $inode->link;
 
-    return $self->lstat($path)->readlink;
+    return $inode->readlink;
 }
 
+=item $fs->unlink($path)
+
+Using $fs->lstat() to resolve the given path for an inode specified, said inode
+will be removed from its parent directory entry.  The following exceptions will
+be thrown in the event of certain errors:
+
+=over
+
+=item No such file or directory
+
+No entry was found in the path's parent directory for the item specified in the
+path.
+
+=item Is a directory
+
+$fs->unlink() was called with a directory specified.  $fs->rmdir() must be used
+instead for removing directory inodes.
+
+=back
+
+=cut
 sub unlink {
     my ($self, $path) = @_;
     my $hier = Filesys::POSIX::Path->new($path);
@@ -445,6 +508,59 @@ sub unlink {
     $dirent->delete($name);
 }
 
+=item $fs->rename($old, $new)
+
+Relocate the item specified by the $old argument to the new path specified by
+$new.
+
+Using $fs->lstat(), the inode for the old pathname is resolved; $fs->stat() is
+then used to resolve the path of the parent directory of the argument specified
+in $new.
+
+If an inode exists at the path specified by $new, it will be replaced by $old
+in the following circumstances:
+
+=over
+
+=item Both the source ($old) and destination ($new) are non-directory inodes.
+
+=item Both the source ($old) and destination ($new) are directory inodes, and
+the destination is empty.
+
+=back
+
+The following exceptions are thrown for error conditions:
+
+=over
+
+=item Operation not permitted
+
+Currently, $fs->rename() cannot operate if the inode at the old location is an
+inode associated with a Filesys::POSIX::Real filesystem type.
+
+=item Cross-device link
+
+The inode at the old path does not exist on the same filesystem device as the
+inode of the parent directory specified in the new path.
+
+=item Not a directory
+
+The old inode is a directory, but an existing inode found in the new path
+specified, is not.
+
+=item Is a directory
+
+The old inode is not a directory, but an existing inode found in the new path
+specified, is.
+
+=item Directory not empty
+
+Both the old and new paths correspond to a directory, but the new path is not
+of an empty directory.
+
+=back
+
+=cut
 sub rename {
     my ($self, $old, $new) = @_;
     my $hier = Filesys::POSIX::Path->new($new);
@@ -459,6 +575,7 @@ sub rename {
     if (my $existing = $dirent->get($name)) {
         if ($inode->dir) {
             confess('Not a directory') unless $existing->dir;
+            confess('Directory not empty') unless $existing->empty;
         } else {
             confess('Is a directory') if $existing->dir;
         }
@@ -470,6 +587,33 @@ sub rename {
     $dirent->set($name, $inode);
 }
 
+=item $fs->rmdir($path)
+
+Unlinks the directory inode at the specified path.  Exceptions are thrown in
+the following conditions:
+
+=over
+
+=item No such file or directory
+
+No inode exists by the name specified in the final component of the path in
+the parent directory specified in the path.
+
+=item Device or resource busy
+
+The directory specified is an active mount point.
+
+=item Not a directory
+
+The inode found at $path is not a directory.
+
+=item Directory not empty
+
+The directory is not empty.
+
+=back
+
+=cut
 sub rmdir {
     my ($self, $path) = @_;
     my $hier = Filesys::POSIX::Path->new($path);
@@ -480,9 +624,13 @@ sub rmdir {
 
     confess('No such file or directory') unless $inode;
     confess('Device or resource busy') if $self->{'vfs'}->statfs($self->stat($path), 'exact' => 1);
-    confess('Directory not empty') unless $inode->dirent->count == 2;
+    confess('Directory not empty') unless $inode->empty;
 
     $dirent->delete($name);
 }
+
+=back
+
+=cut
 
 1;
