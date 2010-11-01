@@ -6,7 +6,7 @@ use Filesys::POSIX::Mem::Inode;
 use Filesys::POSIX::Mem::Bucket;
 use Filesys::POSIX::Bits;
 
-use Test::More ('tests' => 26);
+use Test::More ('tests' => 29);
 use Test::Exception;
 
 {
@@ -224,5 +224,17 @@ use Test::Exception;
         $bucket->read(my $buf, 3) == 0,
         "Filesys::POSIX::Mem::Bucket->read() returns 0 when reading beyond size in memory buckets"
     );
-    
+
+    ok(
+        $bucket->seek(2048, $SEEK_END) == 2048,
+        "Filesys::POSIX::Mem::Bucket->seek() with \$SEEK_END works properly"
+    );
+
+    ok($bucket->seek(2048, $SEEK_CUR) == 4096,
+        "Filesys::POSIX::Mem::Bucket->seek() with \$SEEK_CUR works properly"
+    );
+
+    throws_ok {
+        $bucket->seek(2048, 0x04)
+    } qr/^Invalid argument/, "Filesys::POSIX::Mem::Bucket->seek() will die with 'Invalid argument' when appropriate";
 }
