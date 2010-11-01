@@ -152,21 +152,19 @@ sub read {
 
 sub seek {
     my ($self, $pos, $whence) = @_;
-
-    if ($whence == $SEEK_SET) {
-        $self->{'pos'} = $pos;
-    } elsif ($whence == $SEEK_CUR) {
-        $self->{'pos'} += $pos;
-    } elsif ($whence == $SEEK_END) {
-        confess('Invalid position') if $self->{'pos'} - $pos < 0;
-        $self->{'pos'} = $self->{'size'} - $pos;
-    }
+    my $newpos;
 
     if ($self->{'fh'}) {
-        return sysseek($self->{'fh'}, $pos, $whence);
+        $newpos = sysseek($self->{'fh'}, $pos, $whence);
+    } elsif ($whence == $SEEK_SET) {
+        $newpos = $pos;
+    } elsif ($whence == $SEEK_CUR) {
+        $newpos = $self->{'pos'} + $pos;
+    } elsif ($whence == $SEEK_END) {
+        $newpos = $self->{'size'} + $pos;
     }
 
-    return $self->{'pos'};
+    return $self->{'pos'} = $newpos;
 }
 
 sub tell {
