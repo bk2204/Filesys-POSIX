@@ -162,6 +162,8 @@ sub seek {
         $newpos = $self->{'pos'} + $pos;
     } elsif ($whence == $SEEK_END) {
         $newpos = $self->{'size'} + $pos;
+    } else {
+        confess('Invalid argument');
     }
 
     return $self->{'pos'} = $newpos;
