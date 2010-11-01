@@ -129,11 +129,17 @@ sub read {
     my $ret = 0;
 
     if ($self->{'fh'}) {
+        confess("Unable to read bucket: $!") unless fileno($self->{'fh'});
         $ret = sysread($self->{'fh'}, $_[0], $len);
-        confess("Unable to read bucket: $!") if $ret == 0 && $!;
     } else {
-        my $maxlen = $self->{'size'} - $self->{'pos'};
+        my $pos = $self->{'pos'} > $self->{'size'}? $self->{'size'}: $self->{'pos'};
+        my $maxlen = $self->{'size'} - $pos;
         $len = $maxlen if $len > $maxlen;
+
+        unless ($len) {
+            $_[0] = '';
+            return 0;
+        }
 
         $_[0] = substr($self->{'buf'}, $self->{'pos'}, $len);
         $ret = $len;
@@ -153,7 +159,7 @@ sub seek {
         $self->{'pos'} += $pos;
     } elsif ($whence == $SEEK_END) {
         confess('Invalid position') if $self->{'pos'} - $pos < 0;
-        $self->{'pos'} -= $pos;
+        $self->{'pos'} = $self->{'size'} - $pos;
     }
 
     if ($self->{'fh'}) {
@@ -175,7 +181,7 @@ sub close {
         undef $self->{'fh'};
     }
 
-    $self->{'pos'}  = 0;
+    $self->{'pos'} = 0;
 }
 
 1;
