@@ -71,7 +71,7 @@ sub empty {
     my ($self) = @_;
     my $dirent = $self->dirent;
 
-    return $dirent->count == 2 && $dirent->get('.') && $dirent->get('..');
+    return $dirent->count == 2;
 }
 
 1;
