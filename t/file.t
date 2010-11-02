@@ -104,6 +104,7 @@ use Test::Exception;
     } qr/^Directory not empty/, "Filesys::POSIX->rmdir() prevents removing populated directories";
 
     lives_ok {
+        $fs->unlink('meow/poo');
         $fs->mkdir('cats');
         $fs->rename('cats', 'meow');
     } "Filesys::POSIX->rename() can replace empty directories with other empty directories";
