@@ -21,6 +21,31 @@ BEGIN {
     );
 }
 
+=head1 NAME
+
+Filesys::POSIX::Bits - Bitfield and constant definitions for file modes and
+system call flags
+
+=head1 DESCRIPTION
+
+This file contains all the constant definitions for the system call flags and
+inode mode bitfields and values.  The following system calls use these values:
+
+=over
+
+=item Filesys::POSIX->open()
+
+Uses both flag and mode specifiers for determining permissions, file open mode,
+and inode format.
+
+=item Filesys::POSIX::IO::Handle->seek()
+
+Uses $SEEK_SET, $SEEK_CUR, and $SEEK_END for the $whence argument.
+
+=back
+
+=cut
+
 #
 # Flags as recognized by open()
 #
