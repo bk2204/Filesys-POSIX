@@ -467,7 +467,7 @@ symlink" exception is thrown unless the inode found is indeed a symlink.
 =cut
 sub readlink {
     my ($self, $path) = @_;
-    my $inode = $fs->lstat($path);
+    my $inode = $self->lstat($path);
     confess('Not a symlink') unless $inode->link;
 
     return $inode->readlink;
