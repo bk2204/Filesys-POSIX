@@ -5,7 +5,7 @@ use Filesys::POSIX;
 use Filesys::POSIX::Mem;
 use Filesys::POSIX::Bits;
 
-use Test::More ('tests' => 30);
+use Test::More ('tests' => 29);
 use Test::Exception;
 
 {
@@ -77,7 +77,6 @@ use Test::Exception;
     my $inode = $fs->fstat($fd);
 
     ok($inode->dir, 'Filesys::POSIX->open() allows for creation of directory inodes when passing $S_IFDIR');
-    ok($inode->perms == 0755, 'Filesys::POSIX->open() provides default permissions when only a format is specified');
 
     $fs->close($fd);
 }
