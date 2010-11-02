@@ -112,7 +112,7 @@ sub delete {
     delete $self->{'members'}->{$name};
 }
 
-sub unlink {
+sub detach {
     my ($self, $name) = @_;
 
     if (exists $self->{'overlays'}->{$name}) {

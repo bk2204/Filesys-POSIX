@@ -23,14 +23,14 @@ sub exists {
     return exists $self->{$name};
 }
 
-sub unlink {
+sub detach {
     my ($self, $name) = @_;
     delete $self->{$name};
 }
 
 sub delete {
     my ($self, $name) = @_;
-    $self->unlink($name);
+    $self->detach($name);
 }
 
 sub list {
