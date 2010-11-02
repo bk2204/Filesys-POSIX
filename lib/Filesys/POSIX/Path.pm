@@ -5,6 +5,45 @@ use warnings;
 
 use Carp;
 
+=head1 NAME
+
+Filesys::POSIX::Path
+
+=head1 SYNOPSIS
+
+    use Filesys::POSIX::Path;
+
+    my $path = Filesys::POSIX::Path->new('/foo/bar/baz');
+
+    printf("%s\n", $path->basename); # outputs 'baz'
+    printf("%s\n", $path->dirname);  # outputs '/foo/bar'
+
+    # outputs '/foo/bar/../baz'
+    printf("%s\n", $path->full('/foo/./././bar/../baz'));
+
+=head1 DESCRIPTION
+
+This module provides an object-oriented approach to path cleanup and
+introspection.
+
+=head1 CREATING AN OBJECT
+
+=over
+
+=item Filesys::POSIX::Path->new($path)
+
+Creates a new path object.
+
+The path is split on the forward slash (/) character into tokens; empty and
+redundant tokens are discarded.  Enough context is kept to help the methods
+implemented in this module determine the nature of the path; if it is relative
+to root, prefixed with './', or relative to the "current working directory".
+An ARRAY reference blessed into this package's namespace is returned upon
+success.
+
+=back
+
+=cut
 sub new {
     my ($class, $path) = @_;
     my @components = split(/\//, $path);
@@ -43,12 +82,28 @@ sub _proxy {
     return $context;
 }
 
+=head1 PATH INTROSPECTION
+
+=over
+
+=item $path->components()
+
+Return a list of the components parsed at object construction time.
+
+=cut
 sub components {
     my $self = _proxy(@_);
 
     return @$self;
 }
 
+=item $path->full()
+
+Returns a string representation of the full path.  This is the same as:
+
+    join('/', @$path);
+
+=cut
 sub full {
     my $self = _proxy(@_);
     my @hier = @$self;
@@ -56,6 +111,12 @@ sub full {
     return join('/', @$self);
 }
 
+=item $path->dirname()
+
+Returns a string representation of all of the leading path elements, of course
+save for the final path element.
+
+=cut
 sub dirname {
     my $self = _proxy(@_);
     my @hier = @$self;
@@ -75,6 +136,14 @@ sub dirname {
     return '.';
 }
 
+=item $path->basename()
+
+=item $path->basename($ext)
+
+Returns the final path component.  If called with an extension, then the method
+will return the path component with the extension chopped off, if found.
+
+=cut
 sub basename {
     my ($self, $ext) = (_proxy(@_[0..1]), $_[2]);
     my @hier = @$self;
@@ -85,40 +154,86 @@ sub basename {
     return $name;
 }
 
+=item $path->shift()
+
+Useful for iterating over the components of the path object.  Shifts the
+internal start-of-array pointer by one, and returns the previous first value.
+
+=cut
 sub shift {
     my ($self) = @_;
     return shift @$self;
 }
 
+=item $path->push(@parts)
+
+Push new components onto the current path object.  Each part will be tokenized
+on the forward slash (/) character, and useless items will be discarded.
+
+=cut
 sub push {
     my ($self, @parts) = @_;
-    return push @$self, map { split /\// } @parts;
+
+    return push @$self, grep {
+        $_ && $_ ne '.'
+    } map {
+        split /\//
+    } @parts;
 }
 
+=item $path->concat($pathname)
+
+A new Filesys::POSIX::Path object is created based on $pathname, and the
+current $path object's non-empty components are pushed onto that new instance.
+The new path object is returned.
+
+=cut
 sub concat {
     my ($self, $path) = @_;
     $path = __PACKAGE__->new($path) unless ref $path eq __PACKAGE__;
     
-    $path->push(grep { $_ } $self->components);
+    $path->push(grep { $_ && $_ ne '.' } $self->components);
     return $path;
 }
 
+=item $path->concat($pathname)
+
+A new Filesys::POSIX::Path object is created based on $pathname, and the
+new path object's non-empty components are pushed onto the current $path
+object.  The current $path reference is then returned.
+
+=cut
 sub append {
     my ($self, $path) = @_;
     $path = __PACKAGE__->new($path) unless ref $path eq __PACKAGE__;
 
-    $self->push(grep { $_ } $path->components);
+    $self->push(grep { $_ && $_ ne '.' } $path->components);
     return $self;
 }
 
+=item $path->pop()
+
+Pops the final path component off of the path object list, and returns that
+value.
+
+=cut
 sub pop {
     my ($self) = @_;
     return pop @$self;
 }
 
+=item $path->count()
+
+Returns the number of components in the current path object.
+
+=cut
 sub count {
     my ($self) = @_;
     return scalar @$self;
 }
+
+=back
+
+=cut
 
 1;
