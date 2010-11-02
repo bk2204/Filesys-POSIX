@@ -5,6 +5,18 @@ use warnings;
 
 use Carp;
 
+=head1 NAME
+
+Filesys::POSIX::FdTable
+
+=head1 DESCRIPTION
+
+This internal module used by Filesys::POSIX handles the allocation and tracking
+of numeric file descriptors associated with inodes opened for I/O.  It does not
+intend to expose any public interfaces.
+
+=cut
+
 sub new {
     return bless {}, shift;
 }
