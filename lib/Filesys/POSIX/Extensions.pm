@@ -10,10 +10,54 @@ use Filesys::POSIX::Real::Dirent;
 
 use Carp;
 
+=head1 NAME
+
+Filesys::POSIX::Extensions
+
+=head1 SYNOPSIS
+
+    use Filesys::POSIX;
+    use Filesys::POSIX::Mem;
+
+    my $fs = Filesys::POSIX->new(Filesys::POSIX::Mem->new,
+        'noatime' => 1
+    );
+
+    $fs->import_module('Filesys::POSIX::Extensions');
+
+=head1 DESCRIPTION
+
+This module of extensions provides system calls that would be considered
+nonstandard in a POSIX environment, but nonetheless provide their functionality
+with standard filesystem semantics.  These extensions provide novel means of
+performing efficient filesystem manipulation, allowing the developer to attach
+arbitrary inodes in specified locations, detach, replace, and perform cross-
+device symlinks.
+
+=head1 SYSTEM CALLS
+
+=over
+
+=cut
+
 sub EXPORT {
     qw/attach map alias detach replace/;
 }
 
+=item $fs->attach($inode, $dest)
+
+Attaches the given inode object to the filesystem in the specified location.
+Exceptions will be thrown for the following:
+
+=over
+
+=item File exists
+
+An inode at the destination path already exists.
+
+=back
+
+=cut
 sub attach {
     my ($self, $inode, $dest) = @_;
     my $hier = Filesys::POSIX::Path->new($dest);
@@ -26,6 +70,25 @@ sub attach {
     $dirent->set($name, $inode);
 }
 
+=item $fs->map($real_src, $dest)
+
+Manifests a Filesys::POSIX::Real::Inode object corresponding to the actual
+inode from the underlying filesystem whose path is specified by $real_src,
+and attaches it to the virtual filesystem in the location specified by $dest.
+Exceptions will be thrown for the following:
+
+=over
+
+=item File exists
+
+An inode at the destination path already exists.
+
+=back
+
+Other exceptions may be thrown, based on the availability and permissions of
+the actual inode referred to by $real_src.
+
+=cut
 sub map {
     my ($self, $real_src, $dest) = @_;
     my $hier = Filesys::POSIX::Path->new($dest);
@@ -47,6 +110,21 @@ sub map {
     $dirent->set($name, $inode);
 }
 
+=item $fs->alias($src, $dest)
+
+Very similar to $fs->link(), however this system call allows inode aliases to
+be made across filesystem mount points.  It is also possible to alias
+directories, unlinke $fs->link().  Exceptions will be thrown for the following:
+
+=over
+
+=item File exists
+
+An inode at the destination path was found.
+
+=back
+
+=cut
 sub alias {
     my ($self, $src, $dest) = @_;
     my $hier = Filesys::POSIX::Path->new($dest);
@@ -60,6 +138,34 @@ sub alias {
     $dirent->set($name, $inode);
 }
 
+=item $fs->detach($path)
+
+Detaches the inode of the given path from the virtual filesystem.  This call is
+similar to $fs->unlink(), except a different underlying, filesystem-dependent
+method is used to detach an inode from the path's parent directory entry.
+Both directories and non-directories alike can be detached from any point in
+the filesystem using this call; directories do not have to be empty.
+
+Given a directory entry object, the $dirent->detach() call is used, which only
+removes the inode from the directory entry itself; whereas $dirent->delete(),
+as used by $fs->unlink(), would perform an unlink() at the system level in the
+case of a Filesys::POSIX::Real::Dirent directory entry object.  This way, it is
+possible to only perform logical deletes of inodes, without affecting the
+underlying filesystem when managing inodes brought into existence using other
+system calls in this extensions module.
+
+Exceptions are thrown for the following:
+
+=over
+
+=item No such file or directory
+
+Thrown when the parent directory of the item in $path does not contain an item
+named in the final component of the path.
+
+=back
+
+=cut
 sub detach {
     my ($self, $path) = @_;
     my $hier = Filesys::POSIX::Path->new($path);
@@ -72,6 +178,22 @@ sub detach {
     $dirent->unlink($name);
 }
 
+=item $fs->replace($path, $inode)
+
+Replaces an existant inode specified by $path with the inode object passed in
+the $inode argument.  The existing and specified inodes can be of any type.
+
+Exceptions will be thrown for the following:
+
+=over
+
+=item No such file or directory
+
+No inode was found at the path specified.
+
+=back
+
+=cut
 sub replace {
     my ($self, $path, $inode) = @_;
     my $hier = Filesys::POSIX::Path->new($path);
@@ -84,5 +206,9 @@ sub replace {
     $dirent->unlink($name);
     $dirent->set($name, $inode);
 }
+
+=back
+
+=cut
 
 1;
