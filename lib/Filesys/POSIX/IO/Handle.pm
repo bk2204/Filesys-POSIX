@@ -9,12 +9,6 @@ sub new {
     return bless \$fh, $class;
 }
 
-sub flush {
-    my ($self) = @_;
-
-    $|++;
-}
-
 sub write {
     my ($self, $buf, $len) = @_;
 
