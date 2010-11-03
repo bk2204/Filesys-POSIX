@@ -47,40 +47,40 @@ sub mountlist {
 # the appropriate VFS mount point for querying purposes.
 #
 sub mount {
-    my ($self, $fs, $path, $mountpoint, %data) = @_;
+    my ($self, $dev, $path, $mountpoint, %data) = @_;
 
-    if (grep { $_->{'dev'} eq $fs } @{$self->{'mounts'}}) {
+    if (grep { $_->{'dev'} eq $dev } @{$self->{'mounts'}}) {
         confess('Already mounted');
     }
 
-    $data{'special'} ||= scalar $fs;
+    $data{'special'} ||= scalar $dev;
 
     #
     # Generate a generic BSD-style filesystem type string.
     #
-    my $type = lc ref $fs;
+    my $type = lc ref $dev;
     $type =~ s/^([a-z_][a-z0-9_]*::)*//;
 
     #
     # Create a vnode record munged from the mountpoint and new
     # filesystem root.
     #
-    my $vnode = Filesys::POSIX::VFS::Inode->new($mountpoint, $fs->{'root'});
+    my $vnode = Filesys::POSIX::VFS::Inode->new($mountpoint, $dev->{'root'});
 
     #
     # Associate the mountpoint and filesystem roots with this vnode.
     #
     $mountpoint->{'vnode'}      = $vnode;
-    $fs->{'root'}->{'vnode'}    = $vnode;
+    $dev->{'root'}->{'vnode'}    = $vnode;
 
     #
     # Generate the mount record.
     #
     my $mount = {
         'mountpoint'    => $mountpoint,
-        'root'          => $fs->{'root'},
+        'root'          => $dev->{'root'},
         'special'       => $data{'special'},
-        'dev'           => $fs,
+        'dev'           => $dev,
         'type'          => $type,
         'path'          => $path,
         'vnode'         => $vnode,
@@ -107,7 +107,7 @@ sub mount {
     #
     # Finally, associate the filesystem with the mount record.
     #
-    $self->{'devices'}->{$fs} = $mount;
+    $self->{'devices'}->{$dev} = $mount;
 
     return $self;
 }
