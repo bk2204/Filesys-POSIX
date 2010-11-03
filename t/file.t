@@ -5,7 +5,7 @@ use Filesys::POSIX;
 use Filesys::POSIX::Mem;
 use Filesys::POSIX::Bits;
 
-use Test::More ('tests' => 37);
+use Test::More ('tests' => 41);
 use Test::Exception;
 
 {
@@ -18,6 +18,11 @@ use Test::Exception;
 
     my $fd = $fs->open('foo', $O_CREAT | $O_WRONLY);
     my $inode = $fs->fstat($fd);
+
+    throws_ok {
+        $fs->fchdir($fd)
+    } qr/^Not a directory/, "Filesys::POSIX->fchdir() fails on non-directory file descriptor";
+
     $fs->close($fd);
 
     throws_ok {
@@ -103,9 +108,17 @@ use Test::Exception;
         $fs->rmdir('meow');
     } qr/^Directory not empty/, "Filesys::POSIX->rmdir() prevents removing populated directories";
 
+    throws_ok {
+        $fs->chdir('meow/poo')
+    } qr/^Not a directory/, "Filesys::POSIX->chdir() fails on non directory inodes";
+
+    throws_ok {
+        $fs->mkdir('cats');
+        $fs->rename('cats', 'meow');
+    } qr/^Directory not empty/, "Filesys::POSIX->rename() fails when replacing a non-empty directory";
+
     lives_ok {
         $fs->unlink('meow/poo');
-        $fs->mkdir('cats');
         $fs->rename('cats', 'meow');
     } "Filesys::POSIX->rename() can replace empty directories with other empty directories";
 
@@ -134,6 +147,10 @@ use Test::Exception;
     $fs->symlink('zwei', 'eins/foo');
 
     ok($fs->stat('eins/zwei/drei') eq $fs->lstat('eins/foo/drei'), "Filesys::POSIX->lstat() resolves symlinks in tree");
+
+    throws_ok {
+        $fs->readlink('foo')
+    } qr/^Not a symlink/, "Filesys::POSIX->readlink() fails on non-symlink inodes";
 
     $fs->symlink('foo', 'bar');
     my $link = $fs->lstat('bar');
