@@ -24,6 +24,7 @@ lib/Filesys/POSIX/VFS.pm
 lib/Filesys/POSIX.pm
 t/001_load.t
 t/bucket.t
+t/dirent.t
 t/file.t
 t/handle.t
 t/inode_tests.t
@@ -31,6 +32,7 @@ t/io.t
 t/mount.t
 t/mount_flags.t
 t/path.t
+t/real.t
 t/stat.t
 t/umask.t
 t/userland.t
