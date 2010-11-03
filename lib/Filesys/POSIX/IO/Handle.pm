@@ -3,6 +3,8 @@ package Filesys::POSIX::IO::Handle;
 use strict;
 use warnings;
 
+use Filesys::POSIX::Bits;
+
 sub new {
     my ($class, $fh) = @_;
 
@@ -31,7 +33,7 @@ sub seek {
 sub tell {
     my ($self) = @_;
 
-    return tell($$self);
+    return sysseek($$self, 0, $SEEK_CUR);
 }
 
 sub close {
