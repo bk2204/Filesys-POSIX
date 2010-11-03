@@ -175,7 +175,7 @@ sub detach {
 
     confess('No such file or directory') unless $dirent->exists($name);
 
-    $dirent->unlink($name);
+    $dirent->detach($name);
 }
 
 =item $fs->replace($path, $inode)
@@ -203,7 +203,7 @@ sub replace {
 
     confess('No such file or directory') unless $dirent->exists($name);
 
-    $dirent->unlink($name);
+    $dirent->detach($name);
     $dirent->set($name, $inode);
 }
 
