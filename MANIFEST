@@ -25,6 +25,7 @@ lib/Filesys/POSIX.pm
 t/001_load.t
 t/bucket.t
 t/dirent.t
+t/extensions.t
 t/file.t
 t/handle.t
 t/inode_tests.t
