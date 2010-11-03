@@ -96,10 +96,6 @@ sub open {
             my $format = $mode? ($mode & $S_IFMT? $mode & $S_IFMT: $S_IFREG): $S_IFREG;
             my $perms = $mode? $mode & $S_IPERM: $S_IRW;
 
-            if ($format == $S_IFDIR) {
-                $perms |= $S_IX unless $mode;
-            }
-
             $perms &= ~$self->{'umask'};
 
             $inode = $parent->child($name, $format | $perms);
