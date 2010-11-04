@@ -1,11 +1,19 @@
 use strict;
 use warnings;
 
-use Test::More ('tests' => 50);
+use Test::More ('tests' => 65);
+use Test::Exception;
 
 use Filesys::POSIX::Path ();
 
 my %TEST_DATA = (
+    '/'             => {
+        'full'      => '/',
+        'dirname'   => '/',
+        'basename'  => '/',
+        'parts'     => ['/']
+    },
+
     '.'             => {
         'full'      => '.',
         'dirname'   => '.',
@@ -74,7 +82,7 @@ my %TEST_DATA = (
         'basename'  => 'bar',
         'dirname'   => './foo/..',
         'parts'     => [qw/. foo .. bar/]
-    }
+    },
 );
 
 foreach my $input (keys %TEST_DATA) {
@@ -91,5 +99,59 @@ foreach my $input (keys %TEST_DATA) {
         $left-- if $path->pop eq pop @{$item->{'parts'}};
     }
 
-    ok($left == 0,                                  "Each component of '$input' held internally parsed as expected");
+    ok($left == 0, "Each component of '$input' held internally parsed as expected");
+}
+
+{
+    my $path = Filesys::POSIX::Path->new('///foo');
+    $path->push('///bar');
+
+    ok($path->full eq '/foo/bar', "Filesys::POSIX::Path->push() chops useless items out like new()");
+}
+
+{
+    my $path = Filesys::POSIX::Path->new('/foo');
+    my $newpath = $path->concat('bar/./baz///boo');
+
+    ok($path->full eq '/foo', "Filesys::POSIX::Path->concat() does not mangle original path");
+    ok($newpath->full eq 'bar/baz/boo/foo', "Filesys::POSIX::Path->concat() provides expected result with string");
+}
+
+{
+    my $path1 = Filesys::POSIX::Path->new('/foo');
+    my $path2 = Filesys::POSIX::Path->new('bar/baz/boo');
+    my $newpath = $path1->concat($path2);
+
+    ok($newpath->full eq 'bar/baz/boo/foo', "Filesys::POSIX::Path->concat() works with other instances of class");
+}
+
+{
+    my $path = Filesys::POSIX::Path->new('///foo');
+    my $newpath = $path->append('bar/./baz///boo');
+
+    ok($path eq $newpath, "Filesys::POSIX::Path->append() returns self");
+    ok($path->full eq '/foo/bar/baz/boo', "Filesys::POSIX::Path->append() works expectedly when passed a string");
+}
+
+{
+    my $path1 = Filesys::POSIX::Path->new('///foo');
+    my $path2 = Filesys::POSIX::Path->new('bar/./baz///boo');
+
+    $path1->append($path2);
+
+    ok($path1->full eq '/foo/bar/baz/boo', "Filesys::POSIX::Path->append() works when passed instance");
+}
+
+ok(
+    Filesys::POSIX::Path->basename('/foo/bar.txt', '.txt') eq 'bar',
+    "Filesys::POSIX::Path->basename() works with an extension"
+);
+
+throws_ok {
+    Filesys::POSIX::Path->new('');
+} qr/^Empty path/, "Filesys::POSIX::Path->new() fails when an empty path is specified";
+
+{
+    my $path = Filesys::POSIX::Path->new('.');
+    ok(scalar(@$path) == 1 && $path->[0] eq '.', "Filesys::POSIX::Path handles '.' appropriately");
 }

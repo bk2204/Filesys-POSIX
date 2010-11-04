@@ -127,11 +127,9 @@ sub dirname {
         }
 
         return join('/', @parts);
-    } elsif (@hier == 1 && $hier[0] eq '/') {
-        return '/'
     }
 
-    return '.';
+    return $hier[0] eq '/'? '/': '.';
 }
 
 =item $path->basename()
@@ -205,7 +203,7 @@ sub append {
     my ($self, $path) = @_;
     $path = __PACKAGE__->new($path) unless ref $path eq __PACKAGE__;
 
-    $self->push(grep { $_ && $_ ne '.' } $path->components);
+    $self->push(grep { $_ ne '.' } $path->components);
     return $self;
 }
 
