@@ -119,7 +119,7 @@ sub dirname {
     my $self = _proxy(@_);
     my @hier = @$self;
 
-    if (scalar @hier > 1) {
+    if (@hier > 1) {
         my @parts = @hier[0..$#hier-1];
 
         if (@parts == 1 && !$parts[0]) {
