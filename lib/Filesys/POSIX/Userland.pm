@@ -29,14 +29,14 @@ sub _find_inode_path {
     my $inode = $self->{'vfs'}->vnode($start);
     my @ret;
 
-    while (my $dir = $self->{'vfs'}->vnode($inode->{'parent'})) {
+    while (my $dir = $self->{'vfs'}->vnode($inode)->{'parent'}) {
         last if $dir eq $inode;
 
         my $dirent = $dir->dirent;
 
-        dirent: foreach ($dirent->list) {
+        foreach ($dirent->list) {
             next if $_ eq '.' || $_ eq '..';
-            next dirent unless $self->{'vfs'}->vnode($dirent->get($_)) == $self->{'vfs'}->vnode($inode);
+            next unless $self->{'vfs'}->vnode($dirent->get($_)) == $self->{'vfs'}->vnode($inode);
 
             push @ret, $_;
             $inode = $dir;
