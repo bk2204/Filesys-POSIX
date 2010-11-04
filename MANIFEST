@@ -28,7 +28,7 @@ t/dirent.t
 t/extensions.t
 t/file.t
 t/handle.t
-t/inode_tests.t
+t/inode.t
 t/io.t
 t/mount.t
 t/mount_flags.t
