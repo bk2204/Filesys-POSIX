@@ -172,11 +172,11 @@ sub tar {
 
     $self->import_module('Filesys::POSIX::Userland::Find');
 
-    $self->find(\%opts, sub {
+    $self->find(sub {
         my ($path, $inode) = @_;
 
         _archive($self, $handle, $path->full, $inode);
-    }, @items);
+    }, \%opts, @items);
 }
 
 1;

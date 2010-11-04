@@ -12,14 +12,14 @@ sub EXPORT {
 
 sub find {
     my $self = shift;
-    my %opts = ref $_[0] eq 'HASH'? %{(shift)}: ();
     my $callback = shift;
+    my %opts = ref $_[0] eq 'HASH'? %{(shift)}: ();
     my @args = @_;
 
     my @paths = map { Filesys::POSIX::Path->new($_) } @args;
-    my @nodes = map { $self->stat($_) } @args;
+    my @inodes = map { $self->stat($_) } @args;
 
-    while (my $inode = pop @nodes) {
+    while (my $inode = pop @inodes) {
         my $path = pop @paths;
 
         if ($inode->link) {
@@ -36,7 +36,7 @@ sub find {
             while (my $item = $dirent->read) {
                 next if $item eq '.' || $item eq '..';
                 push @paths, Filesys::POSIX::Path->new($path->full . "/$item");
-                push @nodes, $self->{'vfs'}->vnode($dirent->get($item));
+                push @inodes, $self->{'vfs'}->vnode($dirent->get($item));
             }
 
             $dirent->close;
