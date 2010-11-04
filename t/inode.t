@@ -5,8 +5,12 @@ use Filesys::POSIX;
 use Filesys::POSIX::Mem;
 use Filesys::POSIX::Bits;
 
-use Test::More ('tests' => 16);
+use Test::More ('tests' => 17);
 use Test::Exception;
+
+{
+    ok(Filesys::POSIX::Mem::Inode->new->{'mode'} == 0, "Filesys::POSIX::Mem::Inode->new() provides default mode of 0");
+}
 
 my $fs = Filesys::POSIX->new(Filesys::POSIX::Mem->new);
 
