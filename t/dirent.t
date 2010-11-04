@@ -7,7 +7,7 @@ use Filesys::POSIX::Real;
 use Filesys::POSIX::Bits;
 
 use File::Temp qw/mkdtemp/;
-use Test::More ('tests' => 10);
+use Test::More ('tests' => 4);
 
 my $tmpdir = mkdtemp('/tmp/.filesys-posix-XXXXXX') or die $!;
 
@@ -37,7 +37,6 @@ my %files = (
 
 my $fs = Filesys::POSIX->new(Filesys::POSIX::Mem->new);
 $fs->import_module('Filesys::POSIX::Extensions');
-$fs->import_module('Filesys::POSIX::Userland::Find');
 
 foreach my $mountpoint (sort keys %mounts) {
     my $mount = $mounts{$mountpoint};
@@ -55,25 +54,37 @@ foreach my $mountpoint (sort keys %mounts) {
         }
     }
 
-    my %found = (
-        '.'     => 0,
-        '..'    => 0,
-        'bar'   => 0,
-        'baz'   => 0,
-        'bleh'  => 0
+    my %members = (
+        '.'     => 1,
+        '..'    => 1,
+        'bar'   => 1,
+        'baz'   => 1,
+        'bleh'  => 1
     );
 
-    my $dirent = $fs->opendir("$mountpoint/foo");
-    my $type = ref $dirent;
+    {
+        my $dirent = $fs->opendir("$mountpoint/foo");
+        my $type = ref $dirent;
+        my $found = 0;
 
-    while (my $member = $fs->readdir($dirent)) {
-        $found{$member} = 1;
+        while (my $member = $fs->readdir($dirent)) {
+            $found++ if $members{$member};
+        }
+
+        $fs->closedir($dirent);
+
+        ok($found == keys %members, "$type\->readdir() found each member");
     }
 
-    $fs->closedir($dirent);
+    {
+        my $dirent = $fs->stat("$mountpoint/foo")->dirent;
+        my $found = 0;
 
-    foreach (sort keys %found) {
-        ok($found{$_} == 1, "$type\->readdir() found member $_");
+        foreach ($dirent->list) {
+            $found++ if $members{$_};
+        }
+
+        ok($found == keys %members, "\$type\->list() found each member");
     }
 }
 
