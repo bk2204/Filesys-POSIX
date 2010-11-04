@@ -5,7 +5,7 @@ use Filesys::POSIX;
 use Filesys::POSIX::Mem;
 use Filesys::POSIX::Bits;
 
-use Test::More ('tests' => 27);
+use Test::More ('tests' => 29);
 use Test::Exception;
 
 my $mounts = {
@@ -28,6 +28,12 @@ foreach (grep { $_ ne '/' } sort keys %$mounts) {
             'noatime' => 1
         )
     } "Able to mount $mounts->{$_} to $_";
+
+    throws_ok {
+        $fs->mount($mounts->{$_}, $_,
+            'noatime' => 1
+        );
+    } qr/^Already mounted/, "Filesys::POSIX->mount() complains when requested device is already mounted";
 }
 
 throws_ok {

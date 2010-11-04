@@ -40,3 +40,4 @@ t/real.t
 t/stat.t
 t/umask.t
 t/userland.t
+t/vfs.t
