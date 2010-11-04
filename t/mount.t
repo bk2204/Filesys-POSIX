@@ -5,7 +5,7 @@ use Filesys::POSIX;
 use Filesys::POSIX::Mem;
 use Filesys::POSIX::Bits;
 
-use Test::More ('tests' => 26);
+use Test::More ('tests' => 27);
 use Test::Exception;
 
 my $mounts = {
@@ -60,6 +60,16 @@ foreach (sort keys %$mounts) {
     ok($fs->fstatfs($fd) eq $mount, "Filesys::POSIX->fstatfs() on open file descriptor returns expected mount object");
 
     $fs->close($fd);
+}
+
+{
+    my $found = 0;
+
+    foreach my $mount ($fs->mountlist) {
+        $found++ if $mounts->{$mount->{'path'}};
+    }
+
+    ok($found == keys %$mounts, "Filesys::POSIX->mountlist() works expectedly");
 }
 
 {
