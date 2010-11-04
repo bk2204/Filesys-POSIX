@@ -8,7 +8,8 @@ use Filesys::POSIX::Bits;
 use File::Temp qw/mkdtemp/;
 use Fcntl;
 
-use Test::More ('tests' => 7);
+use Test::More ('tests' => 9);
+use Test::Exception;
 
 my $tmpdir = mkdtemp('/tmp/.filesys-posix.XXXXXX');
 
@@ -45,5 +46,17 @@ foreach (sort keys %files) {
         ok($inode->dir, "Filesys::POSIX::Real sees $_ as a directory");
     }
 }
+
+throws_ok {
+    Filesys::POSIX->new(Filesys::POSIX::Real->new,
+        'special' => 'poop:'
+    );
+} qr/^Invalid special path/, "Filesys::POSIX::Real->init() dies when an invalid special was passed at mount time";
+
+throws_ok {
+    Filesys::POSIX->new(Filesys::POSIX::Real->new,
+        'special' => 'real:/dev/null'
+    );
+} qr/^Not a directory/, "Filesys::POSIX::Real->init() dies when special is not a directory";
 
 system qw/rm -rf/, $tmpdir;
