@@ -63,9 +63,7 @@ sub new {
 
     my @hier = $components[0]? @ret: ('', @ret);
 
-    if (@hier == 0) {
-        @hier = ('.');
-    } elsif (@hier == 1 && !$hier[0]) {
+    if (@hier == 1 && !$hier[0]) {
         @hier = ('/');
     }
 
