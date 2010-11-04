@@ -22,7 +22,7 @@ sub new {
         'ctime'     => $now,
         'uid'       => 0,
         'gid'       => 0,
-        'mode'      => $opts{'mode'}? $opts{'mode'}: 0,
+        'mode'      => $opts{'mode'},
         'dev'       => $opts{'dev'},
         'rdev'      => $opts{'rdev'},
         'parent'    => $opts{'parent'}
@@ -38,17 +38,10 @@ sub new {
     return $inode;
 }
 
-sub DESTROY {
-    my ($self) = @_;
-
-    $self->close;
-}
-
 sub child {
     my ($self, $name, $mode) = @_;
     my $dirent = $self->dirent;
 
-    confess('Invalid directory entry name') if $name =~ /\//;
     confess('File exists') if $dirent->exists($name);
 
     my $child = __PACKAGE__->new(
@@ -103,14 +96,6 @@ sub open {
     }
 
     return $self->{'bucket'}->open($flags);
-}
-
-sub close {
-    my ($self) = @_;
-
-    if ($self->{'bucket'}) {
-        $self->{'bucket'}->close;
-    }
 }
 
 1;

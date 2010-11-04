@@ -32,12 +32,6 @@ sub new {
     return $inode;
 }
 
-sub DESTROY {
-    my ($self) = @_;
-
-    $self->close;
-}
-
 sub child {
     my ($self, $name, $mode) = @_;
     my $dirent = $self->dirent;
@@ -68,16 +62,7 @@ sub open {
 
     sysopen(my $fh, $self->{'path'}, $flags) or confess $!;
 
-    return $self->{'handle'} = Filesys::POSIX::IO::Handle->new($fh);
-}
-
-sub close {
-    my ($self) = @_;
-
-    if ($self->{'handle'}) {
-        $self->{'handle'}->close;
-        delete $self->{'handle'};
-    }
+    return Filesys::POSIX::IO::Handle->new($fh);
 }
 
 sub chown {
