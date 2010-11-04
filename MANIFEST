@@ -26,7 +26,10 @@ t/001_load.t
 t/bucket.t
 t/dirent.t
 t/extensions.t
+t/fd_table.t
 t/file.t
+t/find.t
+t/fs.t
 t/handle.t
 t/inode.t
 t/io.t
