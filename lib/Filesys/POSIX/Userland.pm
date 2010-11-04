@@ -30,8 +30,6 @@ sub _find_inode_path {
     my @ret;
 
     while (my $dir = $self->{'vfs'}->vnode($inode)->{'parent'}) {
-        last if $dir eq $inode;
-
         my $dirent = $dir->dirent;
 
         foreach ($dirent->list) {
