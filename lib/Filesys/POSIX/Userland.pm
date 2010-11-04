@@ -122,7 +122,6 @@ Using other methods in this module, the directory can be read and closed.
 =cut
 sub opendir {
     my ($self, $path) = @_;
-    my $inode = $self->stat($path);
 
     my $dirent = $self->stat($path)->dirent;
     $dirent->open;
