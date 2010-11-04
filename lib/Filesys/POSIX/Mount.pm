@@ -79,7 +79,7 @@ sub unmount {
     # First, check for open file descriptors held on the desired device.
     #
     foreach ($self->{'fds'}->list) {
-        my $inode = $self->{'fds'}->fetch($_);
+        my $inode = $self->{'fds'}->lookup($_)->{'inode'};
 
         confess('Device or resource busy') if $mount->{'dev'} eq $inode->{'dev'};
     }
