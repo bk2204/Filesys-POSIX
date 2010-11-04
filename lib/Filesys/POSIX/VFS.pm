@@ -20,18 +20,23 @@ sub new {
 sub statfs {
     my ($self, $start, %opts) = @_;
     my $inode = $start;
+    my $ret;
 
     while ($inode->{'vnode'}) {
         $inode = $inode->{'vnode'};
     }
 
     if ($opts{'exact'}) {
-        return $self->{'vnodes'}->{$inode};
+        $ret = $self->{'vnodes'}->{$inode};
     } else {
-        return $self->{'devices'}->{$inode->{'dev'}};
+        $ret = $self->{'devices'}->{$inode->{'dev'}};
     }
 
-    confess('Not mounted') unless $opts{'silent'};
+    unless ($ret) {
+        confess('Not mounted') unless $opts{'silent'};
+    }
+
+    return $ret;
 }
 
 sub mountlist {
@@ -142,8 +147,7 @@ sub vnode {
 }
 
 sub unmount {
-    my ($self, $object) = @_;
-    my $mount = $object->{'special'}? $object: $self->statfs($object, 'exact' => 1);
+    my ($self, $mount) = @_;
 
     #
     # First, check to see that the filesystem mount record found is a
