@@ -8,6 +8,47 @@ use Filesys::POSIX::Bits;
 
 use Carp;
 
+=head1 NAME
+
+Filesys::POSIX::Userland::Tar
+
+=head1 SYNOPSIS
+
+    use Filesys::POSIX;
+    use Filesys::POSIX::Mem;
+    use Filesys::POSIX::IO::Handle;
+
+    my $fs = Filesys::POSIX->new(Filesys::POSIX::Mem->new,
+        'noatime' => 1
+    );
+
+    $fs->import_module('Filesys::POSIX::Userland::Tar');
+
+    $fs->mkdir('foo');
+    $fs->touch('foo/bar');
+
+    $fs->tar(Filesys::POSIX::IO::Handle->new(\*STDOUT, '.'));
+
+=head1 DESCRIPTION
+
+This module provides an implementation of the ustar standard on top of the
+virtual filesystem layer, a mechanism intended to take advantage of the many
+possible mapping and manipulation capabilities inherent in this mechanism.
+Internally, it uses the Filesys::POSIX::Userland::Find module to perform depth-
+last recursion to locate inodes for packaging.
+
+As mentioned, archives are written in the ustar format, with pathnames of the
+extended maximum length of 256 characters, supporting file sizes up to 4GB.
+Currently, only user and group IDs are stored; names are not resolved and
+stored as of the time of this writing.  All inode types are supported for
+archival.
+
+=head1 USAGE
+
+=over
+
+=cut
+
 my $BLOCK_SIZE = 512;
 
 my %TYPES = (
@@ -164,10 +205,21 @@ sub _archive {
     _write_file($fs, $handle, $dest, $inode) if $inode->file;
 }
 
+=item $fs->tar($handle, @items)
+
+=item $fs->tar($handle, $opts, @items)
+
+Locate files and directories in each path specified in the @items array,
+writing results to the I/O handle wrapper specified by $handle, an instance of
+Filesys::POSIX::IO::Handle.  When an anonymous HASH argument, $opts, is
+specified, the data is passed unmodified to Filesys::POSIX::Userland::Find.
+In this way, for instance, the behavior of following symlinks can be specified.
+
+=cut
 sub tar {
     my $self = shift;
     my $handle = shift;
-    my %opts = ref $_[0] eq 'HASH'? %{(shift)}: ();
+    my $opts = ref $_[0] eq 'HASH'? shift: {};
     my @items = @_;
 
     $self->import_module('Filesys::POSIX::Userland::Find');
@@ -176,7 +228,11 @@ sub tar {
         my ($path, $inode) = @_;
 
         _archive($self, $handle, $path->full, $inode);
-    }, \%opts, @items);
+    }, $opts, @items);
 }
+
+=back
+
+=cut
 
 1;
