@@ -96,11 +96,7 @@ sub map {
     my $parent = $self->stat($hier->dirname);
     my $dirent = $parent->dirent;
 
-    eval {
-        $self->stat($dest);
-    };
-
-    confess('File exists') unless $@;
+    confess('File exists') if $dirent->exists($name);
 
     my $inode = Filesys::POSIX::Real::Inode->new($real_src,
         'dev'       => $parent->{'dev'},
