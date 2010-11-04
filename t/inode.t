@@ -5,12 +5,26 @@ use Filesys::POSIX;
 use Filesys::POSIX::Mem;
 use Filesys::POSIX::Bits;
 
-use Test::More ('tests' => 13);
+use Test::More ('tests' => 16);
+use Test::Exception;
 
 my $fs = Filesys::POSIX->new(Filesys::POSIX::Mem->new);
 
 $fs->mkdir('foo');
 ok($fs->lstat('foo')->dir, 'Filesys::POSIX::Inode->dir() reports true for directory inodes');
+
+throws_ok {
+    $fs->touch('foo/bar');
+    $fs->lstat('foo')->child('bar', 0644);
+} qr/^File exists/, "Filesys::POSIX::Inode->child() throws an exception when requested member exists";
+
+throws_ok {
+    $fs->lstat('foo')->readlink;
+} qr/^Not a symlink/, "Filesys::POSIX::Inode->readlink() throws an exception on non-symlink inodes";
+
+throws_ok {
+    $fs->lstat('foo')->symlink('bar');
+} qr/^Not a symlink/, "Filesys::POSIX::Inode->symlink() throws an exception on non-symlink inodes";
 
 $fs->symlink('foo', 'bar');
 ok($fs->lstat('bar')->link, 'Filesys::POSIX::Inode->link() reports true for symlink inodes');
