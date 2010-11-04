@@ -5,7 +5,7 @@ use Filesys::POSIX;
 use Filesys::POSIX::Mem;
 use Filesys::POSIX::Bits;
 
-use Test::More ('tests' => 24);
+use Test::More ('tests' => 26);
 use Test::Exception;
 
 my $mounts = {
@@ -77,9 +77,27 @@ foreach (sort keys %$mounts) {
 }
 
 {
+    my $fd = $fs->open('/mnt/mem/test.txt', $O_CREAT);
+
+    throws_ok {
+        $fs->unmount('/mnt/mem');
+    } qr/^Device or resource busy/, "Filesys::POSIX->unmount() prevents unmounting busy filesystem /mnt/mem";
+
+    $fs->close($fd);
+    $fd = $fs->open('/foo.txt', $O_CREAT);
+
     throws_ok {
         $fs->unmount('/mnt/mem')
     } qr/^Device or resource busy/, "Filesys::POSIX->unmount() prevents unmounting busy filesystem /mnt/mem";
+
+    throws_ok {
+        $fs->chdir('/mnt/mem');
+        $fs->unmount('/mnt/mem')
+    } qr/^Device or resource busy/, "Filesys::POSIX->unmount() fails when cwd is /mnt/mem";
+
+    $fs->chdir('/');
+
+    $fs->close($fd);
 }
 
 {
