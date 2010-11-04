@@ -7,7 +7,7 @@ use Filesys::POSIX::Real;
 use Filesys::POSIX::Bits;
 
 use File::Temp qw/mkdtemp/;
-use Test::More ('tests' => 4);
+use Test::More ('tests' => 6);
 
 my $tmpdir = mkdtemp('/tmp/.filesys-posix-XXXXXX') or die $!;
 
@@ -77,14 +77,29 @@ foreach my $mountpoint (sort keys %mounts) {
     }
 
     {
+        my $dirent = $fs->opendir("$mountpoint/foo");
+        my $type = ref $dirent;
+        my $found = 0;
+
+        foreach ($fs->readdir($dirent)) {
+            $found++ if $members{$_};
+        }
+
+        $fs->closedir($dirent);
+
+        ok($found == keys %members, "$type\->readdir() returned each member in list context");
+    }
+
+    {
         my $dirent = $fs->stat("$mountpoint/foo")->dirent;
+        my $type = ref $dirent;
         my $found = 0;
 
         foreach ($dirent->list) {
             $found++ if $members{$_};
         }
 
-        ok($found == keys %members, "\$type\->list() found each member");
+        ok($found == keys %members, "$type\->list() found each member");
     }
 }
 
