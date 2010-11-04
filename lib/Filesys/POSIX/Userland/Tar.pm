@@ -148,7 +148,7 @@ sub _write_file {
         $handle->write($buf, $len) == $len or confess('Short write while dumping file buffer to handle');
     }
 
-    $inode->close;
+    $fh->close;
 }
 
 sub _archive {
