@@ -623,7 +623,7 @@ sub rmdir {
     my $inode = $dirent->get($name);
 
     confess('No such file or directory') unless $inode;
-    confess('Device or resource busy') if $self->{'vfs'}->statfs($self->stat($path), 'exact' => 1);
+    confess('Device or resource busy') if $self->{'vfs'}->statfs($self->stat($path), 'exact' => 1, 'silent' => 1);
     confess('Directory not empty') unless $inode->empty;
 
     $dirent->delete($name);
