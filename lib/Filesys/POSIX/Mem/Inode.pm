@@ -22,7 +22,7 @@ sub new {
         'ctime'     => $now,
         'uid'       => 0,
         'gid'       => 0,
-        'mode'      => $opts{'mode'},
+        'mode'      => defined $opts{'mode'}? $opts{'mode'}: 0,
         'dev'       => $opts{'dev'},
         'rdev'      => $opts{'rdev'},
         'parent'    => $opts{'parent'}
