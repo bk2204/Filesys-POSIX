@@ -5,7 +5,7 @@ use Filesys::POSIX;
 use Filesys::POSIX::Mem;
 use Filesys::POSIX::Bits;
 
-use Test::More qw/no_plan/;
+use Test::More ('tests' => 1);
 use Test::Exception;
 
 my $fs = Filesys::POSIX->new(Filesys::POSIX::Mem->new);
