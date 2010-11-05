@@ -4,10 +4,14 @@ use strict;
 use warnings;
 
 use Filesys::POSIX::Bits;
+use Filesys::POSIX::IO::Handle;
+
 use File::Temp qw/mkstemp/;
 use Fcntl;
 
 use Carp;
+
+our @ISA = qw/Filesys::POSIX::IO::Handle/;
 
 my $DEFAULT_MAX = 16384;
 my $DEFAULT_DIR = '/tmp';

@@ -17,6 +17,20 @@ sub write {
     return syswrite($$self, $buf, $len);
 }
 
+sub print {
+    my ($self, @args) = @_;
+    my $buf = join($/, @args);
+
+    return $self->write($buf, length $buf);
+}
+
+sub printf {
+    my ($self, $format, @args) = @_;
+    my $buf = sprintf($format, @args);
+
+    return $self->write($buf, length $buf);
+}
+
 sub read {
     my $self = shift;
     my $len = pop;
