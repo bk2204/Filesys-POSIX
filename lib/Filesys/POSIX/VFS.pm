@@ -4,10 +4,10 @@ use strict;
 use warnings;
 
 use Filesys::POSIX::Bits;
-use Filesys::POSIX::Path;
-use Filesys::POSIX::VFS::Inode;
+use Filesys::POSIX::Path ();
+use Filesys::POSIX::VFS::Inode ();
 
-use Carp;
+use Carp qw/confess/;
 
 sub new {
     return bless {

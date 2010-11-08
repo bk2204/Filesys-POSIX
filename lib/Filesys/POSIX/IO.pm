@@ -4,10 +4,10 @@ use strict;
 use warnings;
 
 use Filesys::POSIX::Bits;
-use Filesys::POSIX::FdTable;
-use Filesys::POSIX::Path;
+use Filesys::POSIX::FdTable ();
+use Filesys::POSIX::Path ();
 
-use Carp;
+use Carp qw/confess/;
 
 =head1 NAME
 

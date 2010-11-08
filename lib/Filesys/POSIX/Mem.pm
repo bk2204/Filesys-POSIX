@@ -4,8 +4,8 @@ use strict;
 use warnings;
 
 use Filesys::POSIX::Bits;
-use Filesys::POSIX::Mem::Inode;
-use Filesys::POSIX::Mem::Dirent;
+use Filesys::POSIX::Mem::Inode ();
+use Filesys::POSIX::Mem::Dirent ();
 
 =head1 NAME
 

@@ -3,17 +3,17 @@ package Filesys::POSIX;
 use strict;
 use warnings;
 
-use Filesys::POSIX::Mem;
+use Filesys::POSIX::Mem ();
+use Filesys::POSIX::FdTable ();
+use Filesys::POSIX::Path ();
+use Filesys::POSIX::VFS ();
 use Filesys::POSIX::Bits;
-use Filesys::POSIX::FdTable;
-use Filesys::POSIX::Path;
-use Filesys::POSIX::VFS;
 
-use Filesys::POSIX::IO;
-use Filesys::POSIX::Mount;
-use Filesys::POSIX::Userland;
+use Filesys::POSIX::IO ();
+use Filesys::POSIX::Mount ();
+use Filesys::POSIX::Userland ();
 
-use Carp;
+use Carp qw/confess/;
 
 our $AUTOLOAD;
 

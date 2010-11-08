@@ -1,10 +1,10 @@
 package Filesys::POSIX::Userland::Find;
 
-use Filesys::POSIX::Bits;
-use Filesys::POSIX::Path;
-
 use strict;
 use warnings;
+
+use Filesys::POSIX::Bits;
+use Filesys::POSIX::Path ();
 
 sub EXPORT {
     qw/find/;

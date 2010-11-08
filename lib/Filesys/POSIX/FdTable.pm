@@ -3,7 +3,7 @@ package Filesys::POSIX::FdTable;
 use strict;
 use warnings;
 
-use Carp;
+use Carp qw/confess/;
 
 =head1 NAME
 

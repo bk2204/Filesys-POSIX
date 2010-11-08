@@ -4,10 +4,10 @@ use strict;
 use warnings;
 
 use Filesys::POSIX::Bits;
-use Filesys::POSIX::Inode;
-use Filesys::POSIX::Mem::Bucket;
+use Filesys::POSIX::Inode ();
+use Filesys::POSIX::Mem::Bucket ();
 
-use Carp;
+use Carp qw/confess/;
 
 our @ISA = qw/Filesys::POSIX::Inode/;
 

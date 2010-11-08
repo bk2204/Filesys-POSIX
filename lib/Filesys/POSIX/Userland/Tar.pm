@@ -3,10 +3,10 @@ package Filesys::POSIX::Userland::Tar;
 use strict;
 use warnings;
 
-use Filesys::POSIX::Path;
 use Filesys::POSIX::Bits;
+use Filesys::POSIX::Path ();
 
-use Carp;
+use Carp qw/confess/;
 
 =head1 NAME
 
@@ -49,6 +49,10 @@ archival.
 
 =cut
 
+sub EXPORT {
+    qw/tar/;
+}
+
 my $BLOCK_SIZE = 512;
 
 my %TYPES = (
@@ -59,10 +63,6 @@ my %TYPES = (
     5   => $S_IFDIR,
     6   => $S_IFIFO
 );
-
-sub EXPORT {
-    qw/tar/;
-}
 
 sub _split_filename {
     my ($filename) = @_;

@@ -6,7 +6,7 @@ use warnings;
 use Filesys::POSIX::Bits;
 use Errno qw/ENOENT/;
 
-use Carp;
+use Carp qw/confess/;
 
 sub new {
     my ($class, $path, $inode) = @_;

@@ -3,13 +3,12 @@ package Filesys::POSIX::Real::Inode;
 use strict;
 use warnings;
 
-use Fcntl;
-
 use Filesys::POSIX::Bits;
-use Filesys::POSIX::Inode;
-use Filesys::POSIX::IO::Handle;
+use Filesys::POSIX::Inode ();
+use Filesys::POSIX::IO::Handle ();
 
-use Carp;
+use Fcntl;
+use Carp qw/confess/;
 
 our @ISA = qw/Filesys::POSIX::Inode/;
 

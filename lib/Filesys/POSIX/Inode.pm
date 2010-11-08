@@ -4,7 +4,7 @@ use strict;
 use warnings;
 
 use Filesys::POSIX::Bits;
-use Carp;
+use Carp qw/confess/;
 
 =head1 NAME
 
