@@ -1,7 +1,7 @@
 use strict;
 use warnings;
 
-use Filesys::POSIX::FdTable;
+use Filesys::POSIX::FdTable ();
 
 use Test::More ('tests' => 1);
 use Test::Exception;

@@ -1,9 +1,9 @@
 use strict;
 use warnings;
 
-use Filesys::POSIX;
-use Filesys::POSIX::Mem;
-use Filesys::POSIX::Real;
+use Filesys::POSIX ();
+use Filesys::POSIX::Mem ();
+use Filesys::POSIX::Real ();
 use Filesys::POSIX::Bits;
 
 use File::Temp qw/mkdtemp/;

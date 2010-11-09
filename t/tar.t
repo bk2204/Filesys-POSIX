@@ -1,9 +1,9 @@
 use strict;
 use warnings;
 
-use Filesys::POSIX;
-use Filesys::POSIX::Mem;
-use Filesys::POSIX::IO::Handle;
+use Filesys::POSIX ();
+use Filesys::POSIX::Mem ();
+use Filesys::POSIX::IO::Handle ();
 use Filesys::POSIX::Bits;
 
 use Fcntl;

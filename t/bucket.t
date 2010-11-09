@@ -1,9 +1,9 @@
 use strict;
 use warnings;
 
-use Filesys::POSIX::Mem;
-use Filesys::POSIX::Mem::Inode;
-use Filesys::POSIX::Mem::Bucket;
+use Filesys::POSIX::Mem ();
+use Filesys::POSIX::Mem::Inode ();
+use Filesys::POSIX::Mem::Bucket ();
 use Filesys::POSIX::Bits;
 
 use Test::More ('tests' => 29);

@@ -1,8 +1,8 @@
 use strict;
 use warnings;
 
-use Filesys::POSIX;
-use Filesys::POSIX::Mem;
+use Filesys::POSIX ();
+use Filesys::POSIX::Mem ();
 use Filesys::POSIX::Bits;
 
 use Test::More ('tests' => 4);

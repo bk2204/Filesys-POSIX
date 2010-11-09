@@ -1,11 +1,11 @@
 use strict;
 use warnings;
 
-use Test::More ('tests' => 5);
-
 use Filesys::POSIX;
 use Filesys::POSIX::Mem;
 use Filesys::POSIX::Bits;
+
+use Test::More ('tests' => 5);
 
 my $fs = Filesys::POSIX->new(Filesys::POSIX::Mem->new,
     'noatime'   => 1,
