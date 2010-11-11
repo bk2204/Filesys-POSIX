@@ -50,7 +50,7 @@ sub child {
 
     my $inode = __PACKAGE__->new($path,
         'dev'       => $self->{'dev'},
-        'parent'    => $self
+        'parent'    => $dirent->get('.')
     );
 
     $dirent->set($name, $inode);

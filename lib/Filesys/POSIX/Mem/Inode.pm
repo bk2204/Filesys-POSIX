@@ -47,7 +47,7 @@ sub child {
     my $child = __PACKAGE__->new(
         'mode'      => $mode,
         'dev'       => $self->{'dev'},
-        'parent'    => $self
+        'parent'    => $dirent->get('.')
     );
 
     $dirent->set($name, $child);
