@@ -7,6 +7,7 @@ WriteMakefile(
     'ABSTRACT'      => 'Provides POSIX filesystem semantics in pure Perl',
     'PREREQ_PM'     => {
         'Test::Simple'      => '0.44',
-        'Test::Exception'   => '0.26'
+        'Test::Exception'   => '0.26',
+        'Test::NoWarnings'  => '0.081'
     }
 );

@@ -6,8 +6,9 @@ use Filesys::POSIX::Mem::Inode ();
 use Filesys::POSIX::Mem::Bucket ();
 use Filesys::POSIX::Bits;
 
-use Test::More ('tests' => 29);
+use Test::More ('tests' => 30);
 use Test::Exception;
+use Test::NoWarnings;
 
 {
     my $inode = Filesys::POSIX::Mem::Inode->new(
@@ -237,4 +238,20 @@ use Test::Exception;
     throws_ok {
         $bucket->seek(2048, 0x04)
     } qr/^Invalid argument/, "Filesys::POSIX::Mem::Bucket->seek() will die with 'Invalid argument' when appropriate";
+}
+
+{
+    my $bucket = Filesys::POSIX::Mem::Bucket->new;
+
+    $bucket->open($O_RDWR | $O_TRUNC);
+
+    $bucket->write('X' x 128, 128);
+    $bucket->write('O' x 128, 128);
+
+    $bucket->seek(128, $SEEK_SET);
+
+    my $len = $bucket->read(my $buf, 128);
+
+    ok($len == 128, "Filesys::POSIX::Mem::Bucket->read() after open(\$O_RDWR | \$O_TRUNC) returns correct number of bytes");
+    ok($buf eq 'O' x 128, "Filesys::POSIX::Mem::Bucket->read() after truncate open filled buffer appropriately");
 }
