@@ -61,6 +61,7 @@ sub open {
         if ($flags & $O_TRUNC) {
             $self->{'size'} = 0;
             undef $self->{'buf'};
+            $self->{'buf'} = '';
         }
     }
 
