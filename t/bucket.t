@@ -6,7 +6,7 @@ use Filesys::POSIX::Mem::Inode ();
 use Filesys::POSIX::Mem::Bucket ();
 use Filesys::POSIX::Bits;
 
-use Test::More ('tests' => 30);
+use Test::More ('tests' => 32);
 use Test::Exception;
 use Test::NoWarnings;
 
