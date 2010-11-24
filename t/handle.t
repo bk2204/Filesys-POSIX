@@ -5,7 +5,9 @@ use Filesys::POSIX::IO::Handle ();
 use Filesys::POSIX::Bits;
 
 use File::Temp qw/mkstemp/;
-use Test::More ('tests' => 6);
+
+use Test::More ('tests' => 7);
+use Test::NoWarnings;
 
 {
     pipe my ($fh_out, $fh_in);

@@ -5,7 +5,8 @@ use Filesys::POSIX ();
 use Filesys::POSIX::Mem ();
 use Filesys::POSIX::Bits;
 
-use Test::More ('tests' => 2);
+use Test::More ('tests' => 3);
+use Test::NoWarnings;
 
 my %files = (
     '/foo'          => 'dir',

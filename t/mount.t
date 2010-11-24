@@ -5,8 +5,9 @@ use Filesys::POSIX ();
 use Filesys::POSIX::Mem ();
 use Filesys::POSIX::Bits;
 
-use Test::More ('tests' => 29);
+use Test::More ('tests' => 30);
 use Test::Exception;
+use Test::NoWarnings;
 
 my $mounts = {
     '/'             => Filesys::POSIX::Mem->new,

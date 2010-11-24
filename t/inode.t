@@ -5,8 +5,9 @@ use Filesys::POSIX ();
 use Filesys::POSIX::Mem ();
 use Filesys::POSIX::Bits;
 
-use Test::More ('tests' => 17);
+use Test::More ('tests' => 18);
 use Test::Exception;
+use Test::NoWarnings;
 
 {
     ok(Filesys::POSIX::Mem::Inode->new->{'mode'} == 0, "Filesys::POSIX::Mem::Inode->new() provides default mode of 0");

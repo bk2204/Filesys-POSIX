@@ -7,7 +7,9 @@ use Filesys::POSIX::Real ();
 use Filesys::POSIX::Bits;
 
 use File::Temp qw/mkdtemp/;
-use Test::More ('tests' => 6);
+
+use Test::More ('tests' => 7);
+use Test::NoWarnings;
 
 my $tmpdir = mkdtemp('/tmp/.filesys-posix-XXXXXX') or die $!;
 

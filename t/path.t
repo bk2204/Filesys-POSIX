@@ -3,8 +3,9 @@ use warnings;
 
 use Filesys::POSIX::Path ();
 
-use Test::More ('tests' => 65);
+use Test::More ('tests' => 66);
 use Test::Exception;
+use Test::NoWarnings;
 
 my %TEST_DATA = (
     '/'             => {

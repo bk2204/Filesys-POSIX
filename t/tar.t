@@ -9,8 +9,9 @@ use Filesys::POSIX::Bits;
 use Fcntl;
 use IPC::Open3;
 
-use Test::More ('tests' => 3);
+use Test::More ('tests' => 4);
 use Test::Exception;
+use Test::NoWarnings;
 
 my $fs = Filesys::POSIX->new(Filesys::POSIX::Mem->new);
 $fs->import_module('Filesys::POSIX::Userland::Tar');

@@ -6,8 +6,9 @@ use Filesys::POSIX::Mem ();
 use Filesys::POSIX::Mem::Inode ();
 use Filesys::POSIX::Bits;
 
-use Test::More ('tests' => 10);
+use Test::More ('tests' => 11);
 use Test::Exception;
+use Test::NoWarnings;
 
 my $fs = Filesys::POSIX->new(Filesys::POSIX::Mem->new);
 $fs->import_module('Filesys::POSIX::Extensions');

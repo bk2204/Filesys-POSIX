@@ -5,7 +5,8 @@ use Filesys::POSIX ();
 use Filesys::POSIX::Mem ();
 use Filesys::POSIX::Bits;
 
-use Test::More ('tests' => 10);
+use Test::More ('tests' => 11);
+use Test::NoWarnings;
 
 my $fs = Filesys::POSIX->new(Filesys::POSIX::Mem->new);
 

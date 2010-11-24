@@ -3,8 +3,9 @@ use warnings;
 
 use Filesys::POSIX::FdTable ();
 
-use Test::More ('tests' => 1);
+use Test::More ('tests' => 2);
 use Test::Exception;
+use Test::NoWarnings;
 
 package Dummy::Inode;
 

@@ -8,8 +8,9 @@ use Filesys::POSIX::Bits;
 use File::Temp qw/mkdtemp/;
 use Fcntl;
 
-use Test::More ('tests' => 9);
+use Test::More ('tests' => 10);
 use Test::Exception;
+use Test::NoWarnings;
 
 my $tmpdir = mkdtemp('/tmp/.filesys-posix.XXXXXX');
 
