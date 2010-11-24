@@ -3,6 +3,10 @@ package Filesys::POSIX::Mem::Dirent;
 use strict;
 use warnings;
 
+use Filesys::POSIX::Dirent ();
+
+our @ISA = qw/Filesys::POSIX::Dirent/;
+
 sub new {
     my ($class, %initial) = @_;
     return bless \%initial, $class;

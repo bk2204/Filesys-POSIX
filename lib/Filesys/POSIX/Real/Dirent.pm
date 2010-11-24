@@ -4,9 +4,12 @@ use strict;
 use warnings;
 
 use Filesys::POSIX::Bits;
-use Errno qw/ENOENT/;
+use Filesys::POSIX::Dirent ();
 
+use Errno qw/ENOENT/;
 use Carp qw/confess/;
+
+our @ISA = qw/Filesys::POSIX::Dirent/;
 
 sub new {
     my ($class, $path, $inode) = @_;

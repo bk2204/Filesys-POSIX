@@ -3,6 +3,7 @@ COPYRIGHT
 README
 Makefile.PL
 lib/Filesys/POSIX/Bits.pm
+lib/Filesys/POSIX/Dirent.pm
 lib/Filesys/POSIX/Extensions.pm
 lib/Filesys/POSIX/FdTable.pm
 lib/Filesys/POSIX/Inode.pm
