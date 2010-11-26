@@ -4,11 +4,13 @@ use warnings;
 use Filesys::POSIX ();
 use Filesys::POSIX::Mem ();
 use Filesys::POSIX::Real ();
+use Filesys::POSIX::Dirent ();
 use Filesys::POSIX::Bits;
 
 use File::Temp qw/mkdtemp/;
 
-use Test::More ('tests' => 7);
+use Test::More ('tests' => 18);
+use Test::Exception;
 use Test::NoWarnings;
 
 my $tmpdir = mkdtemp('/tmp/.filesys-posix-XXXXXX') or die $!;
@@ -102,6 +104,20 @@ foreach my $mountpoint (sort keys %mounts) {
         }
 
         ok($found == keys %members, "$type\->list() found each member");
+    }
+}
+
+#
+# Test the Filesys::POSIX::Dirent interface.  This is purely for the sake of
+# code coverage.
+#
+{
+    my $dirent = bless {}, 'Filesys::POSIX::Dirent';                                                                         
+                                                                                                                             
+    foreach (qw/get set exists detach delete list count open rewind read close/) {                                           
+        throws_ok {                                                                                                          
+            $dirent->$_()                                                                                                    
+        } qr/^Not implemented/, "Filesys::POSIX::Dirent->$_() throws 'Not implemented'";                                     
     }
 }
 
