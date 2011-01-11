@@ -6,7 +6,7 @@ use warnings;
 use Filesys::POSIX::Bits;
 use Filesys::POSIX::Path ();
 use Filesys::POSIX::Real::Inode ();
-use Filesys::POSIX::Real::Dirent ();
+use Filesys::POSIX::Real::Directory ();
 
 use Carp qw/confess/;
 

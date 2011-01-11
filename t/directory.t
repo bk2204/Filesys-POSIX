@@ -4,7 +4,7 @@ use warnings;
 use Filesys::POSIX ();
 use Filesys::POSIX::Mem ();
 use Filesys::POSIX::Real ();
-use Filesys::POSIX::Dirent ();
+use Filesys::POSIX::Directory ();
 use Filesys::POSIX::Bits;
 
 use File::Temp qw/mkdtemp/;
@@ -67,39 +67,39 @@ foreach my $mountpoint (sort keys %mounts) {
     );
 
     {
-        my $dirent = $fs->opendir("$mountpoint/foo");
-        my $type = ref $dirent;
+        my $directory = $fs->opendir("$mountpoint/foo");
+        my $type = ref $directory;
         my $found = 0;
 
-        while (my $member = $fs->readdir($dirent)) {
+        while (my $member = $fs->readdir($directory)) {
             $found++ if $members{$member};
         }
 
-        $fs->closedir($dirent);
+        $fs->closedir($directory);
 
         ok($found == keys %members, "$type\->readdir() found each member");
     }
 
     {
-        my $dirent = $fs->opendir("$mountpoint/foo");
-        my $type = ref $dirent;
+        my $directory = $fs->opendir("$mountpoint/foo");
+        my $type = ref $directory;
         my $found = 0;
 
-        foreach ($fs->readdir($dirent)) {
+        foreach ($fs->readdir($directory)) {
             $found++ if $members{$_};
         }
 
-        $fs->closedir($dirent);
+        $fs->closedir($directory);
 
         ok($found == keys %members, "$type\->readdir() returned each member in list context");
     }
 
     {
-        my $dirent = $fs->stat("$mountpoint/foo")->dirent;
-        my $type = ref $dirent;
+        my $directory = $fs->stat("$mountpoint/foo")->directory;
+        my $type = ref $directory;
         my $found = 0;
 
-        foreach ($dirent->list) {
+        foreach ($directory->list) {
             $found++ if $members{$_};
         }
 
@@ -108,16 +108,16 @@ foreach my $mountpoint (sort keys %mounts) {
 }
 
 #
-# Test the Filesys::POSIX::Dirent interface.  This is purely for the sake of
+# Test the Filesys::POSIX::Directory interface.  This is purely for the sake of
 # code coverage.
 #
 {
-    my $dirent = bless {}, 'Filesys::POSIX::Dirent';                                                                         
+    my $directory = bless {}, 'Filesys::POSIX::Directory';                                                                         
                                                                                                                              
     foreach (qw/get set exists detach delete list count open rewind read close/) {                                           
         throws_ok {                                                                                                          
-            $dirent->$_()                                                                                                    
-        } qr/^Not implemented/, "Filesys::POSIX::Dirent->$_() throws 'Not implemented'";                                     
+            $directory->$_()                                                                                                    
+        } qr/^Not implemented/, "Filesys::POSIX::Directory->$_() throws 'Not implemented'";                                     
     }
 }
 

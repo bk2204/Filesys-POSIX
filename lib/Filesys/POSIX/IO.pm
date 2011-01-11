@@ -88,9 +88,9 @@ sub open {
 
     if ($flags & $O_CREAT) {
         my $parent = $self->stat($hier->dirname);
-        my $dirent = $parent->dirent;
+        my $directory = $parent->directory;
 
-        if ($inode = $dirent->get($name)) {
+        if ($inode = $directory->get($name)) {
             confess('File exists') if $flags & $O_EXCL;
         } else {
             my $format = $mode? ($mode & $S_IFMT? $mode & $S_IFMT: $S_IFREG): $S_IFREG;

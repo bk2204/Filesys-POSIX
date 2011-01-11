@@ -25,7 +25,7 @@ sub new {
     $inode->update(@st);
 
     if (($st[2] & $S_IFMT) == $S_IFDIR) {
-        $inode->{'dirent'} = Filesys::POSIX::Real::Dirent->new($path, $inode);
+        $inode->{'directory'} = Filesys::POSIX::Real::Directory->new($path, $inode);
     }
 
     return $inode;
@@ -33,10 +33,10 @@ sub new {
 
 sub child {
     my ($self, $name, $mode) = @_;
-    my $dirent = $self->dirent;
+    my $directory = $self->directory;
 
     confess('Invalid directory entry name') if $name =~ /\//;
-    confess('File exists') if $dirent->exists($name);
+    confess('File exists') if $directory->exists($name);
 
     my $path = "$self->{'path'}/$name";
     my $child;
@@ -50,10 +50,10 @@ sub child {
 
     my $inode = __PACKAGE__->new($path,
         'dev'       => $self->{'dev'},
-        'parent'    => $dirent->get('.')
+        'parent'    => $directory->get('.')
     );
 
-    $dirent->set($name, $inode);
+    $directory->set($name, $inode);
 }
 
 sub open {

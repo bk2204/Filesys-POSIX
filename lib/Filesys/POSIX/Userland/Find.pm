@@ -88,17 +88,17 @@ sub find {
         $callback->($path, $inode);
 
         if ($inode->dir) {
-            my $dirent = $inode->{'dirent'};
+            my $directory = $inode->{'directory'};
 
-            $dirent->open;
+            $directory->open;
 
-            while (my $item = $dirent->read) {
+            while (my $item = $directory->read) {
                 next if $item eq '.' || $item eq '..';
                 push @paths, Filesys::POSIX::Path->new($path->full . "/$item");
-                push @inodes, $self->{'vfs'}->vnode($dirent->get($item));
+                push @inodes, $self->{'vfs'}->vnode($directory->get($item));
             }
 
-            $dirent->close;
+            $directory->close;
         }
     }
 }

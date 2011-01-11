@@ -30,11 +30,11 @@ sub _find_inode_path {
     my @ret;
 
     while (my $dir = $self->{'vfs'}->vnode($inode)->{'parent'}) {
-        my $dirent = $dir->dirent;
+        my $directory = $dir->directory;
 
-        foreach ($dirent->list) {
+        foreach ($directory->list) {
             next if $_ eq '.' || $_ eq '..';
-            next unless $self->{'vfs'}->vnode($dirent->get($_)) == $self->{'vfs'}->vnode($inode);
+            next unless $self->{'vfs'}->vnode($directory->get($_)) == $self->{'vfs'}->vnode($inode);
 
             push @ret, $_;
             $inode = $dir;
@@ -73,8 +73,8 @@ sub mkpath {
             next;
         }
 
-        my $dirent = $dir->dirent;
-        my $inode = $self->{'vfs'}->vnode($dirent->get($item));
+        my $directory = $dir->directory;
+        my $inode = $self->{'vfs'}->vnode($directory->get($item));
 
         if ($inode) {
             $dir = $inode;
@@ -114,53 +114,53 @@ sub realpath {
 
 =item $fs->opendir($path)
 
-Returns a newly opened directory entry handle for the item pointed to by $path.
+Returns a newly opened directory handle for the item pointed to by $path.
 Using other methods in this module, the directory can be read and closed.
 
 =cut
 sub opendir {
     my ($self, $path) = @_;
 
-    my $dirent = $self->stat($path)->dirent;
-    $dirent->open;
+    my $directory = $self->stat($path)->directory;
+    $directory->open;
 
-    return $dirent;
+    return $directory;
 }
 
-=item $fs->readdir($dirent)
+=item $fs->readdir($directory)
 
-Read the next member of the directory entry passed.  Returns undef if there are
-no more entries to be read.
+Read the next member of the directory passed.  Returns undef if there are no
+more entries to be read.
 
 =cut
 sub readdir {
-    my ($self, $dirent) = @_;
+    my ($self, $directory) = @_;
 
-    return $dirent->read unless wantarray;
+    return $directory->read unless wantarray;
 
     my @ret;
 
-    while (my $item = $dirent->read) {
+    while (my $item = $directory->read) {
         push @ret, $item;
     }
 
     return @ret;
 }
 
-=item $fs->closedir($dirent)
+=item $fs->closedir($directory)
 
-Closes the directory entry handle for reading.
+Closes the directory handle for reading.
 
 =cut
 sub closedir {
-    my ($self, $dirent) = @_;
-    return $dirent->close;
+    my ($self, $directory) = @_;
+    return $directory->close;
 }
 
 =item $fs->touch($path)
 
 Acts like the userland utility touch(1).  Uses $fs->open() with the $O_CREAT
-flag to open the entry specified by $path, and immediately closes the file
+flag to open the file specified by $path, and immediately closes the file
 descriptor returned.  This causes an update of the inode modification time for
 existing files, and the creation of new, empty files otherwise.
 

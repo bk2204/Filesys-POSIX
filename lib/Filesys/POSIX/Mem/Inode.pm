@@ -29,7 +29,7 @@ sub new {
     }, $class;
 
     if (exists $opts{'mode'} && ($opts{'mode'} & $S_IFMT) == $S_IFDIR) {
-        $inode->{'dirent'} = Filesys::POSIX::Mem::Dirent->new(
+        $inode->{'directory'} = Filesys::POSIX::Mem::Directory->new(
             '.'     => $inode,
             '..'    => $opts{'parent'}? $opts{'parent'}: $inode
         );
@@ -40,17 +40,17 @@ sub new {
 
 sub child {
     my ($self, $name, $mode) = @_;
-    my $dirent = $self->dirent;
+    my $directory = $self->directory;
 
-    confess('File exists') if $dirent->exists($name);
+    confess('File exists') if $directory->exists($name);
 
     my $child = __PACKAGE__->new(
         'mode'      => $mode,
         'dev'       => $self->{'dev'},
-        'parent'    => $dirent->get('.')
+        'parent'    => $directory->get('.')
     );
 
-    $dirent->set($name, $child);
+    $directory->set($name, $child);
 
     return $child;
 }

@@ -6,7 +6,7 @@ use warnings;
 use Filesys::POSIX::Bits;
 use Filesys::POSIX::Path ();
 use Filesys::POSIX::Real::Inode ();
-use Filesys::POSIX::Real::Dirent ();
+use Filesys::POSIX::Real::Directory ();
 
 use Carp qw/confess/;
 
@@ -63,11 +63,11 @@ sub attach {
     my $hier = Filesys::POSIX::Path->new($dest);
     my $name = $hier->basename;
     my $parent = $self->stat($hier->dirname);
-    my $dirent = $parent->dirent;
+    my $directory = $parent->directory;
 
-    confess('File exists') if $dirent->exists($name);
+    confess('File exists') if $directory->exists($name);
 
-    $dirent->set($name, $inode);
+    $directory->set($name, $inode);
 }
 
 =item $fs->map($real_src, $dest)
@@ -94,16 +94,16 @@ sub map {
     my $hier = Filesys::POSIX::Path->new($dest);
     my $name = $hier->basename;
     my $parent = $self->stat($hier->dirname);
-    my $dirent = $parent->dirent;
+    my $directory = $parent->directory;
 
-    confess('File exists') if $dirent->exists($name);
+    confess('File exists') if $directory->exists($name);
 
     my $inode = Filesys::POSIX::Real::Inode->new($real_src,
         'dev'       => $parent->{'dev'},
         'parent'    => $parent
     );
 
-    $dirent->set($name, $inode);
+    $directory->set($name, $inode);
 }
 
 =item $fs->alias($src, $dest)
@@ -127,28 +127,28 @@ sub alias {
     my $name = $hier->basename;
     my $inode = $self->stat($src);
     my $parent = $self->stat($hier->dirname);
-    my $dirent = $parent->dirent;
+    my $directory = $parent->directory;
 
-    confess('File exists') if $dirent->exists($name);
+    confess('File exists') if $directory->exists($name);
 
-    $dirent->set($name, $inode);
+    $directory->set($name, $inode);
 }
 
 =item $fs->detach($path)
 
 Detaches the inode of the given path from the virtual filesystem.  This call is
 similar to $fs->unlink(), except a different underlying, filesystem-dependent
-method is used to detach an inode from the path's parent directory entry.
-Both directories and non-directories alike can be detached from any point in
-the filesystem using this call; directories do not have to be empty.
+method is used to detach an inode from the path's parent directory.  Both
+directories and non-directories alike can be detached from any point in the
+filesystem using this call; directories do not have to be empty.
 
-Given a directory entry object, the $dirent->detach() call is used, which only
-removes the inode from the directory entry itself; whereas $dirent->delete(),
-as used by $fs->unlink(), would perform an unlink() at the system level in the
-case of a Filesys::POSIX::Real::Dirent directory entry object.  This way, it is
-possible to only perform logical deletes of inodes, without affecting the
-underlying filesystem when managing inodes brought into existence using other
-system calls in this extensions module.
+Given a directory object, the $directory->detach() call is used, which only
+removes the inode from the directory itself; whereas $directory->delete(), as
+used by $fs->unlink(), would perform an unlink() at the system level in the
+case of a Filesys::POSIX::Real::Directory object.  This way, it is possible to
+only perform logical deletes of inodes, without affecting the underlying
+filesystem when managing inodes brought into existence using other system calls
+in this extensions module.
 
 Exceptions are thrown for the following:
 
@@ -167,11 +167,11 @@ sub detach {
     my $hier = Filesys::POSIX::Path->new($path);
     my $name = $hier->basename;
     my $parent = $self->stat($hier->dirname);
-    my $dirent = $parent->dirent;
+    my $directory = $parent->directory;
 
-    confess('No such file or directory') unless $dirent->exists($name);
+    confess('No such file or directory') unless $directory->exists($name);
 
-    $dirent->detach($name);
+    $directory->detach($name);
 }
 
 =item $fs->replace($path, $inode)
@@ -195,12 +195,12 @@ sub replace {
     my $hier = Filesys::POSIX::Path->new($path);
     my $name = $hier->basename;
     my $parent = $self->stat($hier->dirname);
-    my $dirent = $parent->dirent;
+    my $directory = $parent->directory;
 
-    confess('No such file or directory') unless $dirent->exists($name);
+    confess('No such file or directory') unless $directory->exists($name);
 
-    $dirent->detach($name);
-    $dirent->set($name, $inode);
+    $directory->detach($name);
+    $directory->set($name, $inode);
 }
 
 =back

@@ -138,10 +138,10 @@ sub update {
     @{$self}{qw/size atime mtime ctime uid gid mode rdev/} = (@st[7..10], @st[4..5], $st[2], $st[6]);
 }
 
-=item $inode->dirent()
+=item $inode->directory()
 
-If the current inode is a directory, return the directory entry object held
-by it.  Otherwise, the following exception is issued:
+If the current inode is a directory, return the directory object held by it.
+Otherwise, the following exception is issued:
 
 =over
 
@@ -150,25 +150,24 @@ by it.  Otherwise, the following exception is issued:
 =back
 
 =cut
-sub dirent {
+sub directory {
     my ($self) = @_;
     confess('Not a directory') unless $self->dir;
 
-    return $self->{'dirent'};
+    return $self->{'directory'};
 }
 
 =item $inode->empty()
 
-Uses the above $inode->dirent() call to obtain the directory entry for the
-current inode, and returns true if the directory entry only contains the '..'
-and '.' members.
+Uses the above $inode->directory() call to obtain the directory for the current
+inode, and returns true if the directory only contains the '..' and '.' members.
 
 =cut
 sub empty {
     my ($self) = @_;
-    my $dirent = $self->dirent;
+    my $directory = $self->directory;
 
-    return $dirent->count == 2;
+    return $directory->count == 2;
 }
 
 =back

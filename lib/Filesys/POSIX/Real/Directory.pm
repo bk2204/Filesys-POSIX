@@ -1,15 +1,15 @@
-package Filesys::POSIX::Real::Dirent;
+package Filesys::POSIX::Real::Directory;
 
 use strict;
 use warnings;
 
 use Filesys::POSIX::Bits;
-use Filesys::POSIX::Dirent ();
+use Filesys::POSIX::Directory ();
 
 use Errno qw/ENOENT/;
 use Carp qw/confess/;
 
-our @ISA = qw/Filesys::POSIX::Dirent/;
+our @ISA = qw/Filesys::POSIX::Directory/;
 
 sub new {
     my ($class, $path, $inode) = @_;
