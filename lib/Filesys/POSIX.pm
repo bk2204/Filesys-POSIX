@@ -313,17 +313,6 @@ sub chown {
     $self->stat($path)->chown($uid, $gid);
 }
 
-=item $fs->lchown($path, $uid, $gid)
-
-Using $fs->lstat() to locate the inode of the path specified, update that inode
-object's 'uid' and 'gid' fields with the values specified.
-
-=cut
-sub lchown {
-    my ($self, $path, $uid, $gid) = @_;
-    $self->lstat($path)->chown($uid, $gid);
-}
-
 =item $fs->fchown($fd, $uid, $gid)
 
 Using $fs->fstat() to locate the inode of the file descriptor specified, update
@@ -344,17 +333,6 @@ object's 'mode' field with the value specified.
 sub chmod {
     my ($self, $path, $mode) = @_;
     $self->stat($path)->chmod($mode);
-}
-
-=item $fs->lchmod($path, $mode)
-
-Using $fs->lstat() to locate the inode of the path specified, update that inode
-object's 'mode' field with the value specified.
-
-=cut
-sub lchmod {
-    my ($self, $path, $mode) = @_;
-    $self->lstat($path)->chmod($mode);
 }
 
 =item $fs->fchmod($fd, $mode)
