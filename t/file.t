@@ -5,7 +5,7 @@ use Filesys::POSIX ();
 use Filesys::POSIX::Mem ();
 use Filesys::POSIX::Bits;
 
-use Test::More ('tests' => 42);
+use Test::More ('tests' => 36);
 use Test::Exception;
 use Test::NoWarnings;
 
