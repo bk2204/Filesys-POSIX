@@ -158,16 +158,6 @@ use Test::NoWarnings;
 
     ok($inode eq $fs->stat('bar'), "Filesys::POSIX->stat() works on symlinks");
     ok($fs->readlink('bar') eq 'foo', "Filesys::POSIX->readlink() returns expected result");
-
-    $fs->lchmod('bar', 0600);
-    ok(($link->{'mode'} & $S_IPERM) == 0600, "Filesys::POSIX->lchmod() updated symlink inode's permissions properly");
-    ok(($inode->{'mode'} & $S_IPERM) == 0644, "Filesys::POSIX->lchown() does not update symlink dest's permissions");
-
-    $fs->lchown('bar', 500, 500);
-    ok($link->{'uid'} == 500, "Filesys::POSIX->lchown() updated symlink uid properly");
-    ok($inode->{'uid'} == 0, "Filesys::POSIX->lchown() does not update symlink dest's permissions");
-    ok($link->{'gid'} == 500, "Filesys::POSIX->lchown() updated symlink gid properly");
-    ok($inode->{'gid'} == 0, "Filesys::POSIX->lchown() does not update symlink dest's permissions");
 }
 
 {
