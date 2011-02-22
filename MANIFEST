@@ -13,6 +13,7 @@ lib/Filesys/POSIX/Mem/Bucket.pm
 lib/Filesys/POSIX/Mem/Directory.pm
 lib/Filesys/POSIX/Mem/Inode.pm
 lib/Filesys/POSIX/Mem.pm
+lib/Filesys/POSIX/Mount.pm
 lib/Filesys/POSIX/Path.pm
 lib/Filesys/POSIX/Real/Directory.pm
 lib/Filesys/POSIX/Real/Inode.pm
