@@ -129,10 +129,13 @@ sub AUTOLOAD {
 
 =item $fs->import_module($module);
 
-Import each method from the module specified into the namespace of the current
-filesystem object instance.  The module to be imported should be specified in
-the usual form of a Perl package name.  Only the methods returned by its
-EXPORT() function will be imported.
+Import functionality from the module specified into the namespace of the
+current filesystem object instance.  The module to be imported should be
+specified in the usual form of a Perl package name.  Only the methods returned
+by its EXPORT() function will be imported.
+
+See the L</"EXTENSION MODULES"> section below for a listing of modules that
+Filesys::POSIX provides.
 
 =back
 
@@ -612,3 +615,78 @@ sub rmdir {
 =cut
 
 1;
+
+__END__
+
+=head1 EXTENSION MODULES
+
+=over
+
+=item L<Filesys::POSIX::Extensions>
+
+This module provides a variety of functions for performing inode operations in
+novel ways that take advantage of the unique characteristics and features of
+Filesys::POSIX.  For example, one method is provided that allows a developer to
+map a file or directory from the system's underlying, actual filesystem, into
+any arbitrary point in the virtual filesystem.
+
+=back
+
+=head1 UTILITIES
+
+=over
+
+=item L<Filesys::POSIX::Path>
+
+A publicly-accessible interface for the path name string manipulation functions
+used by Filesys::POSIX itself.
+
+=back
+
+=head1 INTERFACES
+
+=over
+
+=item L<Filesys::POSIX::Directory>
+
+Lists the requirements for writing modules that act as directory structures.
+
+=item L<Filesys::POSIX::Inode>
+
+Lists the requirements for writing modules that act as inodes.
+
+=back
+
+=head1 INTERNALS
+
+=over
+
+=item L<Filesys::POSIX::Bits>
+
+A listing of bitfields and constants used in various places by Filesys::POSIX.
+
+=item L<Filesys::POSIX::FdTable>
+
+The Filesys::POSIX implementation of the file descriptor allocation table.
+
+=item L<Filesys::POSIX::Userland>
+
+Imported by Filesys::POSIX by default.  Provides many POSIX command line
+tool-like functions not documented in the current manual page.
+
+=item L<Filesys::POSIX::IO>
+
+Imported by Filesys::POSIX by default.  Provides standard file manipulation
+routines as found in a POSIX filesystem.
+
+=item L<Filesys::POSIX::Mount>
+
+Imported by Filesys::POSIX by default.  Provides a frontend to the VFS mount
+point management implementation found in L<Filesys::POSIX::VFS>.
+
+=item L<Filesys::POSIX::VFS>
+
+Used by Filesys::POSIX, this module provides an implementation of a filesystem
+mount table and VFS inode resolution routines.
+
+=back
