@@ -27,7 +27,7 @@ Filesys::POSIX::Userland::Tar
     $fs->mkdir('foo');
     $fs->touch('foo/bar');
 
-    $fs->tar(Filesys::POSIX::IO::Handle->new(\*STDOUT, '.'));
+    $fs->tar(Filesys::POSIX::IO::Handle->new(\*STDOUT), '.');
 
 =head1 DESCRIPTION
 
