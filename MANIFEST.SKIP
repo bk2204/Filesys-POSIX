@@ -1,0 +1,7 @@
+\.git/
+\.swp$
+\.old$
+\.bak$
+^blib/
+^Makefile$
+^MANIFEST\.
