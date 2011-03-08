@@ -15,17 +15,17 @@ Filesys::POSIX::Directory is a common interface used to implement classes that
 act like directories, and should be able to be accessed randomly or in an
 iterative fashion.
 
-Note that this class does not provide an implementation; actual implementations
-should, of course, inherit from this nonetheless using the C<@ISA> variable,
-and should adhere to the behavior documented herein.
+Classes which wish to implement the interface documented herein should provide
+implementations for ALL methods listed in this document, in the manner in which
+they are described within this document.
 
 =head1 RANDOM ACCESS
 
 =over
 
-=item $directory->get($name)
+=item C<$directory-E<gt>get($name)>
 
-If the current directory contains an item named for $name, return the
+If the current directory contains an item named for C<$name>, return the
 corresponding inode.  Otherwise, an C<undef> is returned.
 
 =cut
@@ -34,11 +34,11 @@ sub get {
     confess('Not implemented');
 }
 
-=item $directory->set($name, $inode)
+=item C<$directory-E<gt>set($name, $inode)>
 
-Store a reference to $inode in the current directory, named after the member
-label $name.  If an item already exists for $name, then it will be replaced by
-$inode.
+Store a reference to C<$inode> in the current directory, named after the member
+label C<$name>.  If an item already exists for $name, then it will be replaced
+by C<$inode>.
 
 =cut
 
@@ -46,7 +46,7 @@ sub set {
     confess('Not implemented');
 }
 
-=item $directory->exists($name)
+=item C<$directory-E<gt>exists($name)>
 
 Returns true if a member called $name exists in the current directory.  Returns
 false if no such member inode is listed.
@@ -57,10 +57,10 @@ sub exists {
     confess('Not implemented');
 }
 
-=item $directory->detach($name)
+=item C<$directory-E<gt>detach($name)>
 
-Drop any references to a member called $name in the current directory.  No side
-effects outside of the directory object instance shall occur.
+Drop any references to a member called C<$name> in the current directory.  No
+side effects outside of the directory object instance shall occur.
 
 =cut
 
@@ -68,7 +68,7 @@ sub detach {
     confess('Not implemented');
 }
 
-=item $directory->delete($name)
+=item C<$directory-E<gt>delete($name)>
 
 Drop any references to a member called $name in the current directory.  Side
 effects to other system resources referenced by this directory member may
@@ -86,7 +86,7 @@ sub delete {
 
 =over
 
-=item $directory->list()
+=item C<$directory-E<gt>list()>
 
 Return a list of all items in the current directory, including C<.> and C<..>.
 
@@ -96,7 +96,7 @@ sub list {
     confess('Not implemented');
 }
 
-=item $directory->count()
+=item C<$directory-E<gt>count()>
 
 Return the number of all items in the current directory, including C<.> and
 C<..>.
@@ -113,7 +113,7 @@ sub count {
 
 =over
 
-=item $directory->open()
+=item C<$directory-E<gt>open()>
 
 Prepare the current directory object for iterative reading access.
 
@@ -123,7 +123,7 @@ sub open {
     confess('Not implemented');
 }
 
-=item $directory->rewind()
+=item C<$directory-E<gt>rewind()>
 
 Rewind the current directory object to the beginning of the directory list when
 being accessed iteratively.
@@ -134,7 +134,7 @@ sub rewind {
     confess('Not implemented');
 }
 
-=item $directory->read()
+=item C<$directory-E<gt>read()>
 
 Read and return a single item from the directory, advancing the pointer to the
 next item to be read, if any.  A list containing both the name of the object,
@@ -146,7 +146,7 @@ sub read {
     confess('Not implemented');
 }
 
-=item $directory->close()
+=item C<$directory-E<gt>close()>
 
 Close the current directory for iterative access.
 

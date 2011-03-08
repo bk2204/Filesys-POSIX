@@ -24,7 +24,7 @@ use Test::NoWarnings;
 
     $bucket->open($O_RDWR);
 
-    ok( $bucket->write( 'foo', 3 ) == 3, "Filesys::POSIX::Mem::Bucket->write() returns expected write length" );
+    is( $bucket->write( 'foo', 3 ), 3, "Filesys::POSIX::Mem::Bucket->write() returns expected write length" );
 
     throws_ok {
         $bucket->_flush_to_disk(3);
@@ -35,11 +35,11 @@ use Test::NoWarnings;
 
     ok( -f $file, "Filesys::POSIX::Mem::Bucket->write() flushes to disk immediately with a max of 0" );
     ok( $bucket->seek( 0, $SEEK_SET ) == 0, "Filesys::POSIX::Mem::Bucket->seek() functions and returns expected offset" );
-    ok( $bucket->read( my $buf, 3 ) == 3, "Filesys::POSIX::Mem::Bucket->read() reports expected read length" );
-    ok( $buf eq 'foo', "Filesys::POSIX::Mem::Bucket->read() populated buffer with expected contents" );
-    ok( $bucket->tell == 3, "Filesys::POSIX::Mem::Bucket->tell() reports expected offset" );
-    ok( $bucket->seek( 0, $SEEK_CUR ) == 3, "Filesys::POSIX::Mem::Bucket->seek(0, \$SEEK_CUR) operates expectedly" );
-    ok( $bucket->seek( 3, $SEEK_CUR ) == 6, "Filesys::POSIX::Mem::Bucket->seek(3, \$SEEK_CUR) operates expectedly" );
+    is( $bucket->read( my $buf, 3 ), 3, "Filesys::POSIX::Mem::Bucket->read() reports expected read length" );
+    is( $buf,          'foo', "Filesys::POSIX::Mem::Bucket->read() populated buffer with expected contents" );
+    is( $bucket->tell, 3,     "Filesys::POSIX::Mem::Bucket->tell() reports expected offset" );
+    is( $bucket->seek( 0, $SEEK_CUR ), 3, "Filesys::POSIX::Mem::Bucket->seek(0, \$SEEK_CUR) operates expectedly" );
+    is( $bucket->seek( 3, $SEEK_CUR ), 6, "Filesys::POSIX::Mem::Bucket->seek(3, \$SEEK_CUR) operates expectedly" );
 
     throws_ok {
         $bucket->open(0);
@@ -179,7 +179,7 @@ use Test::NoWarnings;
         $bucket->write( 'meowcats', 8 );
     }
 
-    ok( $bucket->{'size'} == 192 * 8, "Filesys::POSIX::Mem::Bucket->_flush_to_disk() flushes when size exceeds max" );
+    is( $bucket->{'size'}, 192 * 8, "Filesys::POSIX::Mem::Bucket->_flush_to_disk() flushes when size exceeds max" );
 
     {
         my $read = 0;
@@ -190,14 +190,14 @@ use Test::NoWarnings;
             $read += $len if $buf eq 'meowcats';
         }
 
-        ok( $read == 192 * 8, "Filesys::POSIX::Mem::Bucket->read() fetches bucket data correctly after seek(0, 0)" );
+        is( $read, 192 * 8, "Filesys::POSIX::Mem::Bucket->read() fetches bucket data correctly after seek(0, 0)" );
     }
 
     {
         $bucket->seek( 0, $SEEK_SET );
 
-        ok(
-            $bucket->read( my $buf, 192 * 9 ) == 192 * 8,
+        is(
+            $bucket->read( my $buf, 192 * 9 ), 192 * 8,
             "Filesys::POSIX::Mem::Bucket->read() restricts read max to position, minus size"
         );
     }
@@ -221,18 +221,18 @@ use Test::NoWarnings;
     $bucket->open($O_RDWR);
     $bucket->seek( 2048, $SEEK_SET );
 
-    ok(
-        $bucket->read( my $buf, 3 ) == 0,
+    is(
+        $bucket->read( my $buf, 3 ), 0,
         "Filesys::POSIX::Mem::Bucket->read() returns 0 when reading beyond size in memory buckets"
     );
 
-    ok(
-        $bucket->seek( 2048, $SEEK_END ) == 2048,
+    is(
+        $bucket->seek( 2048, $SEEK_END ), 2048,
         "Filesys::POSIX::Mem::Bucket->seek() with \$SEEK_END works properly"
     );
 
-    ok(
-        $bucket->seek( 2048, $SEEK_CUR ) == 4096,
+    is(
+        $bucket->seek( 2048, $SEEK_CUR ), 4096,
         "Filesys::POSIX::Mem::Bucket->seek() with \$SEEK_CUR works properly"
     );
 
@@ -254,6 +254,6 @@ use Test::NoWarnings;
 
     my $len = $bucket->read( my $buf, 128 );
 
-    ok( $len == 128, "Filesys::POSIX::Mem::Bucket->read() after open(\$O_RDWR | \$O_TRUNC) returns correct number of bytes" );
-    ok( $buf eq 'O' x 128, "Filesys::POSIX::Mem::Bucket->read() after truncate open filled buffer appropriately" );
+    is( $len, 128,       "Filesys::POSIX::Mem::Bucket->read() after open(\$O_RDWR | \$O_TRUNC) returns correct number of bytes" );
+    is( $buf, 'O' x 128, "Filesys::POSIX::Mem::Bucket->read() after truncate open filled buffer appropriately" );
 }

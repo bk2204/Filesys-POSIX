@@ -20,6 +20,7 @@ sub get {
 sub set {
     my ( $self, $name, $inode ) = @_;
     $self->{$name} = $inode;
+    return $inode;
 }
 
 sub exists {
@@ -29,12 +30,17 @@ sub exists {
 
 sub detach {
     my ( $self, $name ) = @_;
+    my $inode = $self->{$name};
+
     delete $self->{$name};
+
+    return $inode;
 }
 
 sub delete {
     my ( $self, $name ) = @_;
-    $self->detach($name);
+
+    return $self->detach($name);
 }
 
 sub list {

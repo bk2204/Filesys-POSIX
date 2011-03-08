@@ -80,6 +80,7 @@ sub get {
 sub set {
     my ( $self, $name, $inode ) = @_;
     $self->{'overlays'}->{$name} = $inode;
+    return $inode;
 }
 
 sub exists {
@@ -94,8 +95,9 @@ sub delete {
     my ( $self, $name ) = @_;
 
     if ( exists $self->{'overlays'}->{$name} ) {
+        my $inode = $self->{'overlays'}->{$name};
         delete $self->{'overlays'}->{$name};
-        return;
+        return $inode;
     }
 
     my $member = $self->{'members'}->{$name} or return;
@@ -115,19 +117,25 @@ sub delete {
     my $now = time;
     @{ $self->{'node'} }{qw/mtime ctime/} = ( $now, $now );
 
+    my $inode = $self->{'members'}->{$name};
     delete $self->{'members'}->{$name};
+
+    return $inode;
 }
 
 sub detach {
     my ( $self, $name ) = @_;
 
     if ( exists $self->{'overlays'}->{$name} ) {
+        my $inode = $self->{'overlays'}->{$name};
         delete $self->{'overlays'}->{$name};
-        return;
+        return $inode;;
     }
 
     if ( exists $self->{'members'}->{$name} ) {
-        delete $self->{'overlays'}->{$name};
+        my $inode = $self->{'members'}->{$name};
+        delete $self->{'members'}->{$name};
+        return $inode;
     }
 }
 

@@ -1,5 +1,6 @@
 MANIFEST
 COPYRIGHT
+LICENSE
 README
 Makefile.PL
 lib/Filesys/POSIX/Bits.pm

@@ -19,8 +19,6 @@ our $AUTOLOAD;
 
 BEGIN {
     use Exporter ();
-    use vars qw/$VERSION/;
-
     our $VERSION = '0.9';
 }
 
@@ -285,11 +283,11 @@ sub fstat {
 
 =item $fs->chdir($path)
 
-Change the current working directory to the path specified.  An $fs->stat()
-call will be used internally to lookup the inode for that path; an exception
-"Not a directory" will be thrown unless the inode found is a directory.  The
-internal current working directory pointer will be updated with the directory
-inode found.
+Change the current working directory to the path specified.  An
+C<$fs-E<gt>stat()> call will be used internally to lookup the inode for that
+path; an exception "Not a directory" will be thrown unless the inode found is a
+directory.  The internal current working directory pointer will be updated with
+the directory inode found; this same inode will also be returned.
 
 =cut
 
@@ -298,14 +296,15 @@ sub chdir {
     my $inode = $self->stat($path);
     confess('Not a directory') unless $inode->dir;
 
-    $self->{'cwd'} = $inode;
+    return $self->{'cwd'} = $inode;
 }
 
-=item $fs->chdir($fd)
+=item $fs->fchdir($fd)
 
-When passed a file descriptor for a directory, return a reference to the
-corresponding directory inode.  If the inode is not a directory, an exception
-"Not a directory" will be thrown.
+When passed a file descriptor for a directory, update the internal pointer to
+the current working directory to that directory resolved from the file
+descriptor table, and return the same directory inode.  If the inode is not a
+directory, an exception "Not a directory" will be thrown.
 
 =cut
 
@@ -314,55 +313,75 @@ sub fchdir {
     my $inode = $self->fstat($fd);
     confess('Not a directory') unless $inode->dir;
 
-    $self->{'cwd'} = $inode;
+    return $self->{'cwd'} = $inode;
 }
 
 =item $fs->chown($path, $uid, $gid)
 
 Using $fs->stat() to locate the inode of the path specified, update that inode
-object's 'uid' and 'gid' fields with the values specified.
+object's 'uid' and 'gid' fields with the values specified.  The inode of the
+file modified will be returned.
 
 =cut
 
 sub chown {
     my ( $self, $path, $uid, $gid ) = @_;
-    $self->stat($path)->chown( $uid, $gid );
+    my $inode = $self->stat($path);
+
+    $inode->chown( $uid, $gid );
+
+    return $inode;
 }
 
 =item $fs->fchown($fd, $uid, $gid)
 
 Using $fs->fstat() to locate the inode of the file descriptor specified, update
-that inode object's 'uid' and 'gid' fields with the values specified.
+that inode object's 'uid' and 'gid' fields with the values specified.  A
+reference to the affected inode will be returned.
 
 =cut
 
 sub fchown {
     my ( $self, $fd, $uid, $gid ) = @_;
-    $self->fstat($fd)->chown( $uid, $gid );
+    my $inode = $self->fstat($fd);
+
+    $inode->chown( $uid, $gid );
+
+    return $inode;
 }
 
 =item $fs->chmod($path, $mode)
 
 Using $fs->stat() to locate the inode of the path specified, update that inode
-object's 'mode' field with the value specified.
+object's 'mode' field with the value specified.  A reference to the affected
+inode will be returned.
 
 =cut
 
 sub chmod {
     my ( $self, $path, $mode ) = @_;
-    $self->stat($path)->chmod($mode);
+    my $inode = $self->stat($path);
+    
+    $inode->chmod($mode);
+
+    return $inode;
 }
 
 =item $fs->fchmod($fd, $mode)
 
 Using $fs->fstat() to locate the inode of the file descriptor specified, update
-that inode object's 'mode' field with the value specified.
+that inode object's 'mode' field with the value specified.  A reference to that
+inode will be returned.
 
 =cut
 
 sub fchmod {
     my ( $self, $fd, $mode ) = @_;
-    $self->fstat($fd)->chmod($mode);
+    my $inode = $self->fstat($fd);
+    
+    $inode->chmod($mode);
+
+    return $inode;
 }
 
 =item $fs->mkdir($path)
@@ -375,6 +394,8 @@ the mode value specified.  If no mode is specified, the default permissions of
 exception will be thrown in case the intended parent of the directory to be
 created is not actually a directory itself.
 
+A reference to the newly-created directory inode will be returned.
+
 =cut
 
 sub mkdir {
@@ -384,7 +405,7 @@ sub mkdir {
     my $parent = $self->stat( $hier->dirname );
     my $perm   = $mode ? $mode & ( $S_IPERM | $S_IPROT ) : $S_IPERM ^ $self->{'umask'};
 
-    $parent->child( $name, $perm | $S_IFDIR );
+    return $parent->child( $name, $perm | $S_IFDIR );
 }
 
 =item $fs->link($src, $dest)
@@ -400,7 +421,9 @@ the directory entry for the destination is empty.
 
 Links traversing filesystem mount points are not allowed.  This functionality
 is provided in the alias() call provided by the Filesys::POSIX::Extensions
-module, which can be imported by $fs->import_module() at runtime.
+module, which can be imported by $fs->import_module() at runtime.  Upon
+success, a reference to the inode for which a new link is to be created will be
+returned.
 
 Exceptions thrown:
 
@@ -437,6 +460,8 @@ sub link {
     confess('File exists') if $directory->exists($name);
 
     $directory->set( $name, $inode );
+
+    return $inode;
 }
 
 =item $fs->symlink($path, $dest)
@@ -444,7 +469,7 @@ sub link {
 The path in the first argument specified, $path, is cleaned up using
 Filesys::POSIX::Path->full(), and stored in a new symlink inode created in the
 location specified by $dest.  An exception will be thrown if the destination
-exists.
+exists.  A reference to the newly-created symlink inode will be returned.
 
 =cut
 
@@ -455,7 +480,7 @@ sub symlink {
     my $name   = $hier->basename;
     my $parent = $self->stat( $hier->dirname );
 
-    $parent->child( $name, $S_IFLNK | $perms )->symlink( Filesys::POSIX::Path->full($path) );
+    return $parent->child( $name, $S_IFLNK | $perms )->symlink( Filesys::POSIX::Path->full($path) );
 }
 
 =item $fs->readlink($path)
@@ -494,6 +519,9 @@ instead for removing directory inodes.
 
 =back
 
+Upon success, a reference to the inode removed from its parent directory will
+be returned.
+
 =cut
 
 sub unlink {
@@ -508,6 +536,8 @@ sub unlink {
     confess('Is a directory') if $inode->dir;
 
     $directory->delete($name);
+
+    return $inode;
 }
 
 =item $fs->rename($old, $new)
@@ -562,6 +592,8 @@ of an empty directory.
 
 =back
 
+Upon success, a reference to the inode to be renamed will be returned.
+
 =cut
 
 sub rename {
@@ -589,6 +621,8 @@ sub rename {
     $self->$remove($old);
 
     $directory->set( $name, $inode );
+
+    return $inode;
 }
 
 =item $fs->rmdir($path)
@@ -617,6 +651,9 @@ The directory is not empty.
 
 =back
 
+Upon success, a reference to the inode of the directory to be removed will be
+returned.
+
 =cut
 
 sub rmdir {
@@ -632,6 +669,8 @@ sub rmdir {
     confess('Directory not empty') unless $inode->empty;
 
     $directory->delete($name);
+
+    return $inode;
 }
 
 =back

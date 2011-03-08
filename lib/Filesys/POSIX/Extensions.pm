@@ -57,6 +57,8 @@ An inode at the destination path already exists.
 
 =back
 
+Upon success, the inode provided will be returned to the caller.
+
 =cut
 
 sub attach {
@@ -69,6 +71,8 @@ sub attach {
     confess('File exists') if $directory->exists($name);
 
     $directory->set( $name, $inode );
+
+    return $inode;
 }
 
 =item $fs->map($real_src, $dest)
@@ -89,6 +93,9 @@ An inode at the destination path already exists.
 Other exceptions may be thrown, based on the availability and permissions of
 the actual inode referred to by $real_src.
 
+Upon success, a reference to the C<Filesys::POSIX::Real::Inode> object created
+will be returned to the caller.
+
 =cut
 
 sub map {
@@ -107,6 +114,8 @@ sub map {
     );
 
     $directory->set( $name, $inode );
+
+    return $inode;
 }
 
 =item $fs->alias($src, $dest)
@@ -123,6 +132,8 @@ An inode at the destination path was found.
 
 =back
 
+Upon success, a reference to the source inode will be returned to the caller.
+
 =cut
 
 sub alias {
@@ -136,15 +147,18 @@ sub alias {
     confess('File exists') if $directory->exists($name);
 
     $directory->set( $name, $inode );
+
+    return $inode;
 }
 
 =item $fs->detach($path)
 
 Detaches the inode of the given path from the virtual filesystem.  This call is
 similar to $fs->unlink(), except a different underlying, filesystem-dependent
-method is used to detach an inode from the path's parent directory.  Both
-directories and non-directories alike can be detached from any point in the
-filesystem using this call; directories do not have to be empty.
+method is used to detach an inode from the path's parent directory in the case
+of C<$fs-E<gt>unlink()>.  Both directories and non-directories alike can be
+detached from any point in the filesystem using this call; directories do not
+have to be empty.
 
 Given a directory object, the $directory->detach() call is used, which only
 removes the inode from the directory itself; whereas $directory->delete(), as
@@ -165,6 +179,9 @@ named in the final component of the path.
 
 =back
 
+Upon success, a reference to the inode detached from the filesystem will be
+returned.
+
 =cut
 
 sub detach {
@@ -176,7 +193,7 @@ sub detach {
 
     confess('No such file or directory') unless $directory->exists($name);
 
-    $directory->detach($name);
+    return $directory->detach($name);
 }
 
 =item $fs->replace($path, $inode)
@@ -194,6 +211,9 @@ No inode was found at the path specified.
 
 =back
 
+Upon success, a reference to the inode passed to this method will be returned
+to the caller.
+
 =cut
 
 sub replace {
@@ -207,6 +227,8 @@ sub replace {
 
     $directory->detach($name);
     $directory->set( $name, $inode );
+
+    return $inode;
 }
 
 =back
