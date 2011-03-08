@@ -69,19 +69,19 @@ interface specified within.
 
 =over
 
-=item Filesys::POSIX->new($rootfs, %opts)
+=item C<Filesys::POSIX-E<gt>new($rootfs, %opts)>
 
 Create a new filesystem environment, specifying a reference to an
 uninitialized instance of a filesystem type object to be mounted at the root
 of the virtual filesystem.  Options passed will be passed to the filesystem
-initialization method $rootfs->init() in flat hash form, and passed on again
-to the VFS, where the options will be stored for later retrieval.
+initialization method C<$rootfs-E<gt>init()> in flat hash form, and passed on
+again to the VFS, where the options will be stored for later retrieval.
 
 =back
 
 =head1 ERROR HANDLING
 
-Errors are emitted in the form of exceptions thrown by Carp::confess(), with
+Errors are emitted in the form of exceptions thrown by C<Carp::confess()>, with
 full stack traces.
 
 =cut
@@ -126,7 +126,7 @@ sub AUTOLOAD {
 
 =over
 
-=item $fs->import_module($module);
+=item C<$fs-E<gt>import_module($module)>
 
 Import functionality from the module specified into the namespace of the
 current filesystem object instance.  The module to be imported should be
@@ -161,9 +161,9 @@ sub import_module {
 
 =over
 
-=item $fs->umask()
+=item C<$fs-E<gt>umask()>
 
-=item $fs->umask($mode)
+=item C<$fs-E<gt>umask($mode)>
 
 When called without an argument, the current umask value is returned.  When a
 value is specified, the current umask is modified to that value, and is
@@ -236,15 +236,15 @@ sub _find_inode {
     return $inode;
 }
 
-=item $fs->stat($path)
+=item C<$fs-E<gt>stat($path)>
 
 Resolve the given path for an inode in the filesystem.  If the inode found is
 a symlink, the path of that symlink will be resolved in turn until the desired
 inode is located.
 
 Paths will be resolved relative to the current working directory when not
-prefixed with a slash ('/'), and will be resolved relative to the root
-directory when prefixed with a slash ('/').
+prefixed with a slash ('C</>'), and will be resolved relative to the root
+directory when prefixed with a slash ('C</>').
 
 =cut
 
@@ -256,10 +256,11 @@ sub stat {
     );
 }
 
-=item $fs->lstat($path)
+=item C<$fs-E<gt>lstat($path)>
 
-Resolve the given path for an inode in the filesystem.  Unlinke $fs->stat(),
-the inode found will be returned literally in the case of a symlink.
+Resolve the given path for an inode in the filesystem.  Unlinke
+C<$fs-E<gt>stat()>, the inode found will be returned literally in the case of a
+symlink.
 
 =cut
 
@@ -268,7 +269,7 @@ sub lstat {
     return $self->_find_inode($path);
 }
 
-=item $fs->fstat($fd)
+=item C<$fs-E<gt>fstat($fd)>
 
 Return the inode corresponding to the open file descriptor passed.  An
 exception will be thrown by the file descriptor lookup module if the file
@@ -281,7 +282,7 @@ sub fstat {
     return $self->{'fds'}->lookup($fd)->{'inode'};
 }
 
-=item $fs->chdir($path)
+=item C<$fs-E<gt>chdir($path)>
 
 Change the current working directory to the path specified.  An
 C<$fs-E<gt>stat()> call will be used internally to lookup the inode for that
@@ -299,7 +300,7 @@ sub chdir {
     return $self->{'cwd'} = $inode;
 }
 
-=item $fs->fchdir($fd)
+=item C<$fs-E<gt>fchdir($fd)>
 
 When passed a file descriptor for a directory, update the internal pointer to
 the current working directory to that directory resolved from the file
@@ -316,11 +317,11 @@ sub fchdir {
     return $self->{'cwd'} = $inode;
 }
 
-=item $fs->chown($path, $uid, $gid)
+=item C<$fs-E<gt>chown($path, $uid, $gid)>
 
-Using $fs->stat() to locate the inode of the path specified, update that inode
-object's 'uid' and 'gid' fields with the values specified.  The inode of the
-file modified will be returned.
+Using C<$fs-E<gt>stat()> to locate the inode of the path specified, update that
+inode object's 'uid' and 'gid' fields with the values specified.  The inode of
+the file modified will be returned.
 
 =cut
 
@@ -333,10 +334,10 @@ sub chown {
     return $inode;
 }
 
-=item $fs->fchown($fd, $uid, $gid)
+=item C<$fs-E<gt>fchown($fd, $uid, $gid)>
 
-Using $fs->fstat() to locate the inode of the file descriptor specified, update
-that inode object's 'uid' and 'gid' fields with the values specified.  A
+Using C<$fs-E<gt>fstat()> to locate the inode of the file descriptor specified,
+update that inode object's 'uid' and 'gid' fields with the values specified.  A
 reference to the affected inode will be returned.
 
 =cut
@@ -350,11 +351,11 @@ sub fchown {
     return $inode;
 }
 
-=item $fs->chmod($path, $mode)
+=item C<$fs-E<gt>chmod($path, $mode)>
 
-Using $fs->stat() to locate the inode of the path specified, update that inode
-object's 'mode' field with the value specified.  A reference to the affected
-inode will be returned.
+Using C<$fs-E<gt>stat()> to locate the inode of the path specified, update that
+inode object's 'mode' field with the value specified.  A reference to the
+affected inode will be returned.
 
 =cut
 
@@ -367,11 +368,11 @@ sub chmod {
     return $inode;
 }
 
-=item $fs->fchmod($fd, $mode)
+=item C<$fs-E<gt>fchmod($fd, $mode)>
 
-Using $fs->fstat() to locate the inode of the file descriptor specified, update
-that inode object's 'mode' field with the value specified.  A reference to that
-inode will be returned.
+Using C<$fs-E<gt>fstat()> to locate the inode of the file descriptor specified,
+update that inode object's 'mode' field with the value specified.  A reference
+to that inode will be returned.
 
 =cut
 
@@ -384,13 +385,13 @@ sub fchmod {
     return $inode;
 }
 
-=item $fs->mkdir($path)
+=item C<$fs-E<gt>mkdir($path)>
 
-=item $fs->mkdir($path, $mode)
+=item C<$fs-E<gt>mkdir($path, $mode)>
 
 Create a new directory at the path specified, applying the permissions field in
 the mode value specified.  If no mode is specified, the default permissions of
-0777 will be modified by the current umask value.  A "Not a directory"
+I<0777> will be modified by the current umask value.  A "Not a directory"
 exception will be thrown in case the intended parent of the directory to be
 created is not actually a directory itself.
 
@@ -408,11 +409,11 @@ sub mkdir {
     return $parent->child( $name, $perm | $S_IFDIR );
 }
 
-=item $fs->link($src, $dest)
+=item C<$fs-E<gt>link($src, $dest)>
 
-Using $fs->stat() to resolve the path of the link source, and the parent of the
-link destination, $fs->link() place a reference to the source inode in the
-location specified by the destination.
+Using C<$fs-E<gt>stat()> to resolve the path of the link source, and the parent
+of the link destination, C<$fs-E<gt>link()> place a reference to the source
+inode in the location specified by the destination.
 
 If a destination inode already exists, it will only be able to be replaced by
 the source if both are either directories or non-directories.  If the source
@@ -420,8 +421,8 @@ and destination are both directories, the destination will only be replaced if
 the directory entry for the destination is empty.
 
 Links traversing filesystem mount points are not allowed.  This functionality
-is provided in the alias() call provided by the Filesys::POSIX::Extensions
-module, which can be imported by $fs->import_module() at runtime.  Upon
+is provided in the C<alias()> call provided by the L<Filesys::POSIX::Extensions>
+module, which can be imported by C<$fs-E<gt>import_module()> at runtime.  Upon
 success, a reference to the inode for which a new link is to be created will be
 returned.
 
@@ -464,12 +465,13 @@ sub link {
     return $inode;
 }
 
-=item $fs->symlink($path, $dest)
+=item C<$fs-E<gt>symlink($path, $dest)>
 
 The path in the first argument specified, $path, is cleaned up using
-Filesys::POSIX::Path->full(), and stored in a new symlink inode created in the
-location specified by $dest.  An exception will be thrown if the destination
-exists.  A reference to the newly-created symlink inode will be returned.
+C<Filesys::POSIX::Path-E<gt>full()>, and stored in a new symlink inode created
+in the location specified by $dest.  An exception will be thrown if the
+destination exists.  A reference to the newly-created symlink inode will be
+returned.
 
 =cut
 
@@ -499,11 +501,11 @@ sub readlink {
     return $inode->readlink;
 }
 
-=item $fs->unlink($path)
+=item C<$fs-E<gt>unlink($path)>
 
-Using $fs->lstat() to resolve the given path for an inode specified, said inode
-will be removed from its parent directory entry.  The following exceptions will
-be thrown in the event of certain errors:
+Using C<$fs-E<gt>lstat()> to resolve the given path for an inode specified,
+said inode will be removed from its parent directory entry.  The following
+exceptions will be thrown in the event of certain errors:
 
 =over
 
@@ -514,8 +516,8 @@ path.
 
 =item Is a directory
 
-$fs->unlink() was called with a directory specified.  $fs->rmdir() must be used
-instead for removing directory inodes.
+C<$fs-E<gt>unlink()> was called with a directory specified.
+C<$fs-E<gt>rmdir()> must be used instead for removing directory inodes.
 
 =back
 
@@ -540,23 +542,23 @@ sub unlink {
     return $inode;
 }
 
-=item $fs->rename($old, $new)
+=item C<$fs-E<gt>rename($old, $new)>
 
 Relocate the item specified by the $old argument to the new path specified by
 $new.
 
-Using $fs->lstat(), the inode for the old pathname is resolved; $fs->stat() is
-then used to resolve the path of the parent directory of the argument specified
-in $new.
+Using $fs->lstat(), the inode for the old pathname is resolved;
+C<$fs-E<gt>stat()> is then used to resolve the path of the parent directory of
+the argument specified in C<$new>.
 
-If an inode exists at the path specified by $new, it will be replaced by $old
-in the following circumstances:
+If an inode exists at the path specified by C<$new>, it will be replaced by
+C<$old> in the following circumstances:
 
 =over
 
-=item Both the source ($old) and destination ($new) are non-directory inodes.
+=item Both the source C<$old> and destination C<$new> are non-directory inodes.
 
-=item Both the source ($old) and destination ($new) are directory inodes, and
+=item Both the source C<$old> and destination C<$new> are directory inodes, and
 the destination is empty.
 
 =back
@@ -567,8 +569,8 @@ The following exceptions are thrown for error conditions:
 
 =item Operation not permitted
 
-Currently, $fs->rename() cannot operate if the inode at the old location is an
-inode associated with a Filesys::POSIX::Real filesystem type.
+Currently, C<$fs-E<gt>rename()> cannot operate if the inode at the old location
+is an inode associated with a Filesys::POSIX::Real filesystem type.
 
 =item Cross-device link
 
@@ -625,7 +627,7 @@ sub rename {
     return $inode;
 }
 
-=item $fs->rmdir($path)
+=item C<$fs-E<gt>rmdir($path)>
 
 Unlinks the directory inode at the specified path.  Exceptions are thrown in
 the following conditions:
@@ -643,7 +645,7 @@ The directory specified is an active mount point.
 
 =item Not a directory
 
-The inode found at $path is not a directory.
+The inode found at C<$path> is not a directory.
 
 =item Directory not empty
 
