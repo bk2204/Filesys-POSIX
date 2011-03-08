@@ -23,8 +23,9 @@ analyzing its attributes.
 Returns a value indicating whether or not the current inode is a directory.
 
 =cut
+
 sub dir {
-    (shift->{'mode'} & $S_IFMT) == $S_IFDIR;
+    ( shift->{'mode'} & $S_IFMT ) == $S_IFDIR;
 }
 
 =item $inode->link()
@@ -32,8 +33,9 @@ sub dir {
 Returns true if the current inode is a symlink.
 
 =cut
+
 sub link {
-    (shift->{'mode'} & $S_IFMT) == $S_IFLNK;
+    ( shift->{'mode'} & $S_IFMT ) == $S_IFLNK;
 }
 
 =item $inode->file()
@@ -41,8 +43,9 @@ sub link {
 Returns true if the current inode is a regular file.
 
 =cut
+
 sub file {
-    (shift->{'mode'} & $S_IFMT) == $S_IFREG;
+    ( shift->{'mode'} & $S_IFMT ) == $S_IFREG;
 }
 
 =item $inode->char()
@@ -50,8 +53,9 @@ sub file {
 Returns true if the current inode is a character device.
 
 =cut
+
 sub char {
-    (shift->{'mode'} & $S_IFMT) == $S_IFCHR;
+    ( shift->{'mode'} & $S_IFMT ) == $S_IFCHR;
 }
 
 =item $inode->block()
@@ -59,8 +63,9 @@ sub char {
 Returns true if the current inode is a block device.
 
 =cut
+
 sub block {
-    (shift->{'mode'} & $S_IFMT) == $S_IFBLK;
+    ( shift->{'mode'} & $S_IFMT ) == $S_IFBLK;
 }
 
 =item $inode->fifo()
@@ -68,8 +73,9 @@ sub block {
 Returns true if the current inode is a Unix FIFO.
 
 =cut
+
 sub fifo {
-    (shift->{'mode'} & $S_IFMT) == $S_IFIFO;
+    ( shift->{'mode'} & $S_IFMT ) == $S_IFIFO;
 }
 
 =item $inode->perms()
@@ -77,6 +83,7 @@ sub fifo {
 Returns the permissions bitfield value of the current inode's mode attribute.
 
 =cut
+
 sub perms {
     shift->{'mode'} & $S_IPERM;
 }
@@ -86,8 +93,9 @@ sub perms {
 Returns true if the inode is readable by anyone.
 
 =cut
+
 sub readable {
-    (shift->{'mode'} & $S_IR) != 0;
+    ( shift->{'mode'} & $S_IR ) != 0;
 }
 
 =item $inode->writable()
@@ -95,8 +103,9 @@ sub readable {
 Returns true if the inode is writable by anyone.
 
 =cut
+
 sub writable {
-    (shift->{'mode'} & $S_IW) != 0;
+    ( shift->{'mode'} & $S_IW ) != 0;
 }
 
 =item $inode->executable()
@@ -104,8 +113,9 @@ sub writable {
 Returns true if the inode is executable by anyone.
 
 =cut
+
 sub executable {
-    (shift->{'mode'} & $S_IX) != 0;
+    ( shift->{'mode'} & $S_IX ) != 0;
 }
 
 =item $inode->setuid()
@@ -113,8 +123,9 @@ sub executable {
 Returns true if the inode has a setuid bit set.
 
 =cut
+
 sub setuid {
-    (shift->{'mode'} & $S_ISUID) != 0;
+    ( shift->{'mode'} & $S_ISUID ) != 0;
 }
 
 =item $inode->setgid()
@@ -122,8 +133,9 @@ sub setuid {
 Returns true if the inode has a setgid bit set.
 
 =cut
+
 sub setgid {
-    (shift->{'mode'} & $S_ISGID) != 0;
+    ( shift->{'mode'} & $S_ISGID ) != 0;
 }
 
 =item $inode->update(@st)
@@ -132,10 +144,11 @@ Updates the current inode object with a list of values as returned by
 L<stat()|perlfunc/stat>.
 
 =cut
-sub update {
-    my ($self, @st) = @_;
 
-    @{$self}{qw/size atime mtime ctime uid gid mode rdev/} = (@st[7..10], @st[4..5], $st[2], $st[6]);
+sub update {
+    my ( $self, @st ) = @_;
+
+    @{$self}{qw/size atime mtime ctime uid gid mode rdev/} = ( @st[ 7 .. 10 ], @st[ 4 .. 5 ], $st[2], $st[6] );
 }
 
 =item $inode->directory()
@@ -150,6 +163,7 @@ Otherwise, the following exception is issued:
 =back
 
 =cut
+
 sub directory {
     my ($self) = @_;
     confess('Not a directory') unless $self->dir;
@@ -163,6 +177,7 @@ Uses the above $inode->directory() call to obtain the directory for the current
 inode, and returns true if the directory only contains the '..' and '.' members.
 
 =cut
+
 sub empty {
     my ($self) = @_;
     my $directory = $self->directory;

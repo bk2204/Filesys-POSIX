@@ -5,7 +5,7 @@ use warnings;
 
 use Filesys::POSIX::Bits;
 use Filesys::POSIX::FdTable ();
-use Filesys::POSIX::Path ();
+use Filesys::POSIX::Path    ();
 
 use Carp qw/confess/;
 
@@ -80,31 +80,34 @@ issued file descriptor.
 =back
 
 =cut
+
 sub open {
-    my ($self, $path, $flags, $mode) = @_;
+    my ( $self, $path, $flags, $mode ) = @_;
     my $hier = Filesys::POSIX::Path->new($path);
     my $name = $hier->basename;
     my $inode;
 
-    if ($flags & $O_CREAT) {
-        my $parent = $self->stat($hier->dirname);
+    if ( $flags & $O_CREAT ) {
+        my $parent    = $self->stat( $hier->dirname );
         my $directory = $parent->directory;
 
-        if ($inode = $directory->get($name)) {
+        if ( $inode = $directory->get($name) ) {
             confess('File exists') if $flags & $O_EXCL;
-        } else {
-            my $format = $mode? ($mode & $S_IFMT? $mode & $S_IFMT: $S_IFREG): $S_IFREG;
-            my $perms = $mode? $mode & $S_IPERM: $S_IRW;
+        }
+        else {
+            my $format = $mode ? ( $mode & $S_IFMT ? $mode & $S_IFMT : $S_IFREG ) : $S_IFREG;
+            my $perms = $mode ? $mode & $S_IPERM : $S_IRW;
 
             $perms &= ~$self->{'umask'};
 
-            $inode = $parent->child($name, $format | $perms);
+            $inode = $parent->child( $name, $format | $perms );
         }
-    } else {
+    }
+    else {
         $inode = $self->stat($path);
     }
 
-    return $self->{'fds'}->open($inode, $flags);
+    return $self->{'fds'}->open( $inode, $flags );
 }
 
 =item $fs->read($fd, $buf, $len)
@@ -127,16 +130,16 @@ A read was attempted on a write-only file descriptor.
 =back
 
 =cut
+
 sub read {
-    my $self = shift;
-    my $fd = shift;
+    my $self  = shift;
+    my $fd    = shift;
     my $entry = $self->{'fds'}->lookup($fd);
 
     confess('Invalid argument') if $entry->{'flags'} & $O_WRONLY;
 
     return $entry->{'handle'}->read(@_);
 }
-
 
 =item $fs->write($fd, $buf, $len)
 
@@ -158,13 +161,14 @@ A write was attempted on a read-only file descriptor.
 =back
 
 =cut
+
 sub write {
-    my ($self, $fd, $buf, $len) = @_;
+    my ( $self, $fd, $buf, $len ) = @_;
     my $entry = $self->{'fds'}->lookup($fd);
 
-    confess('Invalid argument') unless $entry->{'flags'} & ($O_WRONLY | $O_RDWR);
+    confess('Invalid argument') unless $entry->{'flags'} & ( $O_WRONLY | $O_RDWR );
 
-    return $entry->{'handle'}->write($buf, $len);
+    return $entry->{'handle'}->write( $buf, $len );
 }
 
 =item $fs->print($fd, @args)
@@ -184,15 +188,16 @@ Issued when called on a read-only file descriptor.
 =back
 
 =cut
+
 sub print {
-    my ($self, $fd, @args) = @_;
+    my ( $self, $fd, @args ) = @_;
     my $entry = $self->{'fds'}->lookup($fd);
 
-    confess('Invalid argument') unless $entry->{'flags'} & ($O_WRONLY | $O_RDWR);
+    confess('Invalid argument') unless $entry->{'flags'} & ( $O_WRONLY | $O_RDWR );
 
-    my $buf = join($/, @args);
+    my $buf = join( $/, @args );
 
-    return $entry->{'handle'}->write($buf, length $buf);
+    return $entry->{'handle'}->write( $buf, length $buf );
 }
 
 =item $fs->printf($fd, $format, @args)
@@ -211,15 +216,16 @@ Issued when called on a read-only file descriptor.
 =back
 
 =cut
+
 sub printf {
-    my ($self, $fd, $format, @args) = @_;
+    my ( $self, $fd, $format, @args ) = @_;
     my $entry = $self->{'fds'}->lookup($fd);
 
-    confess('Invalid argument') unless $entry->{'flags'} & ($O_WRONLY | $O_RDWR);
+    confess('Invalid argument') unless $entry->{'flags'} & ( $O_WRONLY | $O_RDWR );
 
-    my $buf = sprintf($format, @args);
+    my $buf = sprintf( $format, @args );
 
-    return $entry->{'handle'}->write($buf, length $buf);
+    return $entry->{'handle'}->write( $buf, length $buf );
 }
 
 =item $fs->tell($fd)
@@ -227,8 +233,9 @@ sub printf {
 Returns the byte offset of the file descriptor's file handle.
 
 =cut
+
 sub tell {
-    my ($self, $fd) = @_;
+    my ( $self, $fd ) = @_;
     my $entry = $self->{'fds'}->lookup($fd);
 
     return $entry->{'handle'}->tell;
@@ -261,11 +268,12 @@ the end of the file.
 =back
 
 =cut
+
 sub seek {
-    my ($self, $fd, $pos, $whence) = @_;
+    my ( $self, $fd, $pos, $whence ) = @_;
     my $entry = $self->{'fds'}->lookup($fd);
 
-    return $entry->{'handle'}->seek($pos, $whence);
+    return $entry->{'handle'}->seek( $pos, $whence );
 }
 
 =item $fs->close($fd)
@@ -275,8 +283,9 @@ file descriptor.  The file descriptor will then be freed for subsequent use and
 issue by $fs->open().
 
 =cut
+
 sub close {
-    my ($self, $fd) = @_;
+    my ( $self, $fd ) = @_;
     $self->{'fds'}->close($fd);
 }
 
@@ -285,8 +294,9 @@ sub close {
 Returns the underlying file handle opened for the file descriptor passed.
 
 =cut
+
 sub fdopen {
-    my ($self, $fd) = @_;
+    my ( $self, $fd ) = @_;
     my $entry = $self->{'fds'}->lookup($fd);
 
     return $entry->{'handle'};

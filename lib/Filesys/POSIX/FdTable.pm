@@ -22,34 +22,34 @@ sub new {
 }
 
 sub open {
-    my ($self, $inode, $flags) = @_;
+    my ( $self, $inode, $flags ) = @_;
     my $fd = 2;
 
     my $handle = $inode->open($flags) or confess('Unable to open device-specific file handle');
 
-    foreach (sort { $a <=> $b } ($fd, keys %$self)) {
-        next if $self->{$fd = $_ + 1};
+    foreach ( sort { $a <=> $b } ( $fd, keys %$self ) ) {
+        next if $self->{ $fd = $_ + 1 };
         last;
     }
 
     $self->{$fd} = {
-        'inode'     => $inode,
-        'handle'    => $handle,
-        'flags'     => $flags
+        'inode'  => $inode,
+        'handle' => $handle,
+        'flags'  => $flags
     };
 
     return $fd;
 }
 
 sub lookup {
-    my ($self, $fd) = @_;
+    my ( $self, $fd ) = @_;
     my $entry = $self->{$fd} or confess('Invalid file descriptor');
 
     return $entry;
 }
 
 sub close {
-    my ($self, $fd) = @_;
+    my ( $self, $fd ) = @_;
     my $entry = $self->{$fd} or return;
 
     $entry->{'handle'}->close;

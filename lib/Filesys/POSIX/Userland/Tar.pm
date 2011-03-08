@@ -56,70 +56,71 @@ sub EXPORT {
 my $BLOCK_SIZE = 512;
 
 my %TYPES = (
-    0   => $S_IFREG,
-    2   => $S_IFLNK,
-    3   => $S_IFCHR,
-    4   => $S_IFBLK,
-    5   => $S_IFDIR,
-    6   => $S_IFIFO
+    0 => $S_IFREG,
+    2 => $S_IFLNK,
+    3 => $S_IFCHR,
+    4 => $S_IFBLK,
+    5 => $S_IFDIR,
+    6 => $S_IFIFO
 );
 
 sub _split_filename {
     my ($filename) = @_;
     my $len = length $filename;
-    my @parts = split(/\//, $filename);
+    my @parts = split( /\//, $filename );
 
-    if ($len > 255) {
+    if ( $len > 255 ) {
         confess('Filename too long');
     }
 
     my $got = 0;
-    my (@prefix_items, @suffix_items);
+    my ( @prefix_items, @suffix_items );
 
     while (@parts) {
         my $item = pop @parts;
         $got += length($item) + 1;
 
-        if ($got >= 100) {
+        if ( $got >= 100 ) {
             push @prefix_items, $item;
-        } else {
+        }
+        else {
             push @suffix_items, $item;
         }
     }
 
-    my $prefix = join('/', reverse @prefix_items);
-    my $suffix = join('/', reverse @suffix_items);
+    my $prefix = join( '/', reverse @prefix_items );
+    my $suffix = join( '/', reverse @suffix_items );
 
     $suffix .= '/' if $filename =~ /\/$/;
 
     return (
-        'prefix'    => $prefix,
-        'suffix'    => $suffix
+        'prefix' => $prefix,
+        'suffix' => $suffix
     );
 }
 
 sub _pad_string {
-    my ($string, $size) = @_;
+    my ( $string, $size ) = @_;
 
     return $string if length($string) == $size;
-    return pack("Z$size", $string);
+    return pack( "Z$size", $string );
 }
 
 sub _format_number {
-    my ($number, $digits, $size) = @_;
-    my $string = sprintf("%.${digits}o", $number);
-    my $offset = length($string) - $digits;
-    my $substring = substr($string, $offset, $digits);
+    my ( $number, $digits, $size ) = @_;
+    my $string    = sprintf( "%.${digits}o", $number );
+    my $offset    = length($string) - $digits;
+    my $substring = substr( $string, $offset, $digits );
 
     return $substring if $digits == $size;
-    return pack("Z$size", $substring);
+    return pack( "Z$size", $substring );
 }
 
 sub _checksum {
     my ($header) = @_;
     my $sum = 0;
 
-    foreach (unpack 'C*', $header) {
+    foreach ( unpack 'C*', $header ) {
         $sum += $_;
     }
 
@@ -129,47 +130,48 @@ sub _checksum {
 sub _type {
     my ($inode) = @_;
 
-    foreach (keys %TYPES) {
-        return $_ if ($inode->{'mode'} & $S_IFMT) == $TYPES{$_};
+    foreach ( keys %TYPES ) {
+        return $_ if ( $inode->{'mode'} & $S_IFMT ) == $TYPES{$_};
     }
 
     return 0;
 }
 
 sub _header {
-    my ($inode, $dest) = @_;
+    my ( $inode, $dest ) = @_;
     my %filename_parts = _split_filename($dest);
     my $header;
 
-    my $size = $inode->file? $inode->{'size'}: 0;
+    my $size = $inode->file ? $inode->{'size'} : 0;
 
-    $header .= _pad_string($filename_parts{'suffix'}, 100);
-    $header .= _format_number($inode->{'mode'} & $S_IPERM, 7, 8);
-    $header .= _format_number($inode->{'uid'}, 7, 8);
-    $header .= _format_number($inode->{'gid'}, 7, 8);
-    $header .= _format_number($size, 12, 12);
-    $header .= _format_number($inode->{'mtime'}, 12, 12);
+    $header .= _pad_string( $filename_parts{'suffix'}, 100 );
+    $header .= _format_number( $inode->{'mode'} & $S_IPERM, 7,  8 );
+    $header .= _format_number( $inode->{'uid'},             7,  8 );
+    $header .= _format_number( $inode->{'gid'},             7,  8 );
+    $header .= _format_number( $size,                       12, 12 );
+    $header .= _format_number( $inode->{'mtime'},           12, 12 );
     $header .= ' ' x 8;
-    $header .= _format_number(_type($inode), 1, 1);
+    $header .= _format_number( _type($inode),               1,  1 );
 
-    if ($inode->link) {
-        $header .= _pad_string($inode->readlink, 100);
-    } else {
+    if ( $inode->link ) {
+        $header .= _pad_string( $inode->readlink, 100 );
+    }
+    else {
         $header .= "\x00" x 100;
     }
 
-    $header .= _pad_string('ustar', 6);
-    $header .= _pad_string('00', 2);
+    $header .= _pad_string( 'ustar', 6 );
+    $header .= _pad_string( '00',    2 );
     $header .= "\x00" x 32;
     $header .= "\x00" x 32;
-    $header .= _format_number(0, 7, 8);
-    $header .= _format_number(0, 7, 8);
-    $header .= _pad_string($filename_parts{'prefix'}, 155);
+    $header .= _format_number( 0, 7, 8 );
+    $header .= _format_number( 0, 7, 8 );
+    $header .= _pad_string( $filename_parts{'prefix'}, 155 );
 
     my $checksum = _checksum($header);
-    substr($header, 148, 8) = _format_number($checksum, 7, 8);
+    substr( $header, 148, 8 ) = _format_number( $checksum, 7, 8 );
 
-    return pack("a$BLOCK_SIZE", $header);
+    return pack( "a$BLOCK_SIZE", $header );
 }
 
 #
@@ -177,32 +179,32 @@ sub _header {
 # necessarily something that should be done by end user software.
 #
 sub _write_file {
-    my ($fs, $handle, $dest, $inode) = @_;
+    my ( $fs, $handle, $dest, $inode ) = @_;
     my $fh = $inode->open($O_RDONLY);
 
-    while (my $len = $fh->read(my $buf, 4096)) {
-        if ((my $padlen = $BLOCK_SIZE - ($len % $BLOCK_SIZE)) != $BLOCK_SIZE) {
+    while ( my $len = $fh->read( my $buf, 4096 ) ) {
+        if ( ( my $padlen = $BLOCK_SIZE - ( $len % $BLOCK_SIZE ) ) != $BLOCK_SIZE ) {
             $len += $padlen;
             $buf .= "\x0" x $padlen;
         }
 
-        $handle->write($buf, $len) == $len or confess('Short write while dumping file buffer to handle');
+        $handle->write( $buf, $len ) == $len or confess('Short write while dumping file buffer to handle');
     }
 
     $fh->close;
 }
 
 sub _archive {
-    my ($fs, $handle, $dest, $inode) = @_;
+    my ( $fs, $handle, $dest, $inode ) = @_;
 
-    unless ($dest =~ /\/$/) {
+    unless ( $dest =~ /\/$/ ) {
         $dest .= '/' if $inode->dir;
     }
 
-    my $header = _header($inode, $dest);
-    $handle->write($header, 512) == 512 or confess('Short write while dumping tar header to file handle');
+    my $header = _header( $inode, $dest );
+    $handle->write( $header, 512 ) == 512 or confess('Short write while dumping tar header to file handle');
 
-    _write_file($fs, $handle, $dest, $inode) if $inode->file;
+    _write_file( $fs, $handle, $dest, $inode ) if $inode->file;
 }
 
 =item $fs->tar($handle, @items)
@@ -216,19 +218,24 @@ specified, the data is passed unmodified to Filesys::POSIX::Userland::Find.
 In this way, for instance, the behavior of following symlinks can be specified.
 
 =cut
+
 sub tar {
-    my $self = shift;
+    my $self   = shift;
     my $handle = shift;
-    my $opts = ref $_[0] eq 'HASH'? shift: {};
-    my @items = @_;
+    my $opts   = ref $_[0] eq 'HASH' ? shift : {};
+    my @items  = @_;
 
     $self->import_module('Filesys::POSIX::Userland::Find');
 
-    $self->find(sub {
-        my ($path, $inode) = @_;
+    $self->find(
+        sub {
+            my ( $path, $inode ) = @_;
 
-        _archive($self, $handle, $path->full, $inode);
-    }, $opts, @items);
+            _archive( $self, $handle, $path->full, $inode );
+        },
+        $opts,
+        @items
+    );
 }
 
 =back

@@ -3,14 +3,14 @@ package Filesys::POSIX;
 use strict;
 use warnings;
 
-use Filesys::POSIX::Mem ();
+use Filesys::POSIX::Mem     ();
 use Filesys::POSIX::FdTable ();
-use Filesys::POSIX::Path ();
-use Filesys::POSIX::VFS ();
+use Filesys::POSIX::Path    ();
+use Filesys::POSIX::VFS     ();
 use Filesys::POSIX::Bits;
 
-use Filesys::POSIX::IO ();
-use Filesys::POSIX::Mount ();
+use Filesys::POSIX::IO       ();
+use Filesys::POSIX::Mount    ();
 use Filesys::POSIX::Userland ();
 
 use Carp qw/confess/;
@@ -87,40 +87,41 @@ Errors are emitted in the form of exceptions thrown by Carp::confess(), with
 full stack traces.
 
 =cut
+
 sub new {
-    my ($class, $rootfs, %opts) = @_;
+    my ( $class, $rootfs, %opts ) = @_;
 
     confess('No root filesystem specified') unless $rootfs;
 
     $rootfs->init(%opts);
 
-    my $vfs = Filesys::POSIX::VFS->new->mount($rootfs, '/', $rootfs->{'root'}, %opts);
+    my $vfs = Filesys::POSIX::VFS->new->mount( $rootfs, '/', $rootfs->{'root'}, %opts );
 
     return bless {
-        'methods'   => {},
-        'umask'     => 022,
-        'fds'       => Filesys::POSIX::FdTable->new,
-        'cwd'       => $rootfs->{'root'},
-        'root'      => $rootfs->{'root'},
-        'vfs'       => $vfs,
-        'cwd'       => $vfs->vnode($rootfs->{'root'}),
-        'root'      => $vfs->vnode($rootfs->{'root'})
+        'methods' => {},
+        'umask'   => 022,
+        'fds'     => Filesys::POSIX::FdTable->new,
+        'cwd'     => $rootfs->{'root'},
+        'root'    => $rootfs->{'root'},
+        'vfs'     => $vfs,
+        'cwd'     => $vfs->vnode( $rootfs->{'root'} ),
+        'root'    => $vfs->vnode( $rootfs->{'root'} )
     }, $class;
 }
 
 sub AUTOLOAD {
-    my ($self, @args) = @_;
+    my ( $self, @args ) = @_;
     my $method = $AUTOLOAD;
     $method =~ s/^([a-z0-9_]+::)*//i;
 
     my $module = $self->{'methods'}->{$method};
 
     return if $method eq 'DESTROY';
-    confess("No module imported for method '". __PACKAGE__ ."::$method()") unless $module;
+    confess( "No module imported for method '" . __PACKAGE__ . "::$method()" ) unless $module;
 
     no strict 'refs';
 
-    return *{"$module\::$method"}->($self, @args);
+    return *{"$module\::$method"}->( $self, @args );
 }
 
 =head1 IMPORTING MODULES FOR ADDITIONAL FUNCTIONALITY
@@ -140,16 +141,17 @@ Filesys::POSIX provides.
 =back
 
 =cut
+
 sub import_module {
-    my ($self, $module) = @_;
+    my ( $self, $module ) = @_;
 
     eval "use $module";
     confess $@ if $@;
 
     no strict 'refs';
 
-    foreach (*{"$module\::EXPORT"}->()) {
-        if (my $imported = $self->{'methods'}->{$_}) {
+    foreach ( *{"$module\::EXPORT"}->() ) {
+        if ( my $imported = $self->{'methods'}->{$_} ) {
             confess("Module $imported already imported method $_") unless $module eq $imported;
         }
 
@@ -170,22 +172,23 @@ value is specified, the current umask is modified to that value, and is
 returned once set.
 
 =cut
+
 sub umask {
-    my ($self, $umask) = @_;
+    my ( $self, $umask ) = @_;
 
     return $self->{'umask'} = $umask if defined $umask;
     return $self->{'umask'};
 }
 
 sub _find_inode {
-    my ($self, $path, %opts) = @_;
+    my ( $self, $path, %opts ) = @_;
     my $hier = Filesys::POSIX::Path->new($path);
-    my $dir = $self->{'cwd'};
+    my $dir  = $self->{'cwd'};
     my $inode;
 
     return $self->{'root'} if $hier->full eq '/';
 
-    while ($hier->count) {
+    while ( $hier->count ) {
         my $item = $hier->shift;
 
         #
@@ -202,7 +205,7 @@ sub _find_inode {
         #
         $dir = $self->{'vfs'}->vnode($dir);
 
-        unless ($dir->{'dev'}->{'flags'}->{'noatime'}) {
+        unless ( $dir->{'dev'}->{'flags'}->{'noatime'} ) {
             $dir->{'atime'} = time;
         }
 
@@ -211,20 +214,23 @@ sub _find_inode {
         #
         my $directory = $dir->directory;
 
-        if ($item eq '.') {
+        if ( $item eq '.' ) {
             $inode = $dir;
-        } elsif ($item eq '..') {
+        }
+        elsif ( $item eq '..' ) {
             my $vnode = $self->{'vfs'}->vnode($dir);
-            $inode = $vnode->{'parent'}? $vnode->{'parent'}: $self->{'vfs'}->vnode($directory->get('..'));
-        } else {
-            $inode = $self->{'vfs'}->vnode($directory->get($item));
+            $inode = $vnode->{'parent'} ? $vnode->{'parent'} : $self->{'vfs'}->vnode( $directory->get('..') );
+        }
+        else {
+            $inode = $self->{'vfs'}->vnode( $directory->get($item) );
         }
 
         confess('No such file or directory') unless $inode;
 
-        if ($inode->link) {
-            $hier = $hier->concat($inode->readlink) if $opts{'resolve_symlinks'} || $hier->count;
-        } else {
+        if ( $inode->link ) {
+            $hier = $hier->concat( $inode->readlink ) if $opts{'resolve_symlinks'} || $hier->count;
+        }
+        else {
             $dir = $inode;
         }
     }
@@ -243,9 +249,11 @@ prefixed with a slash ('/'), and will be resolved relative to the root
 directory when prefixed with a slash ('/').
 
 =cut
+
 sub stat {
-    my ($self, $path) = @_;
-    return $self->_find_inode($path,
+    my ( $self, $path ) = @_;
+    return $self->_find_inode(
+        $path,
         'resolve_symlinks' => 1
     );
 }
@@ -256,8 +264,9 @@ Resolve the given path for an inode in the filesystem.  Unlinke $fs->stat(),
 the inode found will be returned literally in the case of a symlink.
 
 =cut
+
 sub lstat {
-    my ($self, $path) = @_;
+    my ( $self, $path ) = @_;
     return $self->_find_inode($path);
 }
 
@@ -268,8 +277,9 @@ exception will be thrown by the file descriptor lookup module if the file
 descriptor passed does not correspond to an open file.
 
 =cut
+
 sub fstat {
-    my ($self, $fd) = @_;
+    my ( $self, $fd ) = @_;
     return $self->{'fds'}->lookup($fd)->{'inode'};
 }
 
@@ -282,8 +292,9 @@ internal current working directory pointer will be updated with the directory
 inode found.
 
 =cut
+
 sub chdir {
-    my ($self, $path) = @_;
+    my ( $self, $path ) = @_;
     my $inode = $self->stat($path);
     confess('Not a directory') unless $inode->dir;
 
@@ -297,8 +308,9 @@ corresponding directory inode.  If the inode is not a directory, an exception
 "Not a directory" will be thrown.
 
 =cut
+
 sub fchdir {
-    my ($self, $fd) = @_;
+    my ( $self, $fd ) = @_;
     my $inode = $self->fstat($fd);
     confess('Not a directory') unless $inode->dir;
 
@@ -311,9 +323,10 @@ Using $fs->stat() to locate the inode of the path specified, update that inode
 object's 'uid' and 'gid' fields with the values specified.
 
 =cut
+
 sub chown {
-    my ($self, $path, $uid, $gid) = @_;
-    $self->stat($path)->chown($uid, $gid);
+    my ( $self, $path, $uid, $gid ) = @_;
+    $self->stat($path)->chown( $uid, $gid );
 }
 
 =item $fs->fchown($fd, $uid, $gid)
@@ -322,9 +335,10 @@ Using $fs->fstat() to locate the inode of the file descriptor specified, update
 that inode object's 'uid' and 'gid' fields with the values specified.
 
 =cut
+
 sub fchown {
-    my ($self, $fd, $uid, $gid) = @_;
-    $self->fstat($fd)->chown($uid, $gid);
+    my ( $self, $fd, $uid, $gid ) = @_;
+    $self->fstat($fd)->chown( $uid, $gid );
 }
 
 =item $fs->chmod($path, $mode)
@@ -333,8 +347,9 @@ Using $fs->stat() to locate the inode of the path specified, update that inode
 object's 'mode' field with the value specified.
 
 =cut
+
 sub chmod {
-    my ($self, $path, $mode) = @_;
+    my ( $self, $path, $mode ) = @_;
     $self->stat($path)->chmod($mode);
 }
 
@@ -344,8 +359,9 @@ Using $fs->fstat() to locate the inode of the file descriptor specified, update
 that inode object's 'mode' field with the value specified.
 
 =cut
+
 sub fchmod {
-    my ($self, $fd, $mode) = @_;
+    my ( $self, $fd, $mode ) = @_;
     $self->fstat($fd)->chmod($mode);
 }
 
@@ -360,14 +376,15 @@ exception will be thrown in case the intended parent of the directory to be
 created is not actually a directory itself.
 
 =cut
-sub mkdir {
-    my ($self, $path, $mode) = @_;
-    my $hier = Filesys::POSIX::Path->new($path);
-    my $name = $hier->basename;
-    my $parent = $self->stat($hier->dirname);
-    my $perm = $mode? $mode & ($S_IPERM | $S_IPROT): $S_IPERM ^ $self->{'umask'};
 
-    $parent->child($name, $perm | $S_IFDIR);
+sub mkdir {
+    my ( $self, $path, $mode ) = @_;
+    my $hier   = Filesys::POSIX::Path->new($path);
+    my $name   = $hier->basename;
+    my $parent = $self->stat( $hier->dirname );
+    my $perm   = $mode ? $mode & ( $S_IPERM | $S_IPROT ) : $S_IPERM ^ $self->{'umask'};
+
+    $parent->child( $name, $perm | $S_IFDIR );
 }
 
 =item $fs->link($src, $dest)
@@ -406,19 +423,20 @@ Thrown if an entry at the destination path already exists.
 =back
 
 =cut
+
 sub link {
-    my ($self, $src, $dest) = @_;
-    my $hier = Filesys::POSIX::Path->new($dest);
-    my $name = $hier->basename;
-    my $inode = $self->stat($src);
-    my $parent = $self->stat($hier->dirname);
+    my ( $self, $src, $dest ) = @_;
+    my $hier      = Filesys::POSIX::Path->new($dest);
+    my $name      = $hier->basename;
+    my $inode     = $self->stat($src);
+    my $parent    = $self->stat( $hier->dirname );
     my $directory = $parent->directory;
 
     confess('Cross-device link') unless $inode->{'dev'} == $parent->{'dev'};
     confess('Is a directory') if $inode->dir;
     confess('File exists') if $directory->exists($name);
 
-    $directory->set($name, $inode);
+    $directory->set( $name, $inode );
 }
 
 =item $fs->symlink($path, $dest)
@@ -429,14 +447,15 @@ location specified by $dest.  An exception will be thrown if the destination
 exists.
 
 =cut
-sub symlink {
-    my ($self, $path, $dest) = @_;
-    my $perms = $S_IPERM ^ $self->{'umask'};
-    my $hier = Filesys::POSIX::Path->new($dest);
-    my $name = $hier->basename;
-    my $parent = $self->stat($hier->dirname);
 
-    $parent->child($name, $S_IFLNK | $perms)->symlink(Filesys::POSIX::Path->full($path));
+sub symlink {
+    my ( $self, $path, $dest ) = @_;
+    my $perms  = $S_IPERM ^ $self->{'umask'};
+    my $hier   = Filesys::POSIX::Path->new($dest);
+    my $name   = $hier->basename;
+    my $parent = $self->stat( $hier->dirname );
+
+    $parent->child( $name, $S_IFLNK | $perms )->symlink( Filesys::POSIX::Path->full($path) );
 }
 
 =item $fs->readlink($path)
@@ -446,8 +465,9 @@ destination path associated with the inode is returned as a string.  A "Not a
 symlink" exception is thrown unless the inode found is indeed a symlink.
 
 =cut
+
 sub readlink {
-    my ($self, $path) = @_;
+    my ( $self, $path ) = @_;
     my $inode = $self->lstat($path);
     confess('Not a symlink') unless $inode->link;
 
@@ -475,13 +495,14 @@ instead for removing directory inodes.
 =back
 
 =cut
+
 sub unlink {
-    my ($self, $path) = @_;
-    my $hier = Filesys::POSIX::Path->new($path);
-    my $name = $hier->basename;
-    my $parent = $self->lstat($hier->dirname);
+    my ( $self, $path ) = @_;
+    my $hier      = Filesys::POSIX::Path->new($path);
+    my $name      = $hier->basename;
+    my $parent    = $self->lstat( $hier->dirname );
     my $directory = $parent->directory;
-    my $inode = $directory->get($name);
+    my $inode     = $directory->get($name);
 
     confess('No such file or directory') unless $inode;
     confess('Is a directory') if $inode->dir;
@@ -542,30 +563,32 @@ of an empty directory.
 =back
 
 =cut
+
 sub rename {
-    my ($self, $old, $new) = @_;
-    my $hier = Filesys::POSIX::Path->new($new);
-    my $name = $hier->basename;
-    my $inode = $self->lstat($old);
-    my $parent = $self->stat($hier->dirname);
+    my ( $self, $old, $new ) = @_;
+    my $hier      = Filesys::POSIX::Path->new($new);
+    my $name      = $hier->basename;
+    my $inode     = $self->lstat($old);
+    my $parent    = $self->stat( $hier->dirname );
     my $directory = $parent->directory;
 
     confess('Operation not permitted') if ref $inode eq 'Filesys::POSIX::Real::Inode';
     confess('Cross-device link') unless $inode->{'dev'} eq $parent->{'dev'};
 
-    if (my $existing = $directory->get($name)) {
-        if ($inode->dir) {
-            confess('Not a directory') unless $existing->dir;
+    if ( my $existing = $directory->get($name) ) {
+        if ( $inode->dir ) {
+            confess('Not a directory')     unless $existing->dir;
             confess('Directory not empty') unless $existing->empty;
-        } else {
+        }
+        else {
             confess('Is a directory') if $existing->dir;
         }
     }
 
-    my $remove = $inode->dir? 'rmdir': 'unlink';
+    my $remove = $inode->dir ? 'rmdir' : 'unlink';
     $self->$remove($old);
 
-    $directory->set($name, $inode);
+    $directory->set( $name, $inode );
 }
 
 =item $fs->rmdir($path)
@@ -595,16 +618,17 @@ The directory is not empty.
 =back
 
 =cut
+
 sub rmdir {
-    my ($self, $path) = @_;
-    my $hier = Filesys::POSIX::Path->new($path);
-    my $name = $hier->basename;
-    my $parent = $self->lstat($hier->dirname);
+    my ( $self, $path ) = @_;
+    my $hier      = Filesys::POSIX::Path->new($path);
+    my $name      = $hier->basename;
+    my $parent    = $self->lstat( $hier->dirname );
     my $directory = $parent->directory;
-    my $inode = $directory->get($name);
+    my $inode     = $directory->get($name);
 
     confess('No such file or directory') unless $inode;
-    confess('Device or resource busy') if $self->{'vfs'}->statfs($self->stat($path), 'exact' => 1, 'silent' => 1);
+    confess('Device or resource busy') if $self->{'vfs'}->statfs( $self->stat($path), 'exact' => 1, 'silent' => 1 );
     confess('Directory not empty') unless $inode->empty;
 
     $directory->delete($name);

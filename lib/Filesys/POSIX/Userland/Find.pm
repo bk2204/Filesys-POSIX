@@ -69,33 +69,34 @@ those of directories, then further descent will be made into said directories.
 =back
 
 =cut
-sub find {
-    my $self = shift;
-    my $callback = shift;
-    my %opts = ref $_[0] eq 'HASH'? %{(shift)}: ();
-    my @args = @_;
 
-    my @paths = map { Filesys::POSIX::Path->new($_) } @args;
+sub find {
+    my $self     = shift;
+    my $callback = shift;
+    my %opts     = ref $_[0] eq 'HASH' ? %{ (shift) } : ();
+    my @args     = @_;
+
+    my @paths  = map { Filesys::POSIX::Path->new($_) } @args;
     my @inodes = map { $self->stat($_) } @args;
 
-    while (my $inode = pop @inodes) {
+    while ( my $inode = pop @inodes ) {
         my $path = pop @paths;
 
-        if ($inode->link) {
-            $inode = $self->stat($inode->readlink) if $opts{'follow'};
+        if ( $inode->link ) {
+            $inode = $self->stat( $inode->readlink ) if $opts{'follow'};
         }
 
-        $callback->($path, $inode);
+        $callback->( $path, $inode );
 
-        if ($inode->dir) {
+        if ( $inode->dir ) {
             my $directory = $inode->{'directory'};
 
             $directory->open;
 
-            while (my $item = $directory->read) {
+            while ( my $item = $directory->read ) {
                 next if $item eq '.' || $item eq '..';
-                push @paths, Filesys::POSIX::Path->new($path->full . "/$item");
-                push @inodes, $self->{'vfs'}->vnode($directory->get($item));
+                push @paths,  Filesys::POSIX::Path->new( $path->full . "/$item" );
+                push @inodes, $self->{'vfs'}->vnode( $directory->get($item) );
             }
 
             $directory->close;

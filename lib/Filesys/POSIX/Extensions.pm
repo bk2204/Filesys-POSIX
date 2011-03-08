@@ -4,8 +4,8 @@ use strict;
 use warnings;
 
 use Filesys::POSIX::Bits;
-use Filesys::POSIX::Path ();
-use Filesys::POSIX::Real::Inode ();
+use Filesys::POSIX::Path            ();
+use Filesys::POSIX::Real::Inode     ();
 use Filesys::POSIX::Real::Directory ();
 
 use Carp qw/confess/;
@@ -58,16 +58,17 @@ An inode at the destination path already exists.
 =back
 
 =cut
+
 sub attach {
-    my ($self, $inode, $dest) = @_;
-    my $hier = Filesys::POSIX::Path->new($dest);
-    my $name = $hier->basename;
-    my $parent = $self->stat($hier->dirname);
+    my ( $self, $inode, $dest ) = @_;
+    my $hier      = Filesys::POSIX::Path->new($dest);
+    my $name      = $hier->basename;
+    my $parent    = $self->stat( $hier->dirname );
     my $directory = $parent->directory;
 
     confess('File exists') if $directory->exists($name);
 
-    $directory->set($name, $inode);
+    $directory->set( $name, $inode );
 }
 
 =item $fs->map($real_src, $dest)
@@ -89,21 +90,23 @@ Other exceptions may be thrown, based on the availability and permissions of
 the actual inode referred to by $real_src.
 
 =cut
+
 sub map {
-    my ($self, $real_src, $dest) = @_;
-    my $hier = Filesys::POSIX::Path->new($dest);
-    my $name = $hier->basename;
-    my $parent = $self->stat($hier->dirname);
+    my ( $self, $real_src, $dest ) = @_;
+    my $hier      = Filesys::POSIX::Path->new($dest);
+    my $name      = $hier->basename;
+    my $parent    = $self->stat( $hier->dirname );
     my $directory = $parent->directory;
 
     confess('File exists') if $directory->exists($name);
 
-    my $inode = Filesys::POSIX::Real::Inode->new($real_src,
-        'dev'       => $parent->{'dev'},
-        'parent'    => $parent
+    my $inode = Filesys::POSIX::Real::Inode->new(
+        $real_src,
+        'dev'    => $parent->{'dev'},
+        'parent' => $parent
     );
 
-    $directory->set($name, $inode);
+    $directory->set( $name, $inode );
 }
 
 =item $fs->alias($src, $dest)
@@ -121,17 +124,18 @@ An inode at the destination path was found.
 =back
 
 =cut
+
 sub alias {
-    my ($self, $src, $dest) = @_;
-    my $hier = Filesys::POSIX::Path->new($dest);
-    my $name = $hier->basename;
-    my $inode = $self->stat($src);
-    my $parent = $self->stat($hier->dirname);
+    my ( $self, $src, $dest ) = @_;
+    my $hier      = Filesys::POSIX::Path->new($dest);
+    my $name      = $hier->basename;
+    my $inode     = $self->stat($src);
+    my $parent    = $self->stat( $hier->dirname );
     my $directory = $parent->directory;
 
     confess('File exists') if $directory->exists($name);
 
-    $directory->set($name, $inode);
+    $directory->set( $name, $inode );
 }
 
 =item $fs->detach($path)
@@ -162,11 +166,12 @@ named in the final component of the path.
 =back
 
 =cut
+
 sub detach {
-    my ($self, $path) = @_;
-    my $hier = Filesys::POSIX::Path->new($path);
-    my $name = $hier->basename;
-    my $parent = $self->stat($hier->dirname);
+    my ( $self, $path ) = @_;
+    my $hier      = Filesys::POSIX::Path->new($path);
+    my $name      = $hier->basename;
+    my $parent    = $self->stat( $hier->dirname );
     my $directory = $parent->directory;
 
     confess('No such file or directory') unless $directory->exists($name);
@@ -190,17 +195,18 @@ No inode was found at the path specified.
 =back
 
 =cut
+
 sub replace {
-    my ($self, $path, $inode) = @_;
-    my $hier = Filesys::POSIX::Path->new($path);
-    my $name = $hier->basename;
-    my $parent = $self->stat($hier->dirname);
+    my ( $self, $path, $inode ) = @_;
+    my $hier      = Filesys::POSIX::Path->new($path);
+    my $name      = $hier->basename;
+    my $parent    = $self->stat( $hier->dirname );
     my $directory = $parent->directory;
 
     confess('No such file or directory') unless $directory->exists($name);
 
     $directory->detach($name);
-    $directory->set($name, $inode);
+    $directory->set( $name, $inode );
 }
 
 =back

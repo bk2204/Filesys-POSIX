@@ -4,4 +4,4 @@
 
 use Test::More tests => 1;
 
-BEGIN { use_ok( 'Filesys::POSIX' ); }
+BEGIN { use_ok('Filesys::POSIX'); }

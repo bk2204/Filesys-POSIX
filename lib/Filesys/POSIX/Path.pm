@@ -44,26 +44,25 @@ success.
 =back
 
 =cut
+
 sub new {
-    my ($class, $path) = @_;
-    my @components = split(/\//, $path);
+    my ( $class, $path ) = @_;
+    my @components = split( /\//, $path );
     my @ret;
 
-    if (@components && $components[0]) {
+    if ( @components && $components[0] ) {
         push @ret, $components[0];
     }
 
-    if (@components > 1) {
-        push @ret, grep {
-            $_ && $_ ne '.'
-        } @components[1..$#components]
+    if ( @components > 1 ) {
+        push @ret, grep { $_ && $_ ne '.' } @components[ 1 .. $#components ];
     }
 
     confess('Empty path') unless @components || $path;
 
-    my @hier = $components[0]? @ret: ('', @ret);
+    my @hier = $components[0] ? @ret : ( '', @ret );
 
-    if (@hier == 1 && !$hier[0]) {
+    if ( @hier == 1 && !$hier[0] ) {
         @hier = ('/');
     }
 
@@ -71,9 +70,9 @@ sub new {
 }
 
 sub _proxy {
-    my ($context, @args) = @_;
+    my ( $context, @args ) = @_;
 
-    unless (ref $context eq __PACKAGE__) {
+    unless ( ref $context eq __PACKAGE__ ) {
         return $context->new(@args);
     }
 
@@ -89,6 +88,7 @@ sub _proxy {
 Return a list of the components parsed at object construction time.
 
 =cut
+
 sub components {
     my $self = _proxy(@_);
 
@@ -102,11 +102,12 @@ Returns a string representation of the full path.  This is the same as:
     join('/', @$path);
 
 =cut
+
 sub full {
     my $self = _proxy(@_);
     my @hier = @$self;
 
-    return join('/', @$self);
+    return join( '/', @$self );
 }
 
 =item $path->dirname()
@@ -115,21 +116,22 @@ Returns a string representation of all of the leading path elements, of course
 save for the final path element.
 
 =cut
+
 sub dirname {
     my $self = _proxy(@_);
     my @hier = @$self;
 
-    if (@hier > 1) {
-        my @parts = @hier[0..$#hier-1];
+    if ( @hier > 1 ) {
+        my @parts = @hier[ 0 .. $#hier - 1 ];
 
-        if (@parts == 1 && !$parts[0]) {
+        if ( @parts == 1 && !$parts[0] ) {
             return '/';
         }
 
-        return join('/', @parts);
+        return join( '/', @parts );
     }
 
-    return $hier[0] eq '/'? '/': '.';
+    return $hier[0] eq '/' ? '/' : '.';
 }
 
 =item $path->basename()
@@ -140,8 +142,9 @@ Returns the final path component.  If called with an extension, then the method
 will return the path component with the extension chopped off, if found.
 
 =cut
+
 sub basename {
-    my ($self, $ext) = (_proxy(@_[0..1]), $_[2]);
+    my ( $self, $ext ) = ( _proxy( @_[ 0 .. 1 ] ), $_[2] );
     my @hier = @$self;
 
     my $name = $hier[$#hier];
@@ -156,6 +159,7 @@ Useful for iterating over the components of the path object.  Shifts the
 internal start-of-array pointer by one, and returns the previous first value.
 
 =cut
+
 sub shift {
     my ($self) = @_;
     return shift @$self;
@@ -167,14 +171,11 @@ Push new components onto the current path object.  Each part will be tokenized
 on the forward slash (/) character, and useless items will be discarded.
 
 =cut
-sub push {
-    my ($self, @parts) = @_;
 
-    return push @$self, grep {
-        $_ && $_ ne '.'
-    } map {
-        split /\//
-    } @parts;
+sub push {
+    my ( $self, @parts ) = @_;
+
+    return push @$self, grep { $_ && $_ ne '.' } map { split /\// } @parts;
 }
 
 =item $path->concat($pathname)
@@ -184,11 +185,12 @@ current $path object's non-empty components are pushed onto that new instance.
 The new path object is returned.
 
 =cut
+
 sub concat {
-    my ($self, $path) = @_;
+    my ( $self, $path ) = @_;
     $path = __PACKAGE__->new($path) unless ref $path eq __PACKAGE__;
-    
-    $path->push(grep { $_ && $_ ne '.' } $self->components);
+
+    $path->push( grep { $_ && $_ ne '.' } $self->components );
     return $path;
 }
 
@@ -199,11 +201,12 @@ new path object's non-empty components are pushed onto the current $path
 object.  The current $path reference is then returned.
 
 =cut
+
 sub append {
-    my ($self, $path) = @_;
+    my ( $self, $path ) = @_;
     $path = __PACKAGE__->new($path) unless ref $path eq __PACKAGE__;
 
-    $self->push(grep { $_ ne '.' } $path->components);
+    $self->push( grep { $_ ne '.' } $path->components );
     return $self;
 }
 
@@ -213,6 +216,7 @@ Pops the final path component off of the path object list, and returns that
 value.
 
 =cut
+
 sub pop {
     my ($self) = @_;
     return pop @$self;
@@ -223,6 +227,7 @@ sub pop {
 Returns the number of components in the current path object.
 
 =cut
+
 sub count {
     my ($self) = @_;
     return scalar @$self;

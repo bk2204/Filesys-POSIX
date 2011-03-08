@@ -34,14 +34,15 @@ The filesystem mount record is kept in an ordered list by the VFS, and can be
 retrieved later using the $fs->statfs(), or $fs->mountlist() system calls.
 
 =cut
+
 sub mount {
-    my ($self, $dev, $path, %data) = @_;
+    my ( $self, $dev, $path, %data ) = @_;
     my $mountpoint = $self->stat($path);
-    my $realpath = $self->_find_inode_path($mountpoint);
+    my $realpath   = $self->_find_inode_path($mountpoint);
 
     $dev->init(%data);
 
-    $self->{'vfs'}->mount($dev, $realpath, $mountpoint, %data);
+    $self->{'vfs'}->mount( $dev, $realpath, $mountpoint, %data );
 }
 
 =item $fs->unmount($path)
@@ -70,15 +71,16 @@ thrown if the current directory is on the same device that is to be unmounted.
 =back
 
 =cut
+
 sub unmount {
-    my ($self, $path) = @_;
+    my ( $self, $path ) = @_;
     my $mountpoint = $self->stat($path);
-    my $mount = $self->{'vfs'}->statfs($mountpoint, 'exact' => 1);
+    my $mount = $self->{'vfs'}->statfs( $mountpoint, 'exact' => 1 );
 
     #
     # First, check for open file descriptors held on the desired device.
     #
-    foreach ($self->{'fds'}->list) {
+    foreach ( $self->{'fds'}->list ) {
         my $inode = $self->{'fds'}->lookup($_)->{'inode'};
 
         confess('Device or resource busy') if $mount->{'dev'} eq $inode->{'dev'};
@@ -100,8 +102,9 @@ $path.  The inode is found using $fs->stat(), then queried for by
 Filesys::POSIX::VFS->statfs().
 
 =cut
+
 sub statfs {
-    my ($self, $path) = @_;
+    my ( $self, $path ) = @_;
     my $inode = $self->stat($path);
 
     return $self->{'vfs'}->statfs($inode);
@@ -114,8 +117,9 @@ the open file descriptor, $fd.  The inode is found using $fs->fstat(), then
 queried for by Filesys::POSIX::VFS->statfs().
 
 =cut
+
 sub fstatfs {
-    my ($self, $fd) = @_;
+    my ( $self, $fd ) = @_;
     my $inode = $self->fstat($fd);
 
     return $self->{'vfs'}->statfs($inode);
@@ -127,6 +131,7 @@ Returns a list of records for each filesystem currently mounted, in the order
 in which they were mounted.
 
 =cut
+
 sub mountlist {
     shift->{'vfs'}->mountlist;
 }

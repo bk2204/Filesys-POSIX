@@ -15,13 +15,13 @@ my $DEFAULT_MAX = 16384;
 my $DEFAULT_DIR = '/tmp';
 
 sub new {
-    my ($class, %opts) = @_;
+    my ( $class, %opts ) = @_;
 
     return bless {
         'fh'    => undef,
         'buf'   => '',
-        'max'   => defined $opts{'max'}? $opts{'max'}: $DEFAULT_MAX,
-        'dir'   => defined $opts{'dir'}? $opts{'dir'}: $DEFAULT_DIR,
+        'max'   => defined $opts{'max'} ? $opts{'max'} : $DEFAULT_MAX,
+        'dir'   => defined $opts{'dir'} ? $opts{'dir'} : $DEFAULT_DIR,
         'inode' => $opts{'inode'},
         'size'  => 0,
         'pos'   => 0
@@ -31,34 +31,36 @@ sub new {
 sub DESTROY {
     my ($self) = @_;
 
-    if ($self->{'fh'}) {
-        close($self->{'fh'});
+    if ( $self->{'fh'} ) {
+        close( $self->{'fh'} );
     }
 
-    if ($self->{'file'} && -f $self->{'file'}) {
+    if ( $self->{'file'} && -f $self->{'file'} ) {
         unlink $self->{'file'};
     }
 }
 
 sub open {
-    my ($self, $flags) = @_;
+    my ( $self, $flags ) = @_;
     $flags ||= 0;
 
     confess('Already opened') if $self->{'fh'};
 
-    if ($flags & $O_APPEND) {
+    if ( $flags & $O_APPEND ) {
         $self->{'pos'} = $self->{'size'};
-    } elsif ($flags & $O_TRUNC) {
-        $self->{'pos'} = 0;
+    }
+    elsif ( $flags & $O_TRUNC ) {
+        $self->{'pos'}  = 0;
         $self->{'size'} = 0;
     }
 
-    if ($self->{'file'}) {
-        sysopen(my $fh, $self->{'file'}, $flags) or confess("Unable to reopen bucket $self->{'file'}: $!");
+    if ( $self->{'file'} ) {
+        sysopen( my $fh, $self->{'file'}, $flags ) or confess("Unable to reopen bucket $self->{'file'}: $!");
 
         $self->{'fh'} = $fh;
-    } else {
-        if ($flags & $O_TRUNC) {
+    }
+    else {
+        if ( $flags & $O_TRUNC ) {
             $self->{'size'} = 0;
             undef $self->{'buf'};
             $self->{'buf'} = '';
@@ -71,53 +73,52 @@ sub open {
 }
 
 sub _flush_to_disk {
-    my ($self, $len) = @_;
+    my ( $self, $len ) = @_;
 
     confess('Already flushed to disk') if $self->{'file'};
 
-    my ($fh, $file) = eval {
-        mkstemp("$self->{'dir'}/.bucket-XXXXXX")
-    };
+    my ( $fh, $file ) = eval { mkstemp("$self->{'dir'}/.bucket-XXXXXX") };
 
     confess("mkstemp() failure: $@") if $@;
 
     my $offset = 0;
 
-    for (my $left = $self->{'size'}; $left > 0; $left -= $len) {
-        my $wrlen = $left > $len? $len: $left;
+    for ( my $left = $self->{'size'}; $left > 0; $left -= $len ) {
+        my $wrlen = $left > $len ? $len : $left;
 
-        syswrite($fh, substr($self->{'buf'}, $offset, $wrlen), $wrlen);
+        syswrite( $fh, substr( $self->{'buf'}, $offset, $wrlen ), $wrlen );
 
         $offset += $wrlen;
     }
 
-    @{$self}{qw/fh file/} = ($fh, $file);
+    @{$self}{qw/fh file/} = ( $fh, $file );
 }
 
 sub write {
-    my ($self, $buf, $len) = @_;
+    my ( $self, $buf, $len ) = @_;
     my $ret = 0;
 
-    unless ($self->{'fh'}) {
+    unless ( $self->{'fh'} ) {
         $self->_flush_to_disk($len) if $self->{'pos'} + $len > $self->{'max'};
     }
 
-    if ($self->{'fh'}) {
-        confess("Unable to write to disk bucket") unless fileno($self->{'fh'});
-        $ret = syswrite($self->{'fh'}, $buf);
-    } else {
-        if ((my $gap = $self->{'pos'} - $self->{'size'}) > 0) {
+    if ( $self->{'fh'} ) {
+        confess("Unable to write to disk bucket") unless fileno( $self->{'fh'} );
+        $ret = syswrite( $self->{'fh'}, $buf );
+    }
+    else {
+        if ( ( my $gap = $self->{'pos'} - $self->{'size'} ) > 0 ) {
             $self->{'buf'} .= "\x00" x $gap;
         }
 
-        substr($self->{'buf'}, $self->{'pos'}, $len) = substr($buf, 0, $len);
+        substr( $self->{'buf'}, $self->{'pos'}, $len ) = substr( $buf, 0, $len );
         $ret = $len;
     }
 
-    $self->{'pos'} += $ret;
+    $self->{'pos'}  += $ret;
     $self->{'size'} += $ret;
 
-    if ($self->{'pos'} > $self->{'size'}) {
+    if ( $self->{'pos'} > $self->{'size'} ) {
         $self->{'size'} = $self->{'pos'};
     }
 
@@ -128,14 +129,15 @@ sub write {
 
 sub read {
     my $self = shift;
-    my $len = pop;
-    my $ret = 0;
+    my $len  = pop;
+    my $ret  = 0;
 
-    if ($self->{'fh'}) {
-        confess("Unable to read bucket: $!") unless fileno($self->{'fh'});
-        $ret = sysread($self->{'fh'}, $_[0], $len);
-    } else {
-        my $pos = $self->{'pos'} > $self->{'size'}? $self->{'size'}: $self->{'pos'};
+    if ( $self->{'fh'} ) {
+        confess("Unable to read bucket: $!") unless fileno( $self->{'fh'} );
+        $ret = sysread( $self->{'fh'}, $_[0], $len );
+    }
+    else {
+        my $pos = $self->{'pos'} > $self->{'size'} ? $self->{'size'} : $self->{'pos'};
         my $maxlen = $self->{'size'} - $pos;
         $len = $maxlen if $len > $maxlen;
 
@@ -144,7 +146,7 @@ sub read {
             return 0;
         }
 
-        $_[0] = substr($self->{'buf'}, $self->{'pos'}, $len);
+        $_[0] = substr( $self->{'buf'}, $self->{'pos'}, $len );
         $ret = $len;
     }
 
@@ -154,18 +156,22 @@ sub read {
 }
 
 sub seek {
-    my ($self, $pos, $whence) = @_;
+    my ( $self, $pos, $whence ) = @_;
     my $newpos;
 
-    if ($self->{'fh'}) {
-        $newpos = sysseek($self->{'fh'}, $pos, $whence);
-    } elsif ($whence == $SEEK_SET) {
+    if ( $self->{'fh'} ) {
+        $newpos = sysseek( $self->{'fh'}, $pos, $whence );
+    }
+    elsif ( $whence == $SEEK_SET ) {
         $newpos = $pos;
-    } elsif ($whence == $SEEK_CUR) {
+    }
+    elsif ( $whence == $SEEK_CUR ) {
         $newpos = $self->{'pos'} + $pos;
-    } elsif ($whence == $SEEK_END) {
+    }
+    elsif ( $whence == $SEEK_END ) {
         $newpos = $self->{'size'} + $pos;
-    } else {
+    }
+    else {
         confess('Invalid argument');
     }
 
@@ -179,7 +185,7 @@ sub tell {
 sub close {
     my ($self) = @_;
 
-    if ($self->{'fh'}) {
+    if ( $self->{'fh'} ) {
         close $self->{'fh'};
         undef $self->{'fh'};
     }

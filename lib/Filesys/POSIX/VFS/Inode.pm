@@ -4,12 +4,13 @@ use strict;
 use warnings;
 
 sub new {
-    my ($class, $mountpoint, $root) = @_;
+    my ( $class, $mountpoint, $root ) = @_;
 
     return bless {
         %$root,
         'parent' => $mountpoint->{'parent'}
-    }, ref $root;
+      },
+      ref $root;
 }
 
 1;

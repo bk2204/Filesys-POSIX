@@ -29,6 +29,7 @@ If the current directory contains an item named for $name, return the
 corresponding inode.  Otherwise, an C<undef> is returned.
 
 =cut
+
 sub get {
     confess('Not implemented');
 }
@@ -40,6 +41,7 @@ label $name.  If an item already exists for $name, then it will be replaced by
 $inode.
 
 =cut
+
 sub set {
     confess('Not implemented');
 }
@@ -50,6 +52,7 @@ Returns true if a member called $name exists in the current directory.  Returns
 false if no such member inode is listed.
 
 =cut
+
 sub exists {
     confess('Not implemented');
 }
@@ -60,6 +63,7 @@ Drop any references to a member called $name in the current directory.  No side
 effects outside of the directory object instance shall occur.
 
 =cut
+
 sub detach {
     confess('Not implemented');
 }
@@ -71,6 +75,7 @@ effects to other system resources referenced by this directory member may
 potentially occur, depending on the specific directory implementation.
 
 =cut
+
 sub delete {
     confess('Not implemented');
 }
@@ -86,6 +91,7 @@ sub delete {
 Return a list of all items in the current directory, including C<.> and C<..>.
 
 =cut
+
 sub list {
     confess('Not implemented');
 }
@@ -96,6 +102,7 @@ Return the number of all items in the current directory, including C<.> and
 C<..>.
 
 =cut
+
 sub count {
     confess('Not implemented');
 }
@@ -111,6 +118,7 @@ sub count {
 Prepare the current directory object for iterative reading access.
 
 =cut
+
 sub open {
     confess('Not implemented');
 }
@@ -121,6 +129,7 @@ Rewind the current directory object to the beginning of the directory list when
 being accessed iteratively.
 
 =cut
+
 sub rewind {
     confess('Not implemented');
 }
@@ -132,6 +141,7 @@ next item to be read, if any.  A list containing both the name of the object,
 and the inode it references, are returned.
 
 =cut
+
 sub read {
     confess('Not implemented');
 }
@@ -141,6 +151,7 @@ sub read {
 Close the current directory for iterative access.
 
 =cut
+
 sub close {
     confess('Not implemented');
 }
