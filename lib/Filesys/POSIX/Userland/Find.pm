@@ -77,7 +77,7 @@ sub find {
     my @args     = @_;
 
     my @paths  = map { Filesys::POSIX::Path->new($_) } @args;
-    my @inodes = map { $self->stat($_) } @args;
+    my @inodes = map { $self->lstat($_) } @args;
 
     while ( my $inode = pop @inodes ) {
         my $path = pop @paths;
