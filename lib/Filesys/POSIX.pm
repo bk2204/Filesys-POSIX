@@ -485,9 +485,9 @@ sub symlink {
     return $parent->child( $name, $S_IFLNK | $perms )->symlink( Filesys::POSIX::Path->full($path) );
 }
 
-=item $fs->readlink($path)
+=item C<$fs-E<gt>readlink($path)>
 
-Using $fs->lstat() to resolve the given path for an inode, the symlink
+Using C<$fs-E<gt>lstat()> to resolve the given path for an inode, the symlink
 destination path associated with the inode is returned as a string.  A "Not a
 symlink" exception is thrown unless the inode found is indeed a symlink.
 
