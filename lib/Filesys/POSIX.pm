@@ -606,7 +606,7 @@ sub rename {
     my $parent    = $self->stat( $hier->dirname );
     my $directory = $parent->directory;
 
-    confess('Operation not permitted') if ref $inode eq 'Filesys::POSIX::Real::Inode';
+    confess('Operation not permitted') if ref($inode) eq 'Filesys::POSIX::Real::Inode';
     confess('Cross-device link') unless $inode->{'dev'} eq $parent->{'dev'};
 
     if ( my $existing = $directory->get($name) ) {
