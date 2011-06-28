@@ -5,7 +5,7 @@ use Filesys::POSIX      ();
 use Filesys::POSIX::Mem ();
 use Filesys::POSIX::Bits;
 
-use Test::More ( 'tests' => 36 );
+use Test::More ( 'tests' => 45 );
 use Test::Exception;
 use Test::NoWarnings;
 
@@ -197,4 +197,43 @@ use Test::NoWarnings;
 
     $fs->fchmod( $fd, 0700 );
     ok( ( $inode->{'mode'} & $S_IPERM ) == 0700, "Filesys::POSIX->fchmod() updates inode's permissions properly" );
+}
+
+{
+    my $fs = Filesys::POSIX->new(Filesys::POSIX::Mem->new);
+
+    $fs->mkdir('dev');
+    $fs->mkdir('tmp');
+
+    {
+        my $inode = $fs->mknod( '/dev/null', $S_IFCHR | 0666, ( 1 << 15 ) | 3 );
+
+        ok( $inode->char, 'Filesys::POSIX->mknod() creates character devices approrpiately' );
+        is( $inode->major, 1, 'Filesys::POSIX::Inode->major() returns correct value on char devices' );
+        is( $inode->minor, 3, 'Filesys::POSIX::Inode->minor() returns correct value on char devices' );
+    }
+
+    {
+        my $inode = $fs->mknod( '/dev/mem', $S_IFBLK | 0644, ( 1 << 15 ) | 1 );
+
+        ok( $inode->block, 'Filesys::POSIX->mknod() creates block devices appropriately' );
+        is( $inode->major, 1, 'Filesys::POSIX::Inode->major() returns correct value on block devices' );
+        is( $inode->minor, 1, 'Filesys::POSIX::Inode->minor() returns correct value on block devices' );
+    }
+
+    {
+        my $inode = $fs->mknod( '/tmp/foo', $S_IFREG | 0644, ( 1 << 15 ) | 4 );
+
+        throws_ok {
+            $inode->major
+        } qr/Invalid argument/, 'Filesys::POSIX::Inode->major() dies on non-char, non-block inodes';
+
+        throws_ok {
+            $inode->minor
+        } qr/Invalid argument/, 'Filesys::POSIX::Inode->minor() dies on non-char, non-block inodes';
+    }
+
+    throws_ok {
+        $fs->mknod( '/tmp/bar', 0644 )
+    } qr/Invalid argument/, 'Filesys::POSIX->mknod() throws Invalid Argument when no inode format specified';
 }

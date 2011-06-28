@@ -78,6 +78,34 @@ sub fifo {
     ( shift->{'mode'} & $S_IFMT ) == $S_IFIFO;
 }
 
+=item $inode->major()
+
+If the current inode is a block or character device, return the major number.
+
+=cut
+
+sub major {
+    my ($self) = @_;
+
+    confess('Invalid argument') unless $self->char || $self->block;
+
+    return ( $self->{'dev'} & 0xff00 ) >> 15;
+}
+
+=item $inode->minor()
+
+If the current inode is a block or character device, return the minor number.
+
+=cut
+
+sub minor {
+    my ($self) = @_;
+
+    confess('Invalid argument') unless $self->char || $self->block;
+
+    return $self->{'dev'} & 0x00ff;
+}
+
 =item $inode->perms()
 
 Returns the permissions bitfield value of the current inode's mode attribute.

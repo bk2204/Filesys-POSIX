@@ -147,8 +147,8 @@ sub _header {
     my $minor = 0;
 
     if ( $inode->char || $inode->block ) {
-        $major = ( $inode->{'dev'} & 0xff00 ) >> 15;
-        $minor = $inode->{'dev'} & 0x00ff;
+        $major = $inode->major;
+        $minor = $inode->minor;
     }
 
     $header .= _pad_string( $filename_parts{'suffix'}, 100 );
