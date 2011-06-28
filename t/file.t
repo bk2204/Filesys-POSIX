@@ -5,7 +5,7 @@ use Filesys::POSIX      ();
 use Filesys::POSIX::Mem ();
 use Filesys::POSIX::Bits;
 
-use Test::More ( 'tests' => 45 );
+use Test::More ( 'tests' => 48 );
 use Test::Exception;
 use Test::NoWarnings;
 
@@ -202,8 +202,9 @@ use Test::NoWarnings;
 {
     my $fs = Filesys::POSIX->new(Filesys::POSIX::Mem->new);
 
-    $fs->mkdir('dev');
-    $fs->mkdir('tmp');
+    foreach my $dir ( qw(dev tmp var) ) {
+        $fs->mkdir($dir);
+    }
 
     {
         my $inode = $fs->mknod( '/dev/null', $S_IFCHR | 0666, ( 1 << 15 ) | 3 );
@@ -232,6 +233,20 @@ use Test::NoWarnings;
             $inode->minor
         } qr/Invalid argument/, 'Filesys::POSIX::Inode->minor() dies on non-char, non-block inodes';
     }
+
+    {
+        my $inode = $fs->mkfifo( '/var/test', 0644 );
+
+        ok( $inode->fifo, 'Filesys::POSIX::Inode->fifo() returns true on FIFO inodes' );
+    }
+
+    throws_ok {
+        $fs->mknod( '/foo/bar/baz', $S_IFREG | 0644 );
+    } qr/No such file or directory/, 'Filesys::POSIX->mknod() dies when creating node in nonexistent directory';
+
+    throws_ok {
+        $fs->mknod( '/dev/null', $S_IFREG | 0666, ( 1 << 15 ) | 3 )
+    } qr/File exists/, 'Filesys::POSIX->mknod() dies when a named inode already exists';
 
     throws_ok {
         $fs->mknod( '/tmp/bar', 0644 )

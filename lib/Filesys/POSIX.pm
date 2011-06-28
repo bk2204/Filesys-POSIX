@@ -706,7 +706,6 @@ sub mknod {
     my $perms  = $mode & $S_IPERM;
 
     confess('Invalid argument') unless $format;
-    confess('No such file or directory') unless $parent;
     confess('File exists') if $directory->exists($name);
 
     my $inode = $parent->child( $name, $format | $perms );
@@ -716,6 +715,25 @@ sub mknod {
     }
 
     return $inode;
+}
+
+=item C<$fs-E<gt>mkfifo($path, $mode)>
+
+Create a new FIFO device at the specified C<$path>, with the permissions listed
+in C<$mode>.  Internally, this function is a frontend to
+C<Filesys::POSIX-E<gt>mknod()>.
+
+Returns a reference to a C<Filesys::POSIX::Inode> object upon success.
+
+=cut
+
+sub mkfifo {
+    my ( $self, $path, $mode ) = @_;
+
+    my $format = $S_IFIFO;
+    my $perms  = $mode & $S_IPERM;
+
+    return $self->mknod( $path, $format | $perms );
 }
 
 =back
