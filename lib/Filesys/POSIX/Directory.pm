@@ -107,6 +107,18 @@ sub count {
     confess('Not implemented');
 }
 
+=item C<$directory-E<gt>empty()>
+
+Returns true if the directory only contains the C<.> and C<..> entries.
+
+=cut
+
+sub empty {
+    my ($self) = @_;
+
+    return $self->count == 2;
+}
+
 =back
 
 =head1 ITERATIVE ACCESS

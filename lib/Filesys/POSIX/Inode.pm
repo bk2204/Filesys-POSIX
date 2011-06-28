@@ -173,16 +173,15 @@ sub directory {
 
 =item $inode->empty()
 
-Uses the above $inode->directory() call to obtain the directory for the current
-inode, and returns true if the directory only contains the '..' and '.' members.
+Uses the above C<$inode-E<gt>directory()> call to obtain the directory for the
+current inode, and returns the result of C<$directory-E<gt>empty()>.
 
 =cut
 
 sub empty {
     my ($self) = @_;
-    my $directory = $self->directory;
 
-    return $directory->count == 2;
+    return $self->directory->empty;
 }
 
 =back
