@@ -684,6 +684,13 @@ format specified in the C<$mode> argument.  If C<$mode> specifies a C<$S_IFCHR>
 or C<$S_IFBLK> value, then the device number specified in C<$dev> will be given
 to the new inode.
 
+Code contained within the C<Filesys::POSIX> distribution assumes that the device
+identifier shall contain the major and minor numbers in separate 16-bit fields,
+in the following manner:
+
+    my $major = ($dev & 0xff00) >> 15;
+    my $minor =  $dev & 0x00ff;
+
 Returns a reference to a C<Filesys::POSIX::Inode> object upon success.
 
 =cut

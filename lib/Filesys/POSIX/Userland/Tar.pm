@@ -142,7 +142,14 @@ sub _header {
     my %filename_parts = _split_filename($dest);
     my $header;
 
-    my $size = $inode->file ? $inode->{'size'} : 0;
+    my $size  = $inode->file ? $inode->{'size'} : 0;
+    my $major = 0;
+    my $minor = 0;
+
+    if ( $inode->char || $inode->block ) {
+        $major = ( $inode->{'dev'} & 0xff00 ) >> 15;
+        $minor = $inode->{'dev'} & 0x00ff;
+    }
 
     $header .= _pad_string( $filename_parts{'suffix'}, 100 );
     $header .= _format_number( $inode->{'mode'} & $S_IPERM, 7,  8 );
@@ -164,8 +171,8 @@ sub _header {
     $header .= _pad_string( '00',    2 );
     $header .= "\x00" x 32;
     $header .= "\x00" x 32;
-    $header .= _format_number( 0, 7, 8 );
-    $header .= _format_number( 0, 7, 8 );
+    $header .= _format_number( $major, 7, 8 );
+    $header .= _format_number( $minor, 7, 8 );
     $header .= _pad_string( $filename_parts{'prefix'}, 155 );
 
     my $checksum = _checksum($header);
