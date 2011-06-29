@@ -3,7 +3,7 @@ use warnings;
 
 use Filesys::POSIX::FdTable ();
 
-use Test::More ( 'tests' => 2 );
+use Test::More ( 'tests' => 3 );
 use Test::Exception;
 use Test::NoWarnings;
 
@@ -14,12 +14,18 @@ sub new {
 }
 
 sub open {
-    return 0;
+    my ( $self, $flags ) = @_;
+
+    return $flags ? 'OK' : undef;
 }
 
 package main;
 
 my $fds = Filesys::POSIX::FdTable->new;
+
+lives_ok {
+    $fds->open( Dummy::Inode->new, 1 );
+} 'Filesys::POSIX::FdTable->open() returns a file handle opened by inode object';
 
 throws_ok {
     $fds->open( Dummy::Inode->new, 0 );

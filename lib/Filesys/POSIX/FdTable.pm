@@ -23,9 +23,11 @@ sub new {
 
 sub open {
     my ( $self, $inode, $flags ) = @_;
-    my $fd = 2;
 
-    my $handle = $inode->open($flags) or confess('Unable to open device-specific file handle');
+    my $fd     = 2;
+    my $handle = $inode->open($flags) ;
+
+    confess('Unable to open device-specific file handle') unless $handle;
 
     foreach ( sort { $a <=> $b } ( $fd, keys %$self ) ) {
         next if $self->{ $fd = $_ + 1 };
