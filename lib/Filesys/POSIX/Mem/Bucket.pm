@@ -57,15 +57,14 @@ sub open {
 
         $self->{'fh'} = $fh;
     }
-    else {
-        if ( $flags & $O_TRUNC ) {
-            $self->{'size'} = 0;
-            undef $self->{'buf'};
-            $self->{'buf'} = '';
-        }
-    }
 
-    $self->{'inode'}->{'size'} = 0 if $flags & $O_TRUNC;
+    if ( $flags & $O_TRUNC ) {
+        $self->{'size'} = 0;
+        $self->{'inode'}->{'size'} = 0;
+
+        undef $self->{'buf'};
+        $self->{'buf'} = '';
+    }
 
     return $self;
 }
