@@ -5,14 +5,16 @@ use Filesys::POSIX       ();
 use Filesys::POSIX::Real ();
 use Filesys::POSIX::Bits;
 
-use File::Temp qw/mkdtemp/;
+use File::Temp ();
 use Fcntl;
 
-use Test::More ( 'tests' => 10 );
+use Test::More ( 'tests' => 11 );
 use Test::Exception;
 use Test::NoWarnings;
 
-my $tmpdir = mkdtemp('/tmp/.filesys-posix.XXXXXX');
+my $tmpdir = File::Temp::tempdir(
+    'CLEANUP' => 1
+);
 
 my %files = (
     'foo'          => 'file',
@@ -67,4 +69,7 @@ throws_ok {
 }
 qr/^Not a directory/, "Filesys::POSIX::Real->init() dies when special is not a directory";
 
-system qw/rm -rf/, $tmpdir;
+throws_ok {
+    $fs->rename('foo', 'bleh');
+}
+qr/^Operation not permitted/, "Filesys::POSIX->rename() prohibits renaming real files";
