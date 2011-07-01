@@ -5,17 +5,52 @@ use warnings;
 
 use Filesys::POSIX::Bits;
 
+=head1 NAME
+
+Filesys::POSIX::IO::Handle - Basic wrapper for Perl file handles
+
+=head1 DESCRIPTION
+
+This package provides a wrapper for standard Perl file handles.  It is not meant
+to supplant the behavior or necessity of L<IO::Handle>; rather, it is meant to
+provide a base reference for all of the I/O operations supported by
+L<Filesys::POSIX>, which ignores concerns such as buffering and the like.
+
+=head1 METHODS
+
+=over
+
+=item C<Filesys::POSIX::IO::Handle-E<gt>new($fh)>
+
+Returns a blessed reference to the file handle passed.
+
+=cut
+
 sub new {
     my ( $class, $fh ) = @_;
 
     return bless \$fh, $class;
 }
 
+=item C<$handle-E<gt>write($buf, $len)>
+
+Calls C<syswrite()> on the current file handle, passing the C<$buf> and C<$len>
+arguments literally.  Returns the result of C<syswrite()>.
+
+=cut
+
 sub write {
     my ( $self, $buf, $len ) = @_;
 
     return syswrite( $$self, $buf, $len );
 }
+
+=item C<$handle-E<gt>print(@args)>
+
+Prints a concatenation of each item passed, joined by C<$/>, to the current file
+handle.
+
+=cut
 
 sub print {
     my ( $self, @args ) = @_;
@@ -24,12 +59,24 @@ sub print {
     return $self->write( $buf, length $buf );
 }
 
+=item C<$handle-E<gt>sprintf($format, @args)>
+
+Prints a formatted string to the current file handle.  Uses L<sprintf>.
+
+=cut
+
 sub printf {
     my ( $self, $format, @args ) = @_;
     my $buf = sprintf( $format, @args );
 
     return $self->write( $buf, length $buf );
 }
+
+=item C<$handle-E<gt>read($buf, $len)>
+
+Reads C<$len> bytes from C<$handle> into C<$buf>.
+
+=cut
 
 sub read {
     my $self = shift;
@@ -38,11 +85,25 @@ sub read {
     return sysread( $$self, $_[0], $len );
 }
 
+=item C<$handle-E<gt>seek($pos, $whence)>
+
+Seek C<$handle> to C<$pos> bytes, relative to the current byte position,
+according to the seek mode listed in C<$whence>.  L<$whence> is a position
+modifier as specified in L<Filesys::POSIX::Bits>.
+
+=cut
+
 sub seek {
     my ( $self, $pos, $whence ) = @_;
 
     return sysseek( $$self, $pos, $whence );
 }
+
+=item C<$handle-E<gt>tell>
+
+Returns the current absolute byte position of the current file C<$handle>.
+
+=cut
 
 sub tell {
     my ($self) = @_;
@@ -50,10 +111,20 @@ sub tell {
     return sysseek( $$self, 0, $SEEK_CUR );
 }
 
+=item C<$handle-E<gt>close>
+
+Close the current file handle.
+
+=cut
+
 sub close {
     my ($self) = @_;
 
     close $$self;
 }
+
+=back
+
+=cut
 
 1;

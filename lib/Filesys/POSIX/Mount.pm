@@ -10,28 +10,30 @@ use Carp qw/confess/;
 
 =head1 NAME
 
-Filesys::POSIX::Mount
+Filesys::POSIX::Mount - Exposes VFS mounting functionality to L<Filesys::POSIX>
 
 =head1 DESCRIPTION
 
-Filesys::POSIX::Mount is a mixin module imported into the Filesys::POSIX
+C<Filesys::POSIX::Mount> is a mixin module imported into the C<Filesys::POSIX>
 namespace by said module that provides a frontend to the internal VFS.  Rather
-than dealing in terms of mount point vnodes as Filesys::POSIX::VFS does, the
+than dealing in terms of mount point vnodes as L<Filesys::POSIX::VFS> does, the
 system calls provided in this module deal in terms of pathnames.
 
 =head1 SYSTEM CALLS
 
 =over
 
-=item $fs->mount($dev, $path, %data)
+=item C<$fs-E<gt>mount($dev, $path, %data)>
 
-Attach the filesystem device, $dev, to the directory inode specified by $path.
-The %data hash, for special types of filesystems other than Filesys::POSIX::Mem
-should contain a 'special' value which has a device-dependent meaning.  Mount
-flags are also specified and saved by the VFS for later retrieval.
+Attach the filesystem device, C<$dev>, to the directory inode specified by
+C<$path>.  The C<%data> hash, for special types of filesystems other than
+L<Filesys::POSIX::Mem> should contain a C<'special'> value which has a device-
+dependent meaning.  Mount flags are also specified and saved by the VFS for
+later retrieval.
 
 The filesystem mount record is kept in an ordered list by the VFS, and can be
-retrieved later using the $fs->statfs(), or $fs->mountlist() system calls.
+retrieved later using the C<$fs-E<gt>statfs>, or C<$fs-E<gt>mountlist> system
+calls.
 
 =cut
 
@@ -45,7 +47,7 @@ sub mount {
     $self->{'vfs'}->mount( $dev, $realpath, $mountpoint, %data );
 }
 
-=item $fs->unmount($path)
+=item C<$fs-E<gt>unmount($path)>
 
 Attempts to unmount a filesystem mounted at the directory pointed to by $path,
 performing a number of sanity checks to ensure the safety of the current
@@ -53,11 +55,11 @@ operation.  The following checks are made:
 
 =over
 
-=item The directory inode is retrieved using $fs->stat().
+=item The directory inode is retrieved using C<$fs-E<gt>stat>.
 
-=item Using Filesys::POSIX::VFS->statfs(), with the directory inode passed, the
-VFS is queried to determine if the location given has a filesystem mounted at
-all.  If so, the mount record is kept for reference for the next series of
+=item Using C<Filesys::POSIX::VFS-E<gt>statfs>, with the directory inode passed,
+the VFS is queried to determine if the location given has a filesystem mounted
+at all.  If so, the mount record is kept for reference for the next series of
 checks.
 
 =item The file descriptor table is scanned for open files whose inodes exist on
@@ -95,11 +97,11 @@ sub unmount {
     $self->{'vfs'}->unmount($mount);
 }
 
-=item $fs->statfs($path)
+=item C<$fs-E<gt>statfs($path)>
 
 Returns the mount record for the device associated with the inode specified by
-$path.  The inode is found using $fs->stat(), then queried for by
-Filesys::POSIX::VFS->statfs().
+$path.  The inode is found using C<$fs-E<gt>stat>, then queried for by
+C<Filesys::POSIX::VFS-E<gt>statfs>.
 
 =cut
 
@@ -110,11 +112,11 @@ sub statfs {
     return $self->{'vfs'}->statfs($inode);
 }
 
-=item $fs->fstatfs($fd)
+=item C<$fs-E<gt>fstatfs($fd)>
 
 Returns the mount record for the device associated with the inode referenced by
-the open file descriptor, $fd.  The inode is found using $fs->fstat(), then
-queried for by Filesys::POSIX::VFS->statfs().
+the open file descriptor, C<$fd>.  The inode is found using C<$fs-E<gt>fstat>,
+then queried for by C<Filesys::POSIX::VFS-E<gt>statfs>.
 
 =cut
 
@@ -125,7 +127,7 @@ sub fstatfs {
     return $self->{'vfs'}->statfs($inode);
 }
 
-=item $fs->mountlist()
+=item C<$fs-E<gt>mountlist>
 
 Returns a list of records for each filesystem currently mounted, in the order
 in which they were mounted.
@@ -140,8 +142,8 @@ sub mountlist {
 
 =head1 ANATOMY OF A MOUNT RECORD
 
-Mount records are created internally by Filesys::POSIX::VFS->mount(), and are
-stored as anonymous HASHes.  They contain the following attributes:
+Mount records are created internally by C<Filesys::POSIX::VFS-E<gt>mount>, and
+are stored as anonymous HASHes.  They contain the following attributes:
 
 =over
 
@@ -162,29 +164,30 @@ value is specified, the value stored is equal to C<ref $dev>.
 
 =item C<dev>
 
-A reference to the filesystem device object that was mounted by $fs->mount().
+A reference to the filesystem device object that was mounted by
+C<$fs-E<gt>mount>.
 
 =item C<type>
 
 A lowercase string formed by chopping all but the last item in a Perl fully
 qualified package name corresponding to the type of the device mounted.  For
-instance, an instance of Filesys::POSIX::Mem mounted will result in a value of
-'mem'.
+instance, an instance of L<Filesys::POSIX::Mem> mounted will result in a value
+of C<'mem'>.
 
 =item C<path>
 
 The true, original, and sanitized path of the mount point specified by
-$fs->mount().
+C<$fs-E<gt>mount>.
 
 =item C<vnode>
 
-A VFS inode created by Filesys::POSIX::VFS::Inode->new(), containing most
+A VFS inode created by C<Filesys::POSIX::VFS::Inode-E<gt>new>, containing most
 attributes of the mounted device's root inode, but with a parent pointing to
 the mount point inode's parent.
 
 =item C<flags>
 
-A copy of the options passed to $fs->mount(), minus the C<special> option.
+A copy of the options passed to C<$fs-E<gt>mount>, minus the C<special> option.
 
 =back
 

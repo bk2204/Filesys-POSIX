@@ -10,13 +10,14 @@ use Carp qw/confess/;
 
 =head1 NAME
 
-Filesys::POSIX::Userland
+Filesys::POSIX::Userland - Provide implementations for higher-level, "userland"
+functionality in L<Filesys::POSIX>
 
 =head1 DESCRIPTION
 
-This module is a mixin imported by Filesys::POSIX into its own namespace, and
+This module is a mixin imported by L<Filesys::POSIX> into its own namespace, and
 provides a variety of higher-level calls to supplement the normal suite of
-system calls provided in Filesys::POSIX itself.
+system calls provided in L<Filesys::POSIX> itself.
 
 =head1 METHODS
 
@@ -44,18 +45,18 @@ sub _find_inode_path {
     return '/' . join( '/', reverse @ret );
 }
 
-=item $fs->mkpath($path)
+=item C<$fs-E<gt>mkpath($path)>
 
-=item $fs->mkpath($path, $mode)
+=item C<$fs-E<gt>mkpath($path, $mode)>
 
-Similar to the C<-p> flag that can be passed to mkdir(1), this method attempts
-to create a hierarchy of directories specified in $path.  Each path component
-created will be made with the mode specified by $mode, if any, if a directory
-in that location does not already exist.  Exceptions will be thrown if one of
-the items along the path hierarchy exists but is not a directory.
+Similar to the C<-p> flag that can be passed to L<mkdir(1)>, this method
+attempts to create a hierarchy of directories specified in C<$path>.  Each path
+component created will be made with the mode specified by C<$mode>, if any, if a
+directory in that location does not already exist.  Exceptions will be thrown if
+one of the items along the path hierarchy exists but is not a directory.
 
-A default mode of 0777 is assumed; only the permissions field of $mode is used
-when it is specified.  In both cases, the mode specified is modified with
+A default mode of 0777 is assumed; only the permissions field of C<$mode> is
+used when it is specified.  In both cases, the mode specified is modified with
 exclusive OR by the current umask value.
 
 =cut
@@ -86,7 +87,7 @@ sub mkpath {
     }
 }
 
-=item $fs->getcwd()
+=item C<$fs-E<gt>getcwd>
 
 Returns a string representation of the current working directory.
 
@@ -98,14 +99,14 @@ sub getcwd {
     return $self->_find_inode_path( $self->{'cwd'} );
 }
 
-=item $fs->realpath($path)
+=item C<$fs-E<gt>realpath($path)>
 
 Returns a string representation of the full, true and original path of the
 inode specified by $path.
 
-Using $fs->stat(), the inode of $path is resolved, then starting at that inode,
-each subsequent inode's name is found from its parent and appended to a list of
-path components.  
+Using C<$fs-E<gt>stat>, the inode of C<$path> is resolved, then starting at that
+inode, each subsequent inode's name is found from its parent and appended to a
+list of path components.  
 
 =cut
 
@@ -116,9 +117,9 @@ sub realpath {
     return $self->_find_inode_path($inode);
 }
 
-=item $fs->opendir($path)
+=item C<$fs-E<gt>opendir($path)>
 
-Returns a newly opened directory handle for the item pointed to by $path.
+Returns a newly opened directory handle for the item pointed to by C<$path>.
 Using other methods in this module, the directory can be read and closed.
 
 =cut
@@ -132,7 +133,7 @@ sub opendir {
     return $directory;
 }
 
-=item $fs->readdir($directory)
+=item C<$fs-E<gt>readdir($directory)>
 
 Read the next member of the directory passed.  Returns undef if there are no
 more entries to be read.
@@ -153,7 +154,7 @@ sub readdir {
     return @ret;
 }
 
-=item $fs->closedir($directory)
+=item C<$fs-E<gt>closedir($directory)>
 
 Closes the directory handle for reading.
 
@@ -164,12 +165,12 @@ sub closedir {
     return $directory->close;
 }
 
-=item $fs->touch($path)
+=item C<$fs-E<gt>touch($path)>
 
-Acts like the userland utility touch(1).  Uses $fs->open() with the $O_CREAT
-flag to open the file specified by $path, and immediately closes the file
-descriptor returned.  This causes an update of the inode modification time for
-existing files, and the creation of new, empty files otherwise.
+Acts like the userland utility L<touch(1)>.  Uses C<$fs-E<gt>open> with the
+C<$O_CREAT> flag to open the file specified by $path, and immediately closes the
+file descriptor returned.  This causes an update of the inode modification time
+for existing files, and the creation of new, empty files otherwise.
 
 =cut
 

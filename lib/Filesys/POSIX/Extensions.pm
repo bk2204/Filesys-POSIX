@@ -12,7 +12,8 @@ use Carp qw/confess/;
 
 =head1 NAME
 
-Filesys::POSIX::Extensions
+Filesys::POSIX::Extensions - Provides features not found in a POSIX environment
+environment
 
 =head1 SYNOPSIS
 

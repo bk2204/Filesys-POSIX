@@ -8,7 +8,7 @@ use Carp qw/confess/;
 
 =head1 NAME
 
-Filesys::POSIX::Inode
+Filesys::POSIX::Inode - Base class for filesystem inode objects
 
 =head1 DESCRIPTION
 
@@ -18,9 +18,9 @@ analyzing its attributes.
 
 =over
 
-=item $inode->dir()
+=item C<$inode-E<gt>dir>
 
-Returns a value indicating whether or not the current inode is a directory.
+Returns true if the current inode refers to a directory.
 
 =cut
 
@@ -28,7 +28,7 @@ sub dir {
     ( shift->{'mode'} & $S_IFMT ) == $S_IFDIR;
 }
 
-=item $inode->link()
+=item C<$inode-E<gt>link>
 
 Returns true if the current inode is a symlink.
 
@@ -38,7 +38,7 @@ sub link {
     ( shift->{'mode'} & $S_IFMT ) == $S_IFLNK;
 }
 
-=item $inode->file()
+=item C<$inode-E<gt>file>
 
 Returns true if the current inode is a regular file.
 
@@ -48,7 +48,7 @@ sub file {
     ( shift->{'mode'} & $S_IFMT ) == $S_IFREG;
 }
 
-=item $inode->char()
+=item C<$inode-E<gt>char>
 
 Returns true if the current inode is a character device.
 
@@ -58,7 +58,7 @@ sub char {
     ( shift->{'mode'} & $S_IFMT ) == $S_IFCHR;
 }
 
-=item $inode->block()
+=item C<$inode-E<gt>block>
 
 Returns true if the current inode is a block device.
 
@@ -68,9 +68,9 @@ sub block {
     ( shift->{'mode'} & $S_IFMT ) == $S_IFBLK;
 }
 
-=item $inode->fifo()
+=item C<$inode-E<gt>fifo>
 
-Returns true if the current inode is a Unix FIFO.
+Returns true if the current inode is a FIFO.
 
 =cut
 
@@ -78,7 +78,7 @@ sub fifo {
     ( shift->{'mode'} & $S_IFMT ) == $S_IFIFO;
 }
 
-=item $inode->major()
+=item C<$inode-E<gt>major>
 
 If the current inode is a block or character device, return the major number.
 
@@ -92,7 +92,7 @@ sub major {
     return ( $self->{'dev'} & 0xff00 ) >> 15;
 }
 
-=item $inode->minor()
+=item C<$inode-E<gt>minor>
 
 If the current inode is a block or character device, return the minor number.
 
@@ -106,7 +106,7 @@ sub minor {
     return $self->{'dev'} & 0x00ff;
 }
 
-=item $inode->perms()
+=item C<$inode-E<gt>perms>
 
 Returns the permissions bitfield value of the current inode's mode attribute.
 
@@ -116,7 +116,7 @@ sub perms {
     shift->{'mode'} & $S_IPERM;
 }
 
-=item $inode->readable()
+=item C<$inode-E<gt>readable>
 
 Returns true if the inode is readable by anyone.
 
@@ -126,7 +126,7 @@ sub readable {
     ( shift->{'mode'} & $S_IR ) != 0;
 }
 
-=item $inode->writable()
+=item C<$inode-E<gt>writable>
 
 Returns true if the inode is writable by anyone.
 
@@ -136,7 +136,7 @@ sub writable {
     ( shift->{'mode'} & $S_IW ) != 0;
 }
 
-=item $inode->executable()
+=item C<$inode-E<gt>executable>
 
 Returns true if the inode is executable by anyone.
 
@@ -146,7 +146,7 @@ sub executable {
     ( shift->{'mode'} & $S_IX ) != 0;
 }
 
-=item $inode->setuid()
+=item C<$inode-E<gt>setuid>
 
 Returns true if the inode has a setuid bit set.
 
@@ -156,7 +156,7 @@ sub setuid {
     ( shift->{'mode'} & $S_ISUID ) != 0;
 }
 
-=item $inode->setgid()
+=item C<$inode-E<gt>setgid>
 
 Returns true if the inode has a setgid bit set.
 
@@ -166,7 +166,7 @@ sub setgid {
     ( shift->{'mode'} & $S_ISGID ) != 0;
 }
 
-=item $inode->update(@st)
+=item C<$inode-E<gt>update(@st)>
 
 Updates the current inode object with a list of values as returned by
 L<stat()|perlfunc/stat>.
@@ -179,7 +179,7 @@ sub update {
     @{$self}{qw/size atime mtime ctime uid gid mode rdev/} = ( @st[ 7 .. 10 ], @st[ 4 .. 5 ], $st[2], $st[6] );
 }
 
-=item $inode->directory()
+=item C<$inode-E<gt>directory>
 
 If the current inode is a directory, return the directory object held by it.
 Otherwise, the following exception is issued:
@@ -199,7 +199,7 @@ sub directory {
     return $self->{'directory'};
 }
 
-=item $inode->empty()
+=item C<$inode-E<gt>empty>
 
 Uses the above C<$inode-E<gt>directory()> call to obtain the directory for the
 current inode, and returns the result of C<$directory-E<gt>empty()>.

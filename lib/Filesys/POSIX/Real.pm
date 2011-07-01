@@ -12,7 +12,7 @@ use Carp qw/confess/;
 
 =head1 NAME
 
-Filesys::POSIX::Real
+Filesys::POSIX::Real - Portal to actual underlying filesystem
 
 =head1 SYNOPSIS
 
@@ -33,7 +33,7 @@ the actual system's underlying filesystem.
 
 =over
 
-=item Filesys::POSIX::Real->new()
+=item C<Filesys::POSIX::Real-E<gt>new>
 
 Create a new, uninitialized filesystem.
 
@@ -49,7 +49,7 @@ sub new {
 
 =over
 
-=item $fs->init(%data)
+=item C<$fs-E<gt>init(%data)>
 
 Initializes the new filesystem.  A reference to the %data argument is saved in
 the filesystem object.  The following attribute in the %data hash is required,

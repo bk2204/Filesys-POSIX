@@ -10,7 +10,7 @@ use Carp qw/confess/;
 
 =head1 NAME
 
-Filesys::POSIX::Userland::Tar
+Filesys::POSIX::Userland::Tar - Generate ustar archives from L<Filesys::POSIX>
 
 =head1 SYNOPSIS
 
@@ -34,8 +34,8 @@ Filesys::POSIX::Userland::Tar
 This module provides an implementation of the ustar standard on top of the
 virtual filesystem layer, a mechanism intended to take advantage of the many
 possible mapping and manipulation capabilities inherent in this mechanism.
-Internally, it uses the Filesys::POSIX::Userland::Find module to perform depth-
-last recursion to locate inodes for packaging.
+Internally, it uses the L<Filesys::POSIX::Userland::Find> module to perform
+depth- last recursion to locate inodes for packaging.
 
 As mentioned, archives are written in the ustar format, with pathnames of the
 extended maximum length of 256 characters, supporting file sizes up to 4GB.
@@ -182,8 +182,8 @@ sub _header {
 }
 
 #
-# NOTE: I'm only using $inode->open() calls to save stat()s.  This is not
-# necessarily something that should be done by end user software.
+# NOTE: I'm only using $inode->open() calls to avoid having to call stat().
+# This is not necessarily something that should be done by end user software.
 #
 sub _write_file {
     my ( $fs, $handle, $dest, $inode ) = @_;
@@ -214,14 +214,14 @@ sub _archive {
     _write_file( $fs, $handle, $dest, $inode ) if $inode->file;
 }
 
-=item $fs->tar($handle, @items)
+=item C<$fs-E<gt>tar($handle, @items)>
 
-=item $fs->tar($handle, $opts, @items)
+=item C<$fs-E<gt>tar($handle, $opts, @items)>
 
 Locate files and directories in each path specified in the @items array,
 writing results to the I/O handle wrapper specified by $handle, an instance of
-Filesys::POSIX::IO::Handle.  When an anonymous HASH argument, $opts, is
-specified, the data is passed unmodified to Filesys::POSIX::Userland::Find.
+L<Filesys::POSIX::IO::Handle>.  When an anonymous HASH argument, $opts, is
+specified, the data is passed unmodified to L<Filesys::POSIX::Userland::Find>.
 In this way, for instance, the behavior of following symlinks can be specified.
 
 =cut

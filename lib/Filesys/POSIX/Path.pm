@@ -7,7 +7,7 @@ use Carp qw/confess/;
 
 =head1 NAME
 
-Filesys::POSIX::Path
+Filesys::POSIX::Path - Pathname manipulation utility class
 
 =head1 SYNOPSIS
 
@@ -30,7 +30,7 @@ introspection.
 
 =over
 
-=item Filesys::POSIX::Path->new($path)
+=item C<Filesys::POSIX::Path-E<gt>new($path)>
 
 Creates a new path object.
 
@@ -83,7 +83,7 @@ sub _proxy {
 
 =over
 
-=item $path->components()
+=item C<$path-E<gt>components>
 
 Return a list of the components parsed at object construction time.
 
@@ -95,7 +95,7 @@ sub components {
     return @$self;
 }
 
-=item $path->full()
+=item C<$path-E<gt>full>
 
 Returns a string representation of the full path.  This is the same as:
 
@@ -110,7 +110,7 @@ sub full {
     return join( '/', @$self );
 }
 
-=item $path->dirname()
+=item C<$path-E<gt>dirname>
 
 Returns a string representation of all of the leading path elements, of course
 save for the final path element.
@@ -134,9 +134,9 @@ sub dirname {
     return $hier[0] eq '/' ? '/' : '.';
 }
 
-=item $path->basename()
+=item C<$path-E<gt>basename>
 
-=item $path->basename($ext)
+=item C<$path-E<gt>basename($ext)>
 
 Returns the final path component.  If called with an extension, then the method
 will return the path component with the extension chopped off, if found.
@@ -153,7 +153,7 @@ sub basename {
     return $name;
 }
 
-=item $path->shift()
+=item C<$path-E<gt>shift>
 
 Useful for iterating over the components of the path object.  Shifts the
 internal start-of-array pointer by one, and returns the previous first value.
@@ -165,7 +165,7 @@ sub shift {
     return shift @$self;
 }
 
-=item $path->push(@parts)
+=item C<$path-E<gt>push(@parts)>
 
 Push new components onto the current path object.  Each part will be tokenized
 on the forward slash (/) character, and useless items will be discarded.
@@ -178,7 +178,7 @@ sub push {
     return push @$self, grep { $_ && $_ ne '.' } map { split /\// } @parts;
 }
 
-=item $path->concat($pathname)
+=item C<$path-E<gt>concat($pathname)>
 
 A new Filesys::POSIX::Path object is created based on $pathname, and the
 current $path object's non-empty components are pushed onto that new instance.
@@ -194,7 +194,7 @@ sub concat {
     return $path;
 }
 
-=item $path->concat($pathname)
+=item C<$path-E<gt>concat($pathname)>
 
 A new Filesys::POSIX::Path object is created based on $pathname, and the
 new path object's non-empty components are pushed onto the current $path
@@ -210,7 +210,7 @@ sub append {
     return $self;
 }
 
-=item $path->pop()
+=item C<$path-E<gt>pop>
 
 Pops the final path component off of the path object list, and returns that
 value.
@@ -222,7 +222,7 @@ sub pop {
     return pop @$self;
 }
 
-=item $path->count()
+=item C<$path-E<gt>count>
 
 Returns the number of components in the current path object.
 

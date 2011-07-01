@@ -7,7 +7,7 @@ use Carp qw/confess/;
 
 =head1 NAME
 
-Filesys::POSIX::Directory
+Filesys::POSIX::Directory - Base class for implementing directory structures
 
 =head1 DESCRIPTION
 
