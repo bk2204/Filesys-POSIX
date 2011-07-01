@@ -6,7 +6,7 @@ use Filesys::POSIX::Bits;
 
 use File::Temp qw/mkstemp/;
 
-use Test::More ( 'tests' => 7 );
+use Test::More ( 'tests' => 11 );
 use Test::NoWarnings;
 
 {
@@ -17,7 +17,15 @@ use Test::NoWarnings;
 
     ok( $in->write( 'foo', 3 ) == 3, "Filesys::POSIX::IO::Handle->write() returns expected write length" );
     ok( $out->read( my $buf, 3 ) == 3, "Filesys::POSIX::IO::Handle->read() returns expected number of bytes" );
-    ok( $buf eq 'foo', "Filesys::POSIX::IO::Handle->read() populated buffer with expected result" );
+    is( $buf, 'foo', "Filesys::POSIX::IO::Handle->read() populated buffer with expected result" );
+
+    ok( $in->print('meow') == 4, "Filesys::POSIX::IO::Handle->print() returns expected write length" );
+    $out->read( $buf, 4 );
+    is( $buf, 'meow', "Filesys::POSIX::IO::Handle->read() got correct data from previous print() call" );
+
+    ok( $in->printf( "cats: %d", 2 ) == 7, "Filesys::POSIX::IO::Handle->printf() returns expected write length" );
+    $out->read( $buf, 7 );
+    is( $buf, 'cats: 2', "Filesys::POSIX::IO::Handle->read() got correct data from previous printf() call" );
 
     $in->close;
     $out->close;
