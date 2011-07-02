@@ -38,7 +38,7 @@ The path is split on the forward slash (/) character into tokens; empty and
 redundant tokens are discarded.  Enough context is kept to help the methods
 implemented in this module determine the nature of the path; if it is relative
 to root, prefixed with './', or relative to the "current working directory".
-An ARRAY reference blessed into this package's namespace is returned upon
+An C<ARRAY> reference blessed into this package's namespace is returned upon
 success.
 
 =back
@@ -180,8 +180,8 @@ sub push {
 
 =item C<$path-E<gt>concat($pathname)>
 
-A new Filesys::POSIX::Path object is created based on $pathname, and the
-current $path object's non-empty components are pushed onto that new instance.
+A new C<Filesys::POSIX::Path> object is created based on $pathname, and the
+current path object's non-empty components are pushed onto that new instance.
 The new path object is returned.
 
 =cut
@@ -196,9 +196,9 @@ sub concat {
 
 =item C<$path-E<gt>concat($pathname)>
 
-A new Filesys::POSIX::Path object is created based on $pathname, and the
-new path object's non-empty components are pushed onto the current $path
-object.  The current $path reference is then returned.
+A new C<Filesys::POSIX::Path> object is created based on C<$pathname>, and the
+new path object's non-empty components are pushed onto the current path object.
+The current C<$path> reference is then returned.
 
 =cut
 

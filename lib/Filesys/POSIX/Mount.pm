@@ -14,7 +14,7 @@ Filesys::POSIX::Mount - Exposes VFS mounting functionality to L<Filesys::POSIX>
 
 =head1 DESCRIPTION
 
-C<Filesys::POSIX::Mount> is a mixin module imported into the C<Filesys::POSIX>
+C<Filesys::POSIX::Mount> is a mixin module imported into the L<Filesys::POSIX>
 namespace by said module that provides a frontend to the internal VFS.  Rather
 than dealing in terms of mount point vnodes as L<Filesys::POSIX::VFS> does, the
 system calls provided in this module deal in terms of pathnames.
@@ -49,9 +49,9 @@ sub mount {
 
 =item C<$fs-E<gt>unmount($path)>
 
-Attempts to unmount a filesystem mounted at the directory pointed to by $path,
-performing a number of sanity checks to ensure the safety of the current
-operation.  The following checks are made:
+Attempts to unmount a filesystem mounted at the directory pointed to by
+C<$path>, performing a number of sanity checks to ensure the safety of the
+current operation.  The following checks are made:
 
 =over
 
@@ -159,8 +159,8 @@ vnode.
 
 =item C<special>
 
-The value of the C<special> flag specified in a call to $fs->mount().  When no
-value is specified, the value stored is equal to C<ref $dev>.
+The value of the C<special> flag specified in a call to C<$fs-E<gt>mount>.  When
+no value is specified, the value stored is equal to C<ref $dev>.
 
 =item C<dev>
 

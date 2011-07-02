@@ -218,9 +218,9 @@ sub _archive {
 
 =item C<$fs-E<gt>tar($handle, $opts, @items)>
 
-Locate files and directories in each path specified in the @items array,
-writing results to the I/O handle wrapper specified by $handle, an instance of
-L<Filesys::POSIX::IO::Handle>.  When an anonymous HASH argument, $opts, is
+Locate files and directories in each path specified in the C<@items> array,
+writing results to the I/O handle wrapper specified by C<$handle>, an instance
+of L<Filesys::POSIX::IO::Handle>.  When an anonymous HASH argument, C<$opts>, is
 specified, the data is passed unmodified to L<Filesys::POSIX::Userland::Find>.
 In this way, for instance, the behavior of following symlinks can be specified.
 

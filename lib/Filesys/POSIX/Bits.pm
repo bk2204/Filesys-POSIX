@@ -33,14 +33,14 @@ inode mode bitfields and values.  The following system calls use these values:
 
 =over
 
-=item Filesys::POSIX->open()
+=item C<Filesys::POSIX-E<gt>open>
 
 Uses both flag and mode specifiers for determining permissions, file open mode,
 and inode format.
 
-=item Filesys::POSIX::IO::Handle->seek()
+=item C<Filesys::POSIX::IO::Handle-E<gt>seek>
 
-Uses $SEEK_SET, $SEEK_CUR, and $SEEK_END for the $whence argument.
+Uses C<$SEEK_SET>, C<$SEEK_CUR>, and C<$SEEK_END> for the $whence argument.
 
 =back
 

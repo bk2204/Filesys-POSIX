@@ -12,9 +12,7 @@ use Test::More ( 'tests' => 11 );
 use Test::Exception;
 use Test::NoWarnings;
 
-my $tmpdir = File::Temp::tempdir(
-    'CLEANUP' => 1
-);
+my $tmpdir = File::Temp::tempdir( 'CLEANUP' => 1 );
 
 my %files = (
     'foo'          => 'file',
@@ -70,6 +68,6 @@ throws_ok {
 qr/^Not a directory/, "Filesys::POSIX::Real->init() dies when special is not a directory";
 
 throws_ok {
-    $fs->rename('foo', 'bleh');
+    $fs->rename( 'foo', 'bleh' );
 }
 qr/^Operation not permitted/, "Filesys::POSIX->rename() prohibits renaming real files";

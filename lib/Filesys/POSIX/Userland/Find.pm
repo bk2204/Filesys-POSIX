@@ -46,15 +46,15 @@ hierarchies.
 =item C<$fs-E<gt>find($callback, $options, @paths)>
 
 C<$fs-E<gt>find> will perform recursive descent into each path passed, printing
-the full pathname of each item found relative to each item found in the @paths
-list.  For each item found, both a Filesys::POSIX::Path object, and an inode,
-respectively, are passed as the sole arguments to the callback.  With this
-mechanism, it is possible to retrieve path data from each item in every way
+the full pathname of each item found relative to each item found in the
+C<@paths> list.  For each item found, both a Filesys::POSIX::Path object, and an
+inode, respectively, are passed as the sole arguments to the callback.  With
+this mechanism, it is possible to retrieve path data from each item in every way
 currently provided by L<File::Find>, without retaining global state to do so.
 As a reference to the corresponding item's inode object is passed, there is no
 need to perform a C<$fs-E<gt>stat> call to further inspect the item.
 
-When called with an $options argument, specified in the form of an anonymous
+When called with an C<$options> argument, specified in the form of an anonymous
 HASH, the following flags (whose values are set nonzero) are honored:
 
 =over

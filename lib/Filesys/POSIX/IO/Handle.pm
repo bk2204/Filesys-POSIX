@@ -34,8 +34,8 @@ sub new {
 
 =item C<$handle-E<gt>write($buf, $len)>
 
-Calls C<syswrite()> on the current file handle, passing the C<$buf> and C<$len>
-arguments literally.  Returns the result of C<syswrite()>.
+Calls L<perlfunc/syswrite> on the current file handle, passing the C<$buf> and
+C<$len> arguments literally.  Returns the result of L<perlfuncsyswrite>.
 
 =cut
 
@@ -61,7 +61,7 @@ sub print {
 
 =item C<$handle-E<gt>sprintf($format, @args)>
 
-Prints a formatted string to the current file handle.  Uses L<sprintf>.
+Prints a formatted string to the current file handle.  Uses L<perlfunc/sprintf>.
 
 =cut
 
@@ -88,7 +88,7 @@ sub read {
 =item C<$handle-E<gt>seek($pos, $whence)>
 
 Seek C<$handle> to C<$pos> bytes, relative to the current byte position,
-according to the seek mode listed in C<$whence>.  L<$whence> is a position
+according to the seek mode listed in C<$whence>.  C<$whence> is a position
 modifier as specified in L<Filesys::POSIX::Bits>.
 
 =cut

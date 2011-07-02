@@ -25,7 +25,8 @@ my $fds = Filesys::POSIX::FdTable->new;
 
 lives_ok {
     $fds->open( Dummy::Inode->new, 1 );
-} 'Filesys::POSIX::FdTable->open() returns a file handle opened by inode object';
+}
+'Filesys::POSIX::FdTable->open() returns a file handle opened by inode object';
 
 throws_ok {
     $fds->open( Dummy::Inode->new, 0 );

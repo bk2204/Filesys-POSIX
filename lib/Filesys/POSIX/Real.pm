@@ -51,9 +51,9 @@ sub new {
 
 =item C<$fs-E<gt>init(%data)>
 
-Initializes the new filesystem.  A reference to the %data argument is saved in
-the filesystem object.  The following attribute in the %data hash is required,
-however:
+Initializes the new filesystem.  A reference to the C<%data> argument is saved
+in the filesystem object.  The following attribute in the C<%data> hash is
+required, however:
 
 =over
 
@@ -70,12 +70,12 @@ Exceptions will be thrown for the following:
 
 =item Invalid special path
 
-The format of the $data{'special'} argument does not match the aforementioned
+The format of the C<$data{'special'}> argument does not match the aforementioned
 specification.
 
 =item Not a directory
 
-The path specified in $data{'special'} on the real filesystem does not
+The path specified in C<$data{'special'}> on the real filesystem does not
 correspond to an actual directory.
 
 =back

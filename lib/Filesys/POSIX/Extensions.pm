@@ -45,7 +45,7 @@ sub EXPORT {
     qw/attach map alias detach replace/;
 }
 
-=item $fs->attach($inode, $dest)
+=item C<$fs-E<gt>attach($inode, $dest)>
 
 Attaches the given inode object to the filesystem in the specified location.
 Exceptions will be thrown for the following:
@@ -76,11 +76,11 @@ sub attach {
     return $inode;
 }
 
-=item $fs->map($real_src, $dest)
+=item C<$fs-E<gt>map($real_src, $dest)>
 
-Manifests a Filesys::POSIX::Real::Inode object corresponding to the actual
-inode from the underlying filesystem whose path is specified by $real_src,
-and attaches it to the virtual filesystem in the location specified by $dest.
+Manifests a L<Filesys::POSIX::Real::Inode> object corresponding to the actual
+inode from the underlying filesystem whose path is specified by C<$real_src>,
+and attaches it to the virtual filesystem in the location specified by C<$dest>.
 Exceptions will be thrown for the following:
 
 =over
@@ -92,7 +92,7 @@ An inode at the destination path already exists.
 =back
 
 Other exceptions may be thrown, based on the availability and permissions of
-the actual inode referred to by $real_src.
+the actual inode referred to by C<$real_src>.
 
 Upon success, a reference to the C<Filesys::POSIX::Real::Inode> object created
 will be returned to the caller.
@@ -119,11 +119,11 @@ sub map {
     return $inode;
 }
 
-=item $fs->alias($src, $dest)
+=item C<$fs-E<gt>alias($src, $dest)>
 
-Very similar to $fs->link(), however this system call allows inode aliases to
-be made across filesystem mount points.  It is also possible to alias
-directories, unlinke $fs->link().  Exceptions will be thrown for the following:
+Very similar to C<$fs-E<gt>link>, however this system call allows inode aliases
+to be made across filesystem mount points.  It is also possible to alias
+directories, unlike C<$fs-E<gt>link>.  Exceptions will be thrown for the following:
 
 =over
 
@@ -152,22 +152,22 @@ sub alias {
     return $inode;
 }
 
-=item $fs->detach($path)
+=item C<$fs-E<gt>detach($path)>
 
 Detaches the inode of the given path from the virtual filesystem.  This call is
-similar to $fs->unlink(), except a different underlying, filesystem-dependent
-method is used to detach an inode from the path's parent directory in the case
-of C<$fs-E<gt>unlink()>.  Both directories and non-directories alike can be
-detached from any point in the filesystem using this call; directories do not
+similar to C<$fs-E<gt>unlink>, except a different underlying, filesystem-
+dependent method is used to detach an inode from the path's parent directory in
+the case of C<$fs-E<gt>unlink>.  Both directories and non-directories alike can
+be detached from any point in the filesystem using this call; directories do not
 have to be empty.
 
-Given a directory object, the $directory->detach() call is used, which only
-removes the inode from the directory itself; whereas $directory->delete(), as
-used by $fs->unlink(), would perform an unlink() at the system level in the
-case of a Filesys::POSIX::Real::Directory object.  This way, it is possible to
-only perform logical deletes of inodes, without affecting the underlying
-filesystem when managing inodes brought into existence using other system calls
-in this extensions module.
+Given a directory object, the C<$directory-E<gt>detach> call is used, which only
+removes the inode from the directory itself; whereas C<$directory-E<gt>delete>,
+as used by C<$fs-E<gt>unlink>, would perform an L<unlink()|perlfunc/unlink> at
+the system level in the case of a L<Filesys::POSIX::Real::Directory>. object.
+This way, it is possible to only perform logical deletes of inodes, without
+affecting the underlying filesystem when managing inodes brought into existence
+using other system calls in this extensions module.
 
 Exceptions are thrown for the following:
 
@@ -197,10 +197,10 @@ sub detach {
     return $directory->detach($name);
 }
 
-=item $fs->replace($path, $inode)
+=item C<$fs-E<gt>replace($path, $inode)>
 
-Replaces an existant inode specified by $path with the inode object passed in
-the $inode argument.  The existing and specified inodes can be of any type.
+Replaces an existant inode specified by C<$path> with the inode object passed in
+the C<$inode> argument.  The existing and specified inodes can be of any type.
 
 Exceptions will be thrown for the following:
 

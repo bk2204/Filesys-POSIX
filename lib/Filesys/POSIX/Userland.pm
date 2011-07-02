@@ -49,11 +49,12 @@ sub _find_inode_path {
 
 =item C<$fs-E<gt>mkpath($path, $mode)>
 
-Similar to the C<-p> flag that can be passed to L<mkdir(1)>, this method
-attempts to create a hierarchy of directories specified in C<$path>.  Each path
-component created will be made with the mode specified by C<$mode>, if any, if a
-directory in that location does not already exist.  Exceptions will be thrown if
-one of the items along the path hierarchy exists but is not a directory.
+Similar to the C<-p> flag that can be passed to L<mkdir(1)>, this
+method attempts to create a hierarchy of directories specified in C<$path>.
+Each path component created will be made with the mode specified by C<$mode>, if
+any, if a directory in that location does not already exist.  Exceptions will be
+thrown if one of the items along the path hierarchy exists but is not a
+directory.
 
 A default mode of 0777 is assumed; only the permissions field of C<$mode> is
 used when it is specified.  In both cases, the mode specified is modified with
@@ -102,7 +103,7 @@ sub getcwd {
 =item C<$fs-E<gt>realpath($path)>
 
 Returns a string representation of the full, true and original path of the
-inode specified by $path.
+inode specified by C<$path>.
 
 Using C<$fs-E<gt>stat>, the inode of C<$path> is resolved, then starting at that
 inode, each subsequent inode's name is found from its parent and appended to a
@@ -167,10 +168,11 @@ sub closedir {
 
 =item C<$fs-E<gt>touch($path)>
 
-Acts like the userland utility L<touch(1)>.  Uses C<$fs-E<gt>open> with the
-C<$O_CREAT> flag to open the file specified by $path, and immediately closes the
-file descriptor returned.  This causes an update of the inode modification time
-for existing files, and the creation of new, empty files otherwise.
+Acts like the userland utility L<touch()|perlfunc/touch>.  Uses C<$fs-E<gt>open>
+with the C<$O_CREAT> flag to open the file specified by C<$path>, and
+immediately closes the file descriptor returned.  This causes an update of the
+inode modification time for existing files, and the creation of new, empty files
+otherwise.
 
 =cut
 

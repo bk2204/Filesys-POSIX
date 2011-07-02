@@ -131,7 +131,7 @@ sub AUTOLOAD {
 Import functionality from the module specified into the namespace of the
 current filesystem object instance.  The module to be imported should be
 specified in the usual form of a Perl package name.  Only the methods returned
-by its EXPORT() function will be imported.
+by its C<EXPORT()> function will be imported.
 
 See the L</"EXTENSION MODULES"> section below for a listing of modules that
 Filesys::POSIX provides.
@@ -362,7 +362,7 @@ affected inode will be returned.
 sub chmod {
     my ( $self, $path, $mode ) = @_;
     my $inode = $self->stat($path);
-    
+
     $inode->chmod($mode);
 
     return $inode;
@@ -379,7 +379,7 @@ to that inode will be returned.
 sub fchmod {
     my ( $self, $fd, $mode ) = @_;
     my $inode = $self->fstat($fd);
-    
+
     $inode->chmod($mode);
 
     return $inode;
@@ -467,9 +467,9 @@ sub link {
 
 =item C<$fs-E<gt>symlink($path, $dest)>
 
-The path in the first argument specified, $path, is cleaned up using
-C<Filesys::POSIX::Path-E<gt>full()>, and stored in a new symlink inode created
-in the location specified by $dest.  An exception will be thrown if the
+The path in the first argument specified, C<$path>, is cleaned up using
+C<Filesys::POSIX::Path-E<gt>full>, and stored in a new symlink inode created
+in the location specified by C<$dest>.  An exception will be thrown if the
 destination exists.  A reference to the newly-created symlink inode will be
 returned.
 
@@ -544,11 +544,11 @@ sub unlink {
 
 =item C<$fs-E<gt>rename($old, $new)>
 
-Relocate the item specified by the $old argument to the new path specified by
+Relocate the item specified by the C<$old> argument to the new path specified by
 $new.
 
-Using $fs->lstat(), the inode for the old pathname is resolved;
-C<$fs-E<gt>stat()> is then used to resolve the path of the parent directory of
+Using C<$fs-E<gt>lstat>, the inode for the old pathname is resolved;
+C<$fs-E<gt>stat> is then used to resolve the path of the parent directory of
 the argument specified in C<$new>.
 
 If an inode exists at the path specified by C<$new>, it will be replaced by
@@ -691,7 +691,7 @@ in the following manner:
     my $major = ($dev & 0xff00) >> 15;
     my $minor =  $dev & 0x00ff;
 
-Returns a reference to a C<Filesys::POSIX::Inode> object upon success.
+Returns a reference to a L<Filesys::POSIX::Inode> object upon success.
 
 =cut
 
@@ -721,9 +721,9 @@ sub mknod {
 
 Create a new FIFO device at the specified C<$path>, with the permissions listed
 in C<$mode>.  Internally, this function is a frontend to
-C<Filesys::POSIX-E<gt>mknod()>.
+C<Filesys::POSIX-E<gt>mknod>.
 
-Returns a reference to a C<Filesys::POSIX::Inode> object upon success.
+Returns a reference to a L<Filesys::POSIX::Inode> object upon success.
 
 =cut
 

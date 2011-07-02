@@ -37,8 +37,8 @@ sub get {
 =item C<$directory-E<gt>set($name, $inode)>
 
 Store a reference to C<$inode> in the current directory, named after the member
-label C<$name>.  If an item already exists for $name, then it will be replaced
-by C<$inode>.
+label C<$name>.  If an item already exists for C<$name>, then it will be
+replaced by C<$inode>.
 
 =cut
 
@@ -48,8 +48,8 @@ sub set {
 
 =item C<$directory-E<gt>exists($name)>
 
-Returns true if a member called $name exists in the current directory.  Returns
-false if no such member inode is listed.
+Returns true if a member called C<$name> exists in the current directory.
+Returns false if no such member inode is listed.
 
 =cut
 
@@ -70,7 +70,7 @@ sub detach {
 
 =item C<$directory-E<gt>delete($name)>
 
-Drop any references to a member called $name in the current directory.  Side
+Drop any references to a member called C<$name> in the current directory.  Side
 effects to other system resources referenced by this directory member may
 potentially occur, depending on the specific directory implementation.
 

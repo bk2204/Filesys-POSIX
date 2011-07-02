@@ -27,7 +27,7 @@ routines.
 
 Open a file descriptor for an inode specified by $path.  This operation can be
 modified by usage of the following flags which can be specified together using
-logical OR (|).  The flags as follows are exported by Filesys::POSIX::Bits:
+logical OR (|).  The flags as follows are exported by L<Filesys::POSIX::Bits>:
 
 =over
 

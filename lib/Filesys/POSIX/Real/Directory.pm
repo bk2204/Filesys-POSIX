@@ -129,7 +129,7 @@ sub detach {
     if ( exists $self->{'overlays'}->{$name} ) {
         my $inode = $self->{'overlays'}->{$name};
         delete $self->{'overlays'}->{$name};
-        return $inode;;
+        return $inode;
     }
 
     if ( exists $self->{'members'}->{$name} ) {

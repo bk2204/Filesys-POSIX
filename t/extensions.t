@@ -12,8 +12,8 @@ use Test::More ( 'tests' => 11 );
 use Test::Exception;
 use Test::NoWarnings;
 
-my $tmpdir = File::Temp::tempdir('CLEANUP' => 1);
-my ($tmpfile_fh, $tmpfile) = File::Temp::tempfile('DIR' => $tmpdir);
+my $tmpdir = File::Temp::tempdir( 'CLEANUP' => 1 );
+my ( $tmpfile_fh, $tmpfile ) = File::Temp::tempfile( 'DIR' => $tmpdir );
 
 my $fs = Filesys::POSIX->new( Filesys::POSIX::Mem->new );
 $fs->import_module('Filesys::POSIX::Extensions');

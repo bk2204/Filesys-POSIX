@@ -73,7 +73,7 @@ sub init {
 =head1 DESTROYING THE FILESYSTEM
 
 The filesystem object, as well as any of its constituent inodes, directories,
-and other data are cleaned up completely when the C<DESTROY> method is called.
+and other data are cleaned up completely when the C<DESTROY()> method is called.
 
 =cut
 

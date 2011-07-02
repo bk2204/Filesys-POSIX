@@ -44,7 +44,7 @@ sub open {
     my ( $self, $inode, $flags ) = @_;
 
     my $fd     = 2;
-    my $handle = $inode->open($flags) ;
+    my $handle = $inode->open($flags);
 
     confess('Unable to open device-specific file handle') unless $handle;
 
