@@ -64,6 +64,43 @@ filesystem, starting with the 'real:' prefix.
 
 =back
 
+Optional values in C<%data> are as follows:
+
+=over
+
+=item C<sticky>
+
+When set to a value evaluating to true, any updates to certain attributes of any
+inode brought to life by this module are not committed to disk.  When this flag
+is used, the following calls only affect the inode in memory, but not on disk:
+
+=over
+
+=item C<$fs-E<gt>chmod>
+
+=item C<$fs-E<gt>chown>
+
+=item C<$fs-E<gt>symlink>
+
+=back
+
+Furthermore, only the following attributes are synced from disk onto their
+corresponding memory inodes:
+
+=over
+
+=item C<size>
+
+=item C<atime>
+
+=item C<mtime>
+
+=item C<ctime>
+
+=back
+
+=back
+
 Exceptions will be thrown for the following:
 
 =over

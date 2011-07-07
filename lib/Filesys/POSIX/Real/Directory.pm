@@ -11,7 +11,7 @@ use Carp qw/confess/;
 
 our @ISA = qw/Filesys::POSIX::Directory/;
 
-sub from_disk {
+sub new {
     my ( $class, $path, $inode ) = @_;
 
     return bless {
@@ -54,7 +54,7 @@ sub _sync_member {
         return;
     }
 
-    confess $! unless @st;
+    confess($!) unless @st;
 
     if ( exists $self->{'members'}->{$name} ) {
         $self->{'members'}->{$name}->update(@st);

@@ -15,10 +15,28 @@ our @ISA = qw/Filesys::POSIX::Inode/;
 sub new {
     my ( $class, $path, %opts ) = @_;
 
+    my $sticky = 0;
+
+    #
+    # Allow the sticky flag to be set for every inode belonging to a
+    # Filesys::POSIX::Real filesystem, with usage of a special mount flag.
+    # However, allow this flag to be overridden on a per-inode basis, which
+    # happens with each call from Filesys::POSIX::Extensions->map and the like.
+    #
+    if ( defined $opts{'dev'}->{'sticky'} ) {
+        $sticky = $opts{'dev'}->{'sticky'} ? 1 : 0;
+    }
+
+    if ( defined $opts{'sticky'} ) {
+        $sticky = $opts{'sticky'} ? 1 : 0;
+    }
+
     return bless {
         'path'   => $path,
         'dev'    => $opts{'dev'},
-        'parent' => $opts{'parent'}
+        'parent' => $opts{'parent'},
+        'sticky' => $sticky,
+        'dirty'  => 0
     }, $class;
 }
 
@@ -29,7 +47,7 @@ sub from_disk {
     my $inode = $class->new( $path, %opts )->update(@st);
 
     if ( S_IFMT( $st[2] ) == S_IFDIR ) {
-        $inode->{'directory'} = Filesys::POSIX::Real::Directory->from_disk( $path, $inode );
+        $inode->{'directory'} = Filesys::POSIX::Real::Directory->new( $path, $inode );
     }
 
     return $inode;
@@ -43,30 +61,40 @@ sub child {
     confess('File exists') if $directory->exists($name);
 
     my $path = "$self->{'path'}/$name";
-    my $child;
 
-    if ( ( $mode & $S_IFMT ) == $S_IFDIR ) {
-        mkdir( $path, $mode ) or confess($!);
-    }
-    elsif ( ( $mode & $S_IFMT ) == $S_IFLNK ) {
-        return __PACKAGE__->new(
-            $path,
-            'dev'    => $self->{'dev'},
-            'parent' => $directory->get('.')
-        );
-    }
-    elsif ( ( $mode & $S_IFMT ) == $S_IFREG ) {
-        sysopen( my $fh, $path, O_CREAT | O_EXCL | O_WRONLY, $mode ) or confess($!);
-        close($fh);
-    }
-
-    my $inode = __PACKAGE__->from_disk(
+    my @data = (
         $path,
         'dev'    => $self->{'dev'},
+        'sticky' => $self->{'sticky'},
         'parent' => $directory->get('.')
     );
 
-    $directory->set( $name, $inode );
+    if ( ( $mode & $S_IFMT ) == $S_IFREG ) {
+        sysopen( my $fh, $path, O_CREAT | O_EXCL | O_WRONLY, $mode ) or confess($!);
+        close($fh);
+    }
+    elsif ( ( $mode & $S_IFMT ) == $S_IFDIR ) {
+        mkdir( $path, $mode ) or confess($!);
+    }
+    elsif ( ( $mode & $S_IFMT ) == $S_IFLNK ) {
+        return __PACKAGE__->new(@data);
+    }
+
+    return $directory->set( $name, __PACKAGE__->from_disk(@data) );
+}
+
+sub update {
+    my ( $self, @st ) = @_;
+
+    if ( $self->{'sticky'} && $self->{'dirty'} ) {
+        @{$self}{qw/size atime mtime ctime/} = @st[ 7 .. 10 ];
+    }
+    else {
+        $self->SUPER::update(@st);
+        $self->{'dirty'} = 1;
+    }
+
+    return $self;
 }
 
 sub open {
@@ -79,28 +107,41 @@ sub open {
 
 sub chown {
     my ( $self, $uid, $gid ) = @_;
-    CORE::chown( $uid, $gid, $self->{'path'} );
+
+    unless ( $self->{'sticky'} ) {
+        CORE::chown( $uid, $gid, $self->{'path'} ) or confess($!);
+    }
+
     @{$self}{qw/uid gid/} = ( $uid, $gid );
+
+    return $self;
 }
 
 sub chmod {
     my ( $self, $mode ) = @_;
-    CORE::chmod( $mode, $self->{'path'} );
+
+    unless ( $self->{'sticky'} ) {
+        CORE::chmod( $mode, $self->{'path'} ) or confess($!);
+    }
+
     $self->{'mode'} = $mode;
 }
 
 sub readlink {
     my ($self) = @_;
-    confess('Not a symlink') unless ( $self->{'mode'} & $S_IFMT ) == $S_IFLNK;
 
-    return CORE::readlink( $self->{'path'} );
+    return CORE::readlink( $self->{'path'} ) or confess($!);
 }
 
 sub symlink {
     my ( $self, $dest ) = @_;
 
-    symlink( $dest, $self->{'path'} ) or confess($!);
+    if ( $self->{'sticky'} ) {
+        $self->{'dest'} = $dest;
+        return $self;
+    }
 
+    symlink( $dest, $self->{'path'} ) or confess($!);
     return $self->update( stat $self->{'path'} );
 }
 
