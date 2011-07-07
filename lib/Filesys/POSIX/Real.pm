@@ -90,7 +90,7 @@ sub init {
     my $path = $data{'special'};
     $path =~ s/^real:// or confess('Invalid special path');
 
-    my $root = Filesys::POSIX::Real::Inode->new(
+    my $root = Filesys::POSIX::Real::Inode->from_disk(
         $path,
         'dev' => $self
     );

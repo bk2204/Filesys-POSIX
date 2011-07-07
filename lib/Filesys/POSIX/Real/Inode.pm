@@ -7,25 +7,29 @@ use Filesys::POSIX::Bits;
 use Filesys::POSIX::Inode      ();
 use Filesys::POSIX::IO::Handle ();
 
-use Fcntl;
+use Fcntl qw/:DEFAULT :mode/;
 use Carp qw/confess/;
 
 our @ISA = qw/Filesys::POSIX::Inode/;
 
 sub new {
     my ( $class, $path, %opts ) = @_;
-    my @st = $opts{'st_info'} ? @{ $opts{'st_info'} } : lstat $path or confess($!);
 
-    my $inode = bless {
+    return bless {
         'path'   => $path,
         'dev'    => $opts{'dev'},
         'parent' => $opts{'parent'}
     }, $class;
+}
 
-    $inode->update(@st);
+sub from_disk {
+    my ( $class, $path, %opts ) = @_;
+    my @st = $opts{'st_info'} ? @{ $opts{'st_info'} } : lstat $path or confess($!);
 
-    if ( ( $st[2] & $S_IFMT ) == $S_IFDIR ) {
-        $inode->{'directory'} = Filesys::POSIX::Real::Directory->new( $path, $inode );
+    my $inode = $class->new( $path, %opts )->update(@st);
+
+    if ( S_IFMT( $st[2] ) == S_IFDIR ) {
+        $inode->{'directory'} = Filesys::POSIX::Real::Directory->from_disk( $path, $inode );
     }
 
     return $inode;
@@ -44,15 +48,19 @@ sub child {
     if ( ( $mode & $S_IFMT ) == $S_IFDIR ) {
         mkdir( $path, $mode ) or confess($!);
     }
-    elsif ( ( $mode & $S_IFMT ) == $S_IFDIR ) {
-        symlink( '.placeholder', $path ) or confess($!);
+    elsif ( ( $mode & $S_IFMT ) == $S_IFLNK ) {
+        return __PACKAGE__->new(
+            $path,
+            'dev'    => $self->{'dev'},
+            'parent' => $directory->get('.')
+        );
     }
-    else {
+    elsif ( ( $mode & $S_IFMT ) == $S_IFREG ) {
         sysopen( my $fh, $path, O_CREAT | O_EXCL | O_WRONLY, $mode ) or confess($!);
         close($fh);
     }
 
-    my $inode = __PACKAGE__->new(
+    my $inode = __PACKAGE__->from_disk(
         $path,
         'dev'    => $self->{'dev'},
         'parent' => $directory->get('.')
@@ -90,10 +98,10 @@ sub readlink {
 
 sub symlink {
     my ( $self, $dest ) = @_;
-    confess('Not a symlink') unless -l $self->{'path'};
 
-    CORE::unlink( $self->{'path'} ) or confess($!);
     symlink( $dest, $self->{'path'} ) or confess($!);
+
+    return $self->update( stat $self->{'path'} );
 }
 
 1;

@@ -11,7 +11,7 @@ use Carp qw/confess/;
 
 our @ISA = qw/Filesys::POSIX::Directory/;
 
-sub new {
+sub from_disk {
     my ( $class, $path, $inode ) = @_;
 
     return bless {
@@ -60,7 +60,7 @@ sub _sync_member {
         $self->{'members'}->{$name}->update(@st);
     }
     else {
-        $self->{'members'}->{$name} = Filesys::POSIX::Real::Inode->new(
+        $self->{'members'}->{$name} = Filesys::POSIX::Real::Inode->from_disk(
             $subpath,
             'st_info' => \@st,
             'dev'     => $self->{'node'}->{'dev'},

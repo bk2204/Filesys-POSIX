@@ -7,8 +7,8 @@ use Filesys::POSIX::Bits;
 
 sub EXPORT {
     qw(
-        exists is_file is_dir is_link is_char is_block is_fifo
-        is_readable is_writable is_executable is_setuid is_setgid
+      exists is_file is_dir is_link is_char is_block is_fifo
+      is_readable is_writable is_executable is_setuid is_setgid
     );
 }
 

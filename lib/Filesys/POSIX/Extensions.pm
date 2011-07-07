@@ -108,7 +108,7 @@ sub map {
 
     confess('File exists') if $directory->exists($name);
 
-    my $inode = Filesys::POSIX::Real::Inode->new(
+    my $inode = Filesys::POSIX::Real::Inode->from_disk(
         $real_src,
         'dev'    => $parent->{'dev'},
         'parent' => $parent
@@ -199,7 +199,7 @@ sub detach {
 
 =item C<$fs-E<gt>replace($path, $inode)>
 
-Replaces an existant inode specified by C<$path> with the inode object passed in
+Replaces an existent inode specified by C<$path> with the inode object passed in
 the C<$inode> argument.  The existing and specified inodes can be of any type.
 
 Exceptions will be thrown for the following:
