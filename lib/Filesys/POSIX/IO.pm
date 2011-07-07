@@ -87,6 +87,8 @@ sub open {
     my $name = $hier->basename;
     my $inode;
 
+    confess('Invalid argument') unless defined $flags;
+
     if ( $flags & $O_CREAT ) {
         my $parent    = $self->stat( $hier->dirname );
         my $directory = $parent->directory;
