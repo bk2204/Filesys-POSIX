@@ -465,24 +465,24 @@ sub link {
     return $inode;
 }
 
-=item C<$fs-E<gt>symlink($path, $dest)>
+=item C<$fs-E<gt>symlink($old, $new)>
 
-The path in the first argument specified, C<$path>, is cleaned up using
+The path in the first argument specified, C<$old>, is cleaned up using
 C<Filesys::POSIX::Path-E<gt>full>, and stored in a new symlink inode created
-in the location specified by C<$dest>.  An exception will be thrown if the
-destination exists.  A reference to the newly-created symlink inode will be
-returned.
+in the location specified by C<$new>.  An exception will be thrown if an inode
+at the path indicated by C<$new> exists.  A reference to the newly-created
+symlink inode will be returned.
 
 =cut
 
 sub symlink {
-    my ( $self, $path, $dest ) = @_;
+    my ( $self, $old, $new ) = @_;
     my $perms  = $S_IPERM ^ $self->{'umask'};
-    my $hier   = Filesys::POSIX::Path->new($dest);
+    my $hier   = Filesys::POSIX::Path->new($new);
     my $name   = $hier->basename;
     my $parent = $self->stat( $hier->dirname );
 
-    return $parent->child( $name, $S_IFLNK | $perms )->symlink( Filesys::POSIX::Path->full($path) );
+    return $parent->child( $name, $S_IFLNK | $perms )->symlink( Filesys::POSIX::Path->full($old) );
 }
 
 =item C<$fs-E<gt>readlink($path)>

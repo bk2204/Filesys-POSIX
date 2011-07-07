@@ -42,10 +42,13 @@ sub child {
     my $child;
 
     if ( ( $mode & $S_IFMT ) == $S_IFDIR ) {
-        mkdir( $path, $mode ) or confess $!;
+        mkdir( $path, $mode ) or confess($!);
+    }
+    elsif ( ( $mode & $S_IFMT ) == $S_IFDIR ) {
+        symlink( '.placeholder', $path ) or confess($!);
     }
     else {
-        sysopen( my $fh, $path, O_CREAT | O_EXCL | O_WRONLY, $mode ) or confess $!;
+        sysopen( my $fh, $path, O_CREAT | O_EXCL | O_WRONLY, $mode ) or confess($!);
         close($fh);
     }
 
@@ -61,7 +64,7 @@ sub child {
 sub open {
     my ( $self, $flags ) = @_;
 
-    sysopen( my $fh, $self->{'path'}, $flags ) or confess $!;
+    sysopen( my $fh, $self->{'path'}, $flags ) or confess($!);
 
     return Filesys::POSIX::IO::Handle->new($fh);
 }
@@ -90,7 +93,7 @@ sub symlink {
     confess('Not a symlink') unless -l $self->{'path'};
 
     CORE::unlink( $self->{'path'} ) or confess($!);
-    symlink( $self->{'path'}, $dest ) or confess($!);
+    symlink( $dest, $self->{'path'} ) or confess($!);
 }
 
 1;
