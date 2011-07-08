@@ -83,6 +83,14 @@ sub child {
     return $directory->set( $name, __PACKAGE__->from_disk(@data) );
 }
 
+sub taint {
+    my ($self) = @_;
+
+    $self->{'dirty'} = 1;
+
+    return $self;
+}
+
 sub update {
     my ( $self, @st ) = @_;
 
@@ -91,7 +99,6 @@ sub update {
     }
     else {
         $self->SUPER::update(@st);
-        $self->{'dirty'} = 1;
     }
 
     return $self;
@@ -114,7 +121,7 @@ sub chown {
 
     @{$self}{qw/uid gid/} = ( $uid, $gid );
 
-    return $self;
+    return $self->taint;
 }
 
 sub chmod {
@@ -127,24 +134,32 @@ sub chmod {
     }
 
     $self->{'mode'} = $format | $perm;
+
+    return $self->taint;
 }
 
 sub readlink {
     my ($self) = @_;
 
-    return CORE::readlink( $self->{'path'} ) or confess($!);
+    unless ( $self->{'sticky'} ) {
+        $self->{'dest'} = CORE::readlink( $self->{'path'} ) or confess($!);
+    }
+
+    $self->taint;
+
+    return $self->{'dest'};
 }
 
 sub symlink {
     my ( $self, $dest ) = @_;
 
-    if ( $self->{'sticky'} ) {
-        $self->{'dest'} = $dest;
-        return $self;
+    unless ( $self->{'sticky'} ) {
+        symlink( $dest, $self->{'path'} ) or confess($!);
     }
 
-    symlink( $dest, $self->{'path'} ) or confess($!);
-    return $self->update( stat $self->{'path'} );
+    $self->taint;
+
+    return $self->{'dest'} = $dest;
 }
 
 1;
