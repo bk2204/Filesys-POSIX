@@ -120,9 +120,7 @@ sub map {
         'parent' => $parent
     );
 
-    $directory->set( $name, $inode );
-
-    return $inode;
+    return $directory->set( $name, $inode );
 }
 
 =item C<$fs-E<gt>alias($src, $dest)>
@@ -153,9 +151,7 @@ sub alias {
 
     confess('File exists') if $directory->exists($name);
 
-    $directory->set( $name, $inode );
-
-    return $inode;
+    return $directory->set( $name, $inode );
 }
 
 =item C<$fs-E<gt>detach($path)>
@@ -233,9 +229,8 @@ sub replace {
     confess('No such file or directory') unless $directory->exists($name);
 
     $directory->detach($name);
-    $directory->set( $name, $inode );
 
-    return $inode;
+    return $directory->set( $name, $inode );
 }
 
 =back

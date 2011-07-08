@@ -157,9 +157,9 @@ sub symlink {
         symlink( $dest, $self->{'path'} ) or confess($!);
     }
 
-    $self->taint;
+    $self->{'dest'} = $dest;
 
-    return $self->{'dest'} = $dest;
+    return $self->taint;
 }
 
 1;
