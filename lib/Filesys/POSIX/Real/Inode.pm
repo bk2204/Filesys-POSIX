@@ -119,12 +119,14 @@ sub chown {
 
 sub chmod {
     my ( $self, $mode ) = @_;
+    my $format = $self->{'mode'} & $S_IFMT;
+    my $perm   = $mode & ( $S_IPERM | $S_IPROT );
 
     unless ( $self->{'sticky'} ) {
-        CORE::chmod( $mode, $self->{'path'} ) or confess($!);
+        CORE::chmod( $perm, $self->{'path'} ) or confess($!);
     }
 
-    $self->{'mode'} = $mode;
+    $self->{'mode'} = $format | $perm;
 }
 
 sub readlink {
