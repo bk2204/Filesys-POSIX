@@ -35,9 +35,10 @@ logical OR (|).  The flags as follows are exported by L<Filesys::POSIX::Bits>:
 
 If an inode at the specified path does not exist, attempt to create one.
 
-When a mode is specified, the value is split into the format (C<$S_IFMT>) and
-permission (C<$S_IPERM>) bitfields.  If no value was specified for the format,
-then the default value of C<$S_IFREG> (regular file) is substituted.  
+When a mode is specified, the value is split into the format (C<$S_IFMT>),
+permission (C<$S_IPERM>), and protection (C<$S_IPROT>) bitfields.  If no
+value was specified for the format, then the default value of C<$S_IFREG>
+(regular file) is substituted.  
 
 When no mode is specified whatsoever, the default values of an C<$S_IFREG>
 format, and a mode of 0666 are used, modified by the current umask value.
@@ -98,7 +99,7 @@ sub open {
         }
         else {
             my $format = $mode ? ( $mode & $S_IFMT ? $mode & $S_IFMT : $S_IFREG ) : $S_IFREG;
-            my $perms = $mode ? $mode & $S_IPERM : $S_IRW;
+            my $perms = $mode ? $mode & ( $S_IPERM | $S_IPROT ) : $S_IRW;
 
             $perms &= ~$self->{'umask'};
 
