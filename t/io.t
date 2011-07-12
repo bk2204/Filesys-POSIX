@@ -5,7 +5,7 @@ use Filesys::POSIX      ();
 use Filesys::POSIX::Mem ();
 use Filesys::POSIX::Bits;
 
-use Test::More ( 'tests' => 30 );
+use Test::More ( 'tests' => 31 );
 use Test::Exception;
 use Test::NoWarnings;
 
@@ -113,4 +113,13 @@ use Test::NoWarnings;
     ok( $fs->seek( $fd, 0, $SEEK_SET ) == 0, 'Filesys::POSIX->seek() allows seeking to beginning of file' );
     ok( $fs->read( $fd, $buf, 12 ) == 12, 'Filesys::POSIX->read() read expected number of bytes' );
     ok( $buf eq "foobar\x00\x00\x00baz", 'Filesys::POSIX->read() populated buffer with expected results' );
+}
+
+{
+    my $fs = Filesys::POSIX->new( Filesys::POSIX::Mem->new );
+
+    throws_ok {
+        $fs->open('foo');
+    }
+    qr/^Invalid argument/, 'Filesys::POSIX->open() dies when no flags are passed';
 }
