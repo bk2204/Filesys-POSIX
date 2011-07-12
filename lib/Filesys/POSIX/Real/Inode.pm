@@ -127,7 +127,7 @@ sub chown {
 sub chmod {
     my ( $self, $mode ) = @_;
     my $format = $self->{'mode'} & $S_IFMT;
-    my $perm   = $mode & ( $S_IPERM | $S_IPROT );
+    my $perm = $mode & ( $S_IPERM | $S_IPROT );
 
     unless ( $self->{'sticky'} ) {
         CORE::chmod( $perm, $self->{'path'} ) or confess($!);
