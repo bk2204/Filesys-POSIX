@@ -179,8 +179,11 @@ otherwise.
 sub touch {
     my ( $self, $path ) = @_;
     my $fd = $self->open( $path, $O_CREAT );
+    my $inode = $self->fstat($fd);
 
     $self->close($fd);
+
+    return $inode;
 }
 
 =back
