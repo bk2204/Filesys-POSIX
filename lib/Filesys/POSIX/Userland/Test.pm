@@ -157,7 +157,7 @@ sub is_fifo {
     my $inode = eval { $self->stat($path) };
 
     return 0 unless $inode;
-    return 0 unless $inode->block;
+    return 0 unless $inode->fifo;
     return 1;
 }
 
