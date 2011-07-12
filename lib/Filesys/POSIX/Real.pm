@@ -29,31 +29,12 @@ Filesys::POSIX::Real - Portal to actual underlying filesystem
 This module implements the filesystem device type which provides a portal to
 the actual system's underlying filesystem.
 
-=head1 CREATING A NEW FILESYSTEM
+=head1 MOUNT OPTIONS
 
-=over
+The following mount options as passed by C<Filesys::POSIX-E<gt>new> or
+C<$fs-E<gt>mount> are honored.
 
-=item C<Filesys::POSIX::Real-E<gt>new>
-
-Create a new, uninitialized filesystem.
-
-=back
-
-=cut
-
-sub new {
-    return bless {}, shift;
-}
-
-=head1 INITIALIAZATION
-
-=over
-
-=item C<$fs-E<gt>init(%data)>
-
-Initializes the new filesystem.  A reference to the C<%data> argument is saved
-in the filesystem object.  The following attribute in the C<%data> hash is
-required, however:
+The following value is mandatory:
 
 =over
 
@@ -64,7 +45,7 @@ filesystem, starting with the 'real:' prefix.
 
 =back
 
-Optional values in C<%data> are as follows:
+The following value is not mandatory:
 
 =over
 
@@ -100,6 +81,31 @@ corresponding memory inodes:
 =back
 
 =back
+
+=head1 CREATING A NEW FILESYSTEM
+
+=over
+
+=item C<Filesys::POSIX::Real-E<gt>new>
+
+Create a new, uninitialized filesystem.
+
+=back
+
+=cut
+
+sub new {
+    return bless {}, shift;
+}
+
+=head1 INITIALIAZATION
+
+=over
+
+=item C<$fs-E<gt>init(%data)>
+
+Initializes the new filesystem.  A reference to the C<%data> argument is saved
+in the filesystem object.
 
 Exceptions will be thrown for the following:
 

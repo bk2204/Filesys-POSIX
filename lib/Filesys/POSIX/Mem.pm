@@ -29,6 +29,29 @@ All inode and directory entry data lives completely in memory, or in temporary
 files referenced by inode buckets as provided by L<Filesys::POSIX::Mem::Bucket>
 file handles.
 
+=head1 MOUNT OPTIONS
+
+The following options are honored.  They modify the behavior of the file handle
+object implemented by L<Filesys::POSIX::Mem::Bucket>.
+
+=over
+
+=item C<bucket_dir>
+
+When new files are created within a C<Filesys::POSIX::Mem> filesystem, temporary
+files in the actual underlying filesystem may be created to hold their contents.
+The C<bucket_dir> option specifies the base directory in which these temporary
+files are placed, defaulting to C</tmp>.
+
+=item C<bucket_max>
+
+Specifies the maximum size, in bytes, any given file within a
+C<Filesys::POSIX::Mem> filesystem may reach within memory before its contents
+are flushed to and managed within a temporary disk file.  The default size is
+C<16384> bytes.
+
+=back
+
 =head1 CREATING AND INITIALIZING THE FILESYSTEM
 
 =over
