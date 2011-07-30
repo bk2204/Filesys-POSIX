@@ -5,6 +5,7 @@ use warnings;
 
 use Filesys::POSIX::Bits;
 use Filesys::POSIX::Inode      ();
+use Filesys::POSIX::Mem::Inode ();
 use Filesys::POSIX::IO::Handle ();
 
 use Fcntl qw/:DEFAULT :mode/;
@@ -62,8 +63,7 @@ sub child {
 
     my $path = "$self->{'path'}/$name";
 
-    my @data = (
-        $path,
+    my %data = (
         'dev'    => $self->{'dev'},
         'sticky' => $self->{'sticky'},
         'parent' => $directory->get('.')
@@ -76,11 +76,19 @@ sub child {
     elsif ( ( $mode & $S_IFMT ) == $S_IFDIR ) {
         mkdir( $path, $mode ) or confess($!);
     }
-    elsif ( ( $mode & $S_IFMT ) == $S_IFLNK ) {
-        return __PACKAGE__->new(@data);
+
+    my $inode;
+
+    if ( ( $mode & $S_IFMT ) == $S_IFLNK ) {
+        confess('Operation not permitted') unless $self->{'sticky'};
+
+        $inode = Filesys::POSIX::Mem::Inode->new( %data, 'mode' => $mode );
+    }
+    else {
+        $inode = __PACKAGE__->from_disk( $path, %data );
     }
 
-    return $directory->set( $name, __PACKAGE__->from_disk(@data) );
+    return $directory->set( $name, $inode );
 }
 
 sub taint {
@@ -141,11 +149,9 @@ sub chmod {
 sub readlink {
     my ($self) = @_;
 
-    unless ( $self->{'sticky'} ) {
+    unless ( $self->{'dest'} ) {
         $self->{'dest'} = CORE::readlink( $self->{'path'} ) or confess($!);
     }
-
-    $self->taint;
 
     return $self->{'dest'};
 }
