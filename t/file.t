@@ -256,4 +256,11 @@ use Test::NoWarnings;
         $fs->mknod( '/tmp/bar', 0644 );
     }
     qr/Invalid argument/, 'Filesys::POSIX->mknod() throws Invalid Argument when no inode format specified';
+
+    lives_ok {
+        $fs->mkdir('/test');
+        $fs->mkdir('/test/foo');
+        $fs->rename( '/test', '/test2' );
+    }
+    'Filesys::POSIX->rename() succeeds when renaming a non-empty directory';
 }

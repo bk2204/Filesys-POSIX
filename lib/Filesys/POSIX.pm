@@ -19,7 +19,7 @@ our $AUTOLOAD;
 
 BEGIN {
     use Exporter ();
-    our $VERSION = '0.9.2_2011080901';
+    our $VERSION = '0.9.2_2011092801';
 }
 
 =head1 NAME
@@ -600,29 +600,32 @@ Upon success, a reference to the inode to be renamed will be returned.
 
 sub rename {
     my ( $self, $old, $new ) = @_;
-    my $hier      = Filesys::POSIX::Path->new($new);
-    my $name      = $hier->basename;
-    my $inode     = $self->lstat($old);
-    my $parent    = $self->stat( $hier->dirname );
-    my $directory = $parent->directory;
 
-    confess('Operation not permitted') if ref($inode) eq 'Filesys::POSIX::Real::Inode';
-    confess('Cross-device link') unless $inode->{'dev'} eq $parent->{'dev'};
+    my $inode = $self->lstat($old);
 
-    if ( my $existing = $directory->get($name) ) {
+    my $old_hier   = Filesys::POSIX::Path->new($old);
+    my $old_name   = $old_hier->basename;
+    my $old_parent = $self->stat( $old_hier->dirname );
+    my $old_dir    = $old_parent->directory;
+
+    my $new_hier   = Filesys::POSIX::Path->new($new);
+    my $new_name   = $new_hier->basename;
+    my $new_parent = $self->stat( $new_hier->dirname );
+    my $new_dir    = $new_parent->directory;
+
+    confess('Cross-device link') unless $inode->{'dev'} eq $new_parent->{'dev'};
+
+    if ( my $existing = $new_dir->get($old_name) ) {
         if ( $inode->dir ) {
-            confess('Not a directory')     unless $existing->dir;
-            confess('Directory not empty') unless $existing->empty;
+            confess('Not a directory') unless $existing->dir;
         }
         else {
             confess('Is a directory') if $existing->dir;
         }
     }
 
-    my $remove = $inode->dir ? 'rmdir' : 'unlink';
-    $self->$remove($old);
-
-    $directory->set( $name, $inode );
+    $old_dir->detach($old_name);
+    $new_dir->set( $new_name, $inode );
 
     return $inode;
 }
