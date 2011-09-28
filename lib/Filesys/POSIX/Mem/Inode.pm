@@ -4,10 +4,12 @@ use strict;
 use warnings;
 
 use Filesys::POSIX::Bits;
-use Filesys::POSIX::Inode       ();
-use Filesys::POSIX::Mem::Bucket ();
+use Filesys::POSIX::Inode             ();
+use Filesys::POSIX::Directory::Handle ();
+use Filesys::POSIX::Mem::Bucket       ();
+use Filesys::POSIX::Mem::Directory    ();
 
-use Carp qw/confess/;
+use Carp ();
 
 our @ISA = qw/Filesys::POSIX::Inode/;
 
@@ -24,7 +26,7 @@ sub new {
         'gid'    => 0,
         'mode'   => defined $opts{'mode'} ? $opts{'mode'} : 0,
         'dev'    => $opts{'dev'},
-        'rdev'   => $opts{'rdev'},
+        'rdev'   => defined $opts{'rdev'} ? $opts{'rdev'} : 0,
         'parent' => $opts{'parent'}
     }, $class;
 
@@ -42,7 +44,7 @@ sub child {
     my ( $self, $name, $mode ) = @_;
     my $directory = $self->directory;
 
-    confess('File exists') if $directory->exists($name);
+    Carp::confess('File exists') if $directory->exists($name);
 
     my $child = __PACKAGE__->new(
         'mode'   => $mode,
@@ -70,14 +72,14 @@ sub chmod {
 
 sub readlink {
     my ($self) = @_;
-    confess('Not a symlink') unless $self->link;
+    Carp::confess('Not a symlink') unless $self->link;
 
     return $self->{'dest'};
 }
 
 sub symlink {
     my ( $self, $dest ) = @_;
-    confess('Not a symlink') unless $self->link;
+    Carp::confess('Not a symlink') unless $self->link;
 
     $self->{'dest'} = $dest;
     return $self;
@@ -85,6 +87,11 @@ sub symlink {
 
 sub open {
     my ( $self, $flags ) = @_;
+
+    if ( $self->dir ) {
+        return Filesys::POSIX::Directory::Handle->new;
+    }
+
     my $dev_flags = $self->{'dev'}->{'flags'};
 
     unless ( $self->{'bucket'} ) {

@@ -33,11 +33,11 @@ sub _find_inode_path {
     while ( my $dir = $self->{'vfs'}->vnode($inode)->{'parent'} ) {
         my $directory = $dir->directory;
 
-        foreach ( $directory->list ) {
-            next if $_ eq '.' || $_ eq '..';
-            next unless $self->{'vfs'}->vnode( $directory->get($_) ) == $self->{'vfs'}->vnode($inode);
+        foreach my $item ( $directory->list ) {
+            next if $item eq '.' || $item eq '..';
+            next unless $self->{'vfs'}->vnode( $directory->get($item) ) == $self->{'vfs'}->vnode($inode);
 
-            push @ret, $_;
+            push @ret, $item;
             $inode = $dir;
         }
     }

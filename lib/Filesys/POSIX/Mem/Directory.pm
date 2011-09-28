@@ -57,6 +57,8 @@ sub open {
     my ($self) = @_;
 
     $self->rewind;
+
+    return $self;
 }
 
 sub rewind {

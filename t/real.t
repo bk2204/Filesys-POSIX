@@ -36,7 +36,7 @@ foreach ( sort keys %files ) {
 
 my $fs = Filesys::POSIX->new(
     Filesys::POSIX::Real->new,
-    'special' => "real:$tmpdir"
+    'path' => $tmpdir
 );
 
 foreach ( sort keys %files ) {
@@ -52,22 +52,19 @@ foreach ( sort keys %files ) {
 }
 
 throws_ok {
-    Filesys::POSIX->new(
-        Filesys::POSIX::Real->new,
-        'special' => 'poop:'
-    );
+    Filesys::POSIX->new( Filesys::POSIX::Real->new );
 }
-qr/^Invalid special path/, "Filesys::POSIX::Real->init() dies when an invalid special was passed at mount time";
+qr/^Invalid argument/, "Filesys::POSIX::Real->init() dies when no path is specified";
 
 throws_ok {
     Filesys::POSIX->new(
         Filesys::POSIX::Real->new,
-        'special' => 'real:/dev/null'
+        'path' => '/dev/null'
     );
 }
 qr/^Not a directory/, "Filesys::POSIX::Real->init() dies when special is not a directory";
 
-throws_ok {
+lives_ok {
     $fs->rename( 'foo', 'bleh' );
 }
-qr/^Operation not permitted/, "Filesys::POSIX->rename() prohibits renaming real files";
+"Filesys::POSIX->rename() allows renaming real files";

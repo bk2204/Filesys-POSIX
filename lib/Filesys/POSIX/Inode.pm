@@ -4,7 +4,7 @@ use strict;
 use warnings;
 
 use Filesys::POSIX::Bits;
-use Carp qw/confess/;
+use Carp ();
 
 =head1 NAME
 
@@ -87,9 +87,9 @@ If the current inode is a block or character device, return the major number.
 sub major {
     my ($self) = @_;
 
-    confess('Invalid argument') unless $self->char || $self->block;
+    Carp::confess('Invalid argument') unless $self->char || $self->block;
 
-    return ( $self->{'dev'} & 0xff00 ) >> 15;
+    return ( $self->{'rdev'} & 0xffff0000 ) >> 16;
 }
 
 =item C<$inode-E<gt>minor>
@@ -101,9 +101,9 @@ If the current inode is a block or character device, return the minor number.
 sub minor {
     my ($self) = @_;
 
-    confess('Invalid argument') unless $self->char || $self->block;
+    Carp::confess('Invalid argument') unless $self->char || $self->block;
 
-    return $self->{'dev'} & 0x00ff;
+    return $self->{'rdev'} & 0x0000ffff;
 }
 
 =item C<$inode-E<gt>perms>
@@ -196,7 +196,8 @@ Otherwise, the following exception is issued:
 
 sub directory {
     my ($self) = @_;
-    confess('Not a directory') unless $self->dir;
+
+    Carp::confess('Not a directory') unless $self->dir;
 
     return $self->{'directory'};
 }

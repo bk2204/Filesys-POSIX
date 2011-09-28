@@ -233,6 +233,19 @@ sub count {
     return scalar @$self;
 }
 
+=item C<$path-E<gt>is_absolute>
+
+Returns true if the current path object represents an absolute path.
+
+=cut
+
+sub is_absolute {
+    my ($self) = @_;
+
+    return 1 unless $self->[0];
+    return 0;
+}
+
 =back
 
 =cut

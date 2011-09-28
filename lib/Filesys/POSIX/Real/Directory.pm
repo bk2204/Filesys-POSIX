@@ -7,7 +7,7 @@ use Filesys::POSIX::Bits;
 use Filesys::POSIX::Directory ();
 
 use Errno qw/ENOENT/;
-use Carp qw/confess/;
+use Carp ();
 
 our @ISA = qw/Filesys::POSIX::Directory/;
 
@@ -29,7 +29,7 @@ sub new {
 
 sub _sync_all {
     my ($self) = @_;
-    my $mtime = ( lstat $self->{'path'} )[9] or confess $!;
+    my $mtime = ( lstat $self->{'path'} )[9] or Carp::confess($!);
 
     return unless $mtime > $self->{'mtime'};
 
@@ -54,7 +54,7 @@ sub _sync_member {
         return;
     }
 
-    confess($!) unless @st;
+    Carp::confess($!) unless @st;
 
     if ( exists $self->{'members'}->{$name} ) {
         $self->{'members'}->{$name}->update(@st);
@@ -111,7 +111,7 @@ sub delete {
     }
 
     if ($!) {
-        confess $! unless $!{'ENOENT'};
+        Carp::confess($!) unless $!{'ENOENT'};
     }
 
     my $now = time;
@@ -126,15 +126,11 @@ sub delete {
 sub detach {
     my ( $self, $name ) = @_;
 
-    if ( exists $self->{'overlays'}->{$name} ) {
-        my $inode = $self->{'overlays'}->{$name};
-        delete $self->{'overlays'}->{$name};
-        return $inode;
-    }
+    foreach my $table (qw(overlays members)) {
+        next unless exists $self->{$table}->{$name};
 
-    if ( exists $self->{'members'}->{$name} ) {
-        my $inode = $self->{'members'}->{$name};
-        delete $self->{'members'}->{$name};
+        my $inode = $self->{$table}->{$name};
+        delete $self->{$table}->{$name};
         return $inode;
     }
 }
@@ -161,7 +157,10 @@ sub open {
     @{ $self->{'skipped'} }{ keys %{ $self->{'overlays'} } } = values %{ $self->{'overlays'} };
 
     $self->close;
-    opendir( $self->{'dh'}, $self->{'path'} ) or confess($!);
+
+    opendir( $self->{'dh'}, $self->{'path'} ) or Carp::confess($!);
+
+    return $self;
 }
 
 sub rewind {
@@ -172,6 +171,8 @@ sub rewind {
     if ( $self->{'dh'} ) {
         rewinddir $self->{'dh'};
     }
+
+    return;
 }
 
 sub read {
@@ -189,6 +190,10 @@ sub read {
         $item = each %{ $self->{'skipped'} };
     }
 
+    if (wantarray) {
+        return ( $item, $self->get($item) );
+    }
+
     return $item;
 }
 
@@ -199,6 +204,8 @@ sub close {
         closedir $self->{'dh'};
         delete $self->{'dh'};
     }
+
+    return;
 }
 
 1;

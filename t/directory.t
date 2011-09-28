@@ -24,7 +24,7 @@ my %mounts = (
     '/mnt/real' => {
         'dev'   => Filesys::POSIX::Real->new,
         'flags' => {
-            'special' => "real:$tmpdir",
+            'path'    => $tmpdir,
             'noatime' => 1
         }
     }

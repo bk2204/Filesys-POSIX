@@ -4,9 +4,11 @@ use strict;
 use warnings;
 
 use Filesys::POSIX::Bits;
-use Filesys::POSIX::Path ();
 
-use Carp qw/confess/;
+use Filesys::POSIX::Path                  ();
+use Filesys::POSIX::Userland::Tar::Header ();
+
+use Carp ();
 
 =head1 NAME
 
@@ -53,140 +55,14 @@ sub EXPORT {
     qw/tar/;
 }
 
-my $BLOCK_SIZE = 512;
-
-my %TYPES = (
-    0 => $S_IFREG,
-    2 => $S_IFLNK,
-    3 => $S_IFCHR,
-    4 => $S_IFBLK,
-    5 => $S_IFDIR,
-    6 => $S_IFIFO
-);
-
-sub _split_filename {
-    my ($filename) = @_;
-    my $len = length $filename;
-    my @parts = split( /\//, $filename );
-
-    if ( $len > 255 ) {
-        confess('Filename too long');
-    }
-
-    my $got = 0;
-    my ( @prefix_items, @suffix_items );
-
-    while (@parts) {
-        my $item = pop @parts;
-        $got += length($item) + 1;
-
-        if ( $got >= 100 ) {
-            push @prefix_items, $item;
-        }
-        else {
-            push @suffix_items, $item;
-        }
-    }
-
-    my $prefix = join( '/', reverse @prefix_items );
-    my $suffix = join( '/', reverse @suffix_items );
-
-    $suffix .= '/' if $filename =~ /\/$/;
-
-    return (
-        'prefix' => $prefix,
-        'suffix' => $suffix
-    );
-}
-
-sub _pad_string {
-    my ( $string, $size ) = @_;
-
-    return $string if length($string) == $size;
-    return pack( "Z$size", $string );
-}
-
-sub _format_number {
-    my ( $number, $digits, $size ) = @_;
-    my $string    = sprintf( "%.${digits}o", $number );
-    my $offset    = length($string) - $digits;
-    my $substring = substr( $string, $offset, $digits );
-
-    return $substring if $digits == $size;
-    return pack( "Z$size", $substring );
-}
-
-sub _checksum {
-    my ($header) = @_;
-    my $sum = 0;
-
-    foreach ( unpack 'C*', $header ) {
-        $sum += $_;
-    }
-
-    return $sum;
-}
-
-sub _type {
-    my ($inode) = @_;
-
-    foreach ( keys %TYPES ) {
-        return $_ if ( $inode->{'mode'} & $S_IFMT ) == $TYPES{$_};
-    }
-
-    return 0;
-}
-
-sub _header {
-    my ( $inode, $dest ) = @_;
-    my %filename_parts = _split_filename($dest);
-    my $header;
-
-    my $size  = $inode->file ? $inode->{'size'} : 0;
-    my $major = 0;
-    my $minor = 0;
-
-    if ( $inode->char || $inode->block ) {
-        $major = $inode->major;
-        $minor = $inode->minor;
-    }
-
-    $header .= _pad_string( $filename_parts{'suffix'}, 100 );
-    $header .= _format_number( $inode->{'mode'} & $S_IPERM, 7,  8 );
-    $header .= _format_number( $inode->{'uid'},             7,  8 );
-    $header .= _format_number( $inode->{'gid'},             7,  8 );
-    $header .= _format_number( $size,                       12, 12 );
-    $header .= _format_number( $inode->{'mtime'},           12, 12 );
-    $header .= ' ' x 8;
-    $header .= _format_number( _type($inode),               1,  1 );
-
-    if ( $inode->link ) {
-        $header .= _pad_string( $inode->readlink, 100 );
-    }
-    else {
-        $header .= "\x00" x 100;
-    }
-
-    $header .= _pad_string( 'ustar', 6 );
-    $header .= _pad_string( '00',    2 );
-    $header .= "\x00" x 32;
-    $header .= "\x00" x 32;
-    $header .= _format_number( $major, 7, 8 );
-    $header .= _format_number( $minor, 7, 8 );
-    $header .= _pad_string( $filename_parts{'prefix'}, 155 );
-
-    my $checksum = _checksum($header);
-    substr( $header, 148, 8 ) = _format_number( $checksum, 7, 8 );
-
-    return pack( "a$BLOCK_SIZE", $header );
-}
+our $BLOCK_SIZE = 512;
 
 #
 # NOTE: I'm only using $inode->open() calls to avoid having to call stat().
 # This is not necessarily something that should be done by end user software.
 #
 sub _write_file {
-    my ( $fs, $handle, $dest, $inode ) = @_;
+    my ( $fs, $inode, $handle, $dest ) = @_;
     my $fh = $inode->open($O_RDONLY);
 
     while ( my $len = $fh->read( my $buf, 4096 ) ) {
@@ -195,23 +71,26 @@ sub _write_file {
             $buf .= "\x0" x $padlen;
         }
 
-        $handle->write( $buf, $len ) == $len or confess('Short write while dumping file buffer to handle');
+        $handle->write( $buf, $len ) == $len or Carp::confess('Short write while dumping file buffer to handle');
     }
 
     $fh->close;
 }
 
 sub _archive {
-    my ( $fs, $handle, $dest, $inode ) = @_;
+    my ( $fs, $inode, $handle, $path ) = @_;
 
-    unless ( $dest =~ /\/$/ ) {
-        $dest .= '/' if $inode->dir;
+    unless ( $path =~ /\/$/ ) {
+        $path .= '/' if $inode->dir;
     }
 
-    my $header = _header( $inode, $dest );
-    $handle->write( $header, 512 ) == 512 or confess('Short write while dumping tar header to file handle');
+    my $header = Filesys::POSIX::Userland::Tar::Header->from_inode( $inode, $path );
 
-    _write_file( $fs, $handle, $dest, $inode ) if $inode->file;
+    unless ( $handle->write( $header->encode, 512 ) == 512 ) {
+        Carp::confess('Short write while dumping tar header to file handle');
+    }
+
+    _write_file( $fs, $inode, $handle, $path ) if $inode->file;
 }
 
 =item C<$fs-E<gt>tar($handle, @items)>
@@ -238,7 +117,7 @@ sub tar {
         sub {
             my ( $path, $inode ) = @_;
 
-            _archive( $self, $handle, $path->full, $inode );
+            _archive( $self, $inode, $handle, $path->full );
         },
         $opts,
         @items
