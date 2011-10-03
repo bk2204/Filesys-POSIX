@@ -19,7 +19,7 @@ our $AUTOLOAD;
 
 BEGIN {
     use Exporter ();
-    our $VERSION = '0.9.2_2011092801';
+    our $VERSION = '0.9.2_2011100301';
 }
 
 =head1 NAME
@@ -615,9 +615,10 @@ sub rename {
 
     confess('Cross-device link') unless $inode->{'dev'} eq $new_parent->{'dev'};
 
-    if ( my $existing = $new_dir->get($old_name) ) {
+    if ( my $existing = $new_dir->get($new_name) ) {
         if ( $inode->dir ) {
-            confess('Not a directory') unless $existing->dir;
+            confess('Not a directory')     unless $existing->dir;
+            confess('Directory not empty') unless $existing->empty;
         }
         else {
             confess('Is a directory') if $existing->dir;
