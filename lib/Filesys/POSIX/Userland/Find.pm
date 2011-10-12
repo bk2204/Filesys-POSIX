@@ -89,9 +89,7 @@ sub find {
         $callback->( $path, $inode );
 
         if ( $inode->dir ) {
-            my $directory = $inode->{'directory'};
-
-            $directory->open;
+            my $directory = $inode->directory->open;
 
             while ( my $item = $directory->read ) {
                 next if $item eq '.' || $item eq '..';

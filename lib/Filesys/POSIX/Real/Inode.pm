@@ -103,7 +103,7 @@ sub update {
     my ( $self, @st ) = @_;
 
     if ( $self->{'sticky'} && $self->{'dirty'} ) {
-        @{$self}{qw/size atime mtime ctime/} = @st[ 7 .. 10 ];
+        @{$self}{qw/rdev size atime mtime ctime/} = @st[ 6 .. 10 ];
     }
     else {
         $self->SUPER::update(@st);

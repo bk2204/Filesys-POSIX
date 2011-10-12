@@ -5,7 +5,7 @@ use Filesys::POSIX      ();
 use Filesys::POSIX::Mem ();
 use Filesys::POSIX::Bits;
 
-use Test::More ( 'tests' => 48 );
+use Test::More ( 'tests' => 49 );
 use Test::Exception;
 use Test::NoWarnings;
 
@@ -207,7 +207,7 @@ use Test::NoWarnings;
     }
 
     {
-        my $inode = $fs->mknod( '/dev/null', $S_IFCHR | 0666, ( 1 << 15 ) | 3 );
+        my $inode = $fs->mknod( '/dev/null', $S_IFCHR | 0666, ( 1 << 16 ) | 3 );
 
         ok( $inode->char, 'Filesys::POSIX->mknod() creates character devices approrpiately' );
         is( $inode->major, 1, 'Filesys::POSIX::Inode->major() returns correct value on char devices' );
@@ -215,7 +215,7 @@ use Test::NoWarnings;
     }
 
     {
-        my $inode = $fs->mknod( '/dev/mem', $S_IFBLK | 0644, ( 1 << 15 ) | 1 );
+        my $inode = $fs->mknod( '/dev/mem', $S_IFBLK | 0644, ( 1 << 16 ) | 1 );
 
         ok( $inode->block, 'Filesys::POSIX->mknod() creates block devices appropriately' );
         is( $inode->major, 1, 'Filesys::POSIX::Inode->major() returns correct value on block devices' );
@@ -223,7 +223,7 @@ use Test::NoWarnings;
     }
 
     {
-        my $inode = $fs->mknod( '/tmp/foo', $S_IFREG | 0644, ( 1 << 15 ) | 4 );
+        my $inode = $fs->mknod( '/tmp/foo', $S_IFREG | 0644, ( 1 << 16 ) | 4 );
 
         throws_ok {
             $inode->major;
@@ -248,7 +248,7 @@ use Test::NoWarnings;
     qr/No such file or directory/, 'Filesys::POSIX->mknod() dies when creating node in nonexistent directory';
 
     throws_ok {
-        $fs->mknod( '/dev/null', $S_IFREG | 0666, ( 1 << 15 ) | 3 );
+        $fs->mknod( '/dev/null', $S_IFREG | 0666, ( 1 << 16 ) | 3 );
     }
     qr/File exists/, 'Filesys::POSIX->mknod() dies when a named inode already exists';
 

@@ -19,7 +19,7 @@ our $AUTOLOAD;
 
 BEGIN {
     use Exporter ();
-    our $VERSION = '0.9.2_2011100301';
+    our $VERSION = '0.9.3_2011101201';
 }
 
 =head1 NAME
@@ -692,8 +692,8 @@ Code contained within the C<Filesys::POSIX> distribution assumes that the device
 identifier shall contain the major and minor numbers in separate 16-bit fields,
 in the following manner:
 
-    my $major = ($dev & 0xff00) >> 15;
-    my $minor =  $dev & 0x00ff;
+    my $major = ($dev & 0xffff0000) >> 16;
+    my $minor =  $dev & 0x0000ffff;
 
 Returns a reference to a L<Filesys::POSIX::Inode> object upon success.
 
@@ -715,7 +715,7 @@ sub mknod {
     my $inode = $parent->child( $name, $format | $perms );
 
     if ( $format == $S_IFCHR || $format == $S_IFBLK ) {
-        $inode->{'dev'} = $dev;
+        $inode->{'rdev'} = $dev;
     }
 
     return $inode;

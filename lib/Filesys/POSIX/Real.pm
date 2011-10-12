@@ -38,10 +38,10 @@ The following value is mandatory:
 
 =over
 
-=item C<special>
+=item C<path>
 
-A URI-like specifier indicating the absolute path of a portion of the real
-filesystem, starting with the 'real:' prefix.
+The path, in the real filesystem, upon which the new filesystem to be mounted
+will be based.
 
 =back
 
@@ -130,8 +130,7 @@ correspond to an actual directory.
 sub init {
     my ( $self, %data ) = @_;
 
-    my $path = $data{'special'};
-    $path =~ s/^real:// or confess('Invalid special path');
+    my $path = $data{'path'} or Carp::confess('Invalid argument');
 
     my $root = Filesys::POSIX::Real::Inode->from_disk(
         $path,
