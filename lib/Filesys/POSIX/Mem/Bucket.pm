@@ -44,26 +44,23 @@ sub open {
 
     confess('Already opened') if $self->{'fh'};
 
+    $self->{'pos'} = 0;
+
     if ( $flags & $O_APPEND ) {
         $self->{'pos'} = $self->{'size'};
     }
     elsif ( $flags & $O_TRUNC ) {
-        $self->{'pos'}  = 0;
         $self->{'size'} = 0;
+        $self->{'inode'}->{'size'} = 0;
+
+        undef $self->{'buf'};
+        $self->{'buf'} = '';
     }
 
     if ( $self->{'file'} ) {
         sysopen( my $fh, $self->{'file'}, $flags ) or confess("Unable to reopen bucket $self->{'file'}: $!");
 
         $self->{'fh'} = $fh;
-    }
-
-    if ( $flags & $O_TRUNC ) {
-        $self->{'size'} = 0;
-        $self->{'inode'}->{'size'} = 0;
-
-        undef $self->{'buf'};
-        $self->{'buf'} = '';
     }
 
     return $self;
@@ -95,8 +92,13 @@ sub write {
     my ( $self, $buf, $len ) = @_;
     my $ret = 0;
 
-    unless ( $self->{'fh'} ) {
-        $self->_flush_to_disk($len) if $self->{'pos'} + $len > $self->{'max'};
+    #
+    # If the current file position, plus the length of the intended write
+    # is to exceed the maximum memory bucket threshold, then dump the file
+    # to disk if it hasn't already happened.
+    #
+    if ( $self->{'pos'} + $len > $self->{'max'} ) {
+        $self->_flush_to_disk($len) unless $self->{'fh'};
     }
 
     if ( $self->{'fh'} ) {
@@ -176,7 +178,13 @@ sub seek {
 }
 
 sub tell {
-    return shift->{'pos'};
+    my ($self) = @_;
+
+    if ( $self->{'fh'} ) {
+        return sysseek $self->{'fh'}, 0, 1;
+    }
+
+    return $self->{'pos'};
 }
 
 sub close {

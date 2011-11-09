@@ -35,7 +35,7 @@ sub new {
 =item C<$handle-E<gt>write($buf, $len)>
 
 Calls L<perlfunc/syswrite> on the current file handle, passing the C<$buf> and
-C<$len> arguments literally.  Returns the result of L<perlfuncsyswrite>.
+C<$len> arguments literally.  Returns the result of L<perlfunc/syswrite>.
 
 =cut
 
