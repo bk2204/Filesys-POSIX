@@ -6,6 +6,8 @@ use warnings;
 use Filesys::POSIX::Bits;
 use Filesys::POSIX::Path ();
 
+use Digest::SHA1 ();
+
 use Carp ();
 
 our $HEADER_SIZE = 512;
@@ -32,7 +34,7 @@ sub inode_linktype {
 sub from_inode {
     my ( $class, $inode, $path ) = @_;
 
-    my $path_components = split_path_components($path);
+    my $path_components = split_path_components( $path, $inode );
     my $size = $inode->file ? $inode->{'size'} : 0;
 
     my $major = 0;
@@ -49,7 +51,7 @@ sub from_inode {
         'mode'     => $inode->{'mode'},
         'uid'      => $inode->{'uid'},
         'gid'      => $inode->{'gid'},
-        'size'     => $inode->{'size'},
+        'size'     => $size,
         'mtime'    => $inode->{'mtime'},
         'linktype' => inode_linktype($inode),
         'linkdest' => $inode->link ? $inode->readlink : '',
@@ -115,34 +117,60 @@ sub encode {
 }
 
 sub split_path_components {
-    my ($path) = @_;
+    my ( $path, $inode ) = @_;
 
-    my $len = length $path;
-    my @parts = split( /\//, $path );
+    my $parts = Filesys::POSIX::Path->new($path);
 
-    if ( $len > 255 ) {
-        Carp::confess('Filename too long');
-    }
+    $parts->[-1] .= '/' if $inode->dir;
 
     my $got = 0;
     my ( @prefix_items, @suffix_items );
 
-    while (@parts) {
-        my $item = pop @parts;
-        $got += length($item) + 1;
+    while ( @{$parts} ) {
+        my $item = pop @{$parts};
+        my $len  = length $item;
 
-        if ( $got >= 100 ) {
-            push @prefix_items, $item;
+        #
+        # If the first item found is greater than 100 characters in length,
+        # truncate it so that it may fit in the standard tar path header field.
+        # The first 7 characters of the SHA1 sum of the entire path name will
+        # be affixed to the end of this path suffix.
+        #
+        if ( $got == 0 && $len > 100 ) {
+            my $truncated_len = $inode->dir ? 92 : 93;
+
+            $item = substr( $item, 0, $truncated_len ) . substr( Digest::SHA1::sha1_hex($path), 0, 7 );
+            $item .= '/' if $inode->dir;
+
+            $len = 100;
         }
-        else {
+
+        $got++ if $got;
+        $got += $len;
+
+        if ( $got <= 100 ) {
             push @suffix_items, $item;
+        }
+        elsif ( $got > 100 ) {
+            push @prefix_items, $item;
         }
     }
 
     my $prefix = join( '/', reverse @prefix_items );
     my $suffix = join( '/', reverse @suffix_items );
 
-    $suffix .= '/' if $path =~ /\/$/;
+    #
+    # After arranging the prefix and suffix path components into the best slots
+    # possible, now would be a good time to create a unique prefix value with
+    # another short SHA1 sum string, in case the path prefix or suffix overflows
+    # 155 characters.  This time the SHA1 sum is based on the prefix component
+    # of the path, so as to avoid the pitfalls of a different suffix causing the
+    # SHA1 sum in the prefix to differ given the same prefix, which would cause
+    # tons of confusion, indeed.
+    #
+    if ( length($prefix) > 155 ) {
+        $prefix = substr( $prefix, 0, 148 ) . substr( Digest::SHA1::sha1_hex($prefix), 0, 7 );
+    }
 
     return {
         'prefix' => $prefix,

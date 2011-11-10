@@ -7,7 +7,10 @@ WriteMakefile(
     'LICENSE'      => 'perl',
     'ABSTRACT'     => 'Provides POSIX filesystem semantics in pure Perl',
 
-    'PREREQ_PM' => { 'Carp' => 0 },
+    'PREREQ_PM' => {
+        'Carp'        => 0,
+        'Digest::SHA' => 0
+    },
 
     'BUILD_REQUIRES' => {
         'Test::Simple'     => '0.44',
