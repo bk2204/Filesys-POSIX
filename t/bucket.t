@@ -6,7 +6,7 @@ use Filesys::POSIX::Mem::Inode  ();
 use Filesys::POSIX::Mem::Bucket ();
 use Filesys::POSIX::Bits;
 
-use Test::More ( 'tests' => 32 );
+use Test::More ( 'tests' => 36 );
 use Test::Exception;
 use Test::NoWarnings;
 
@@ -256,4 +256,30 @@ use Test::NoWarnings;
 
     is( $len, 128,       "Filesys::POSIX::Mem::Bucket->read() after open(\$O_RDWR | \$O_TRUNC) returns correct number of bytes" );
     is( $buf, 'O' x 128, "Filesys::POSIX::Mem::Bucket->read() after truncate open filled buffer appropriately" );
+}
+
+{
+    my $bucket = Filesys::POSIX::Mem::Bucket->new;
+
+    $bucket->open($O_WRONLY);
+    $bucket->write( 'X' x 20480, 20480 );
+    $bucket->close;
+
+    $bucket->open( $O_WRONLY | $O_APPEND );
+    $bucket->write( "foo\n", 4 );
+    $bucket->close;
+
+    $bucket->open($O_RDONLY);
+
+    my $len = $bucket->read( my $buf, 20480 );
+
+    is( $len, 20480, "First write() 20480 bytes written successfully to memory bucket" );
+    ok( $buf eq 'X' x 20480, "Filesys::POSIX::Mem::Bucket->read() after two open() write calls returns expected result" );
+
+    $len = $bucket->read( $buf, 512 );
+
+    is( $len, 4,       "Second write() of 4 bytes written successfully to memory bucket" );
+    is( $buf, "foo\n", "Filesys::POSIX::Mem::Bucket->read() after two open() write calls returns expected second result" );
+
+    $bucket->close;
 }
