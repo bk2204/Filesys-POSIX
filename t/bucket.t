@@ -6,7 +6,7 @@ use Filesys::POSIX::Mem::Inode  ();
 use Filesys::POSIX::Mem::Bucket ();
 use Filesys::POSIX::Bits;
 
-use Test::More ( 'tests' => 36 );
+use Test::More ( 'tests' => 56 );
 use Test::Exception;
 use Test::NoWarnings;
 
@@ -282,4 +282,53 @@ use Test::NoWarnings;
     is( $buf, "foo\n", "Filesys::POSIX::Mem::Bucket->read() after two open() write calls returns expected second result" );
 
     $bucket->close;
+}
+
+#
+# Ensure $O_CREAT and $O_TRUNC both truncate file data
+#
+{
+    my %FLAGS = (
+        '$O_CREAT' => $O_CREAT,
+        '$O_TRUNC' => $O_TRUNC
+    );
+
+    foreach my $flag_name ( sort keys %FLAGS ) {
+        my $bucket = Filesys::POSIX::Mem::Bucket->new;
+
+        my $flag = $FLAGS{$flag_name};
+
+        $bucket->open( $flag | $O_WRONLY );
+        $bucket->write( 'X' x 1024, 1024 );
+        $bucket->close;
+
+        $bucket->open( $flag | $O_WRONLY );
+
+        is( $bucket->{'size'}, 0, "Bucket size is 0 after second open() with $flag_name" );
+        is( $bucket->{'pos'},  0, "Bucket position is 0 after second open() with $flag_name" );
+
+        $bucket->write( 'X' x 1024, 1024 );
+
+        is( $bucket->{'size'}, 1024, "Bucket size is 1024 after write() following second open() with $flag_name" );
+        is( $bucket->{'pos'},  1024, "Bucket position is 1024 after second write() following second open() with $flag_name" );
+
+        $bucket->close;
+
+        $bucket->open($O_RDONLY);
+
+        is( $bucket->{'size'}, 1024, "Bucket size is still 1024 after third open() with \$O_RDONLY" );
+        is( $bucket->{'pos'},  0,    "Bucket position is 0 after third open() with \$O_RDONLY" );
+
+        my $len = $bucket->read( my $buf, 1024 );
+
+        is( $len, 1024, "read() 1024 bytes after third open() with \$O_RDONLY" );
+        ok( $buf eq 'X' x 1024, "read() expected data after third open() with \$O_RDONLY" );
+
+        $len = $bucket->read( $buf, 1024 );
+
+        is( $len, 0, "read() 0 further bytes after third open() with \$O_RDONLY" );
+        ok( $buf eq '', "read() expected nothingness after third open() with \$O_RDONLY" );
+
+        $bucket->close;
+    }
 }
