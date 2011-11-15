@@ -1,18 +1,15 @@
 use strict;
 use warnings;
 
+use Filesys::POSIX             ();
+use Filesys::POSIX::Mem        ();
+use Filesys::POSIX::IO::Handle ();
 use Filesys::POSIX::Bits;
-
-use Filesys::POSIX                        ();
-use Filesys::POSIX::Mem                   ();
-use Filesys::POSIX::Mem::Inode            ();
-use Filesys::POSIX::IO::Handle            ();
-use Filesys::POSIX::Userland::Tar::Header ();
 
 use Fcntl;
 use IPC::Open3;
 
-use Test::More ( 'tests' => 22 );
+use Test::More ( 'tests' => 4 );
 use Test::Exception;
 use Test::NoWarnings;
 
@@ -78,6 +75,28 @@ $fs->close($fd);
 }
 
 #
+# Test tar()'s unwillingness to handle paths greater than 255 characters long.
+#
+{
+    my $fs = Filesys::POSIX->new( Filesys::POSIX::Mem->new );
+    $fs->import_module('Filesys::POSIX::Userland::Tar');
+
+    my $path_a = 'a' x 128;
+    my $path_b = 'b' x 128;
+
+    $fs->mkpath("$path_a/$path_b");
+
+    sysopen( my $fh, '/dev/null', O_WRONLY );
+
+    throws_ok {
+        $fs->tar( Filesys::POSIX::IO::Handle->new($fh), '.' );
+    }
+    qr/^Filename too long/, "Filesys::POSIX->tar() dies on filenames that are too long";
+
+    close($fh);
+}
+
+#
 # Test tar()'s output with the system tar(1).
 #
 {
@@ -104,109 +123,5 @@ $fs->close($fd);
     }
     elsif ( !defined $pid ) {
         die("Unable to fork(): $!");
-    }
-}
-
-#
-# Ensure that Filesys::POSIX::Userland::Tar::Header lists a zero size for symlink inodes.
-#
-{
-    my $fs = Filesys::POSIX->new(
-        Filesys::POSIX::Mem->new,
-        'noatime' => 1
-    );
-
-    $fs->symlink( 'foo', 'bar' );
-
-    my $inode = $fs->lstat('bar');
-
-    #
-    # Fudge the inode object to reflect a nonzero size, as would occur on
-    # inodes mapped in with Filesys::POSIX::Real.
-    #
-    $inode->{'size'} = 3;
-
-    my $header = Filesys::POSIX::Userland::Tar::Header->from_inode( $inode, 'bar' );
-
-    is( $header->{'size'}, 0, "File size on symlink inodes listed as 0 in header objects" );
-}
-
-#
-# Ensure that Filesys::POSIX::Userland::Tar::Header splits path names correctly,
-# and that it will make sure pathnames are made unique in the case of long names.
-#
-{
-    my @TESTS = (
-        {
-            'path'   => 'foo',
-            'prefix' => '',
-            'suffix' => 'foo/',
-            'mode'   => $S_IFDIR | 0755
-        },
-
-        {
-            'path'   => 'foo',
-            'prefix' => '',
-            'suffix' => 'foo',
-            'mode'   => $S_IFREG | 0644
-        },
-
-        {
-            'path'   => 'foo/',
-            'prefix' => '',
-            'suffix' => 'foo/',
-            'mode'   => $S_IFDIR | 0755
-        },
-
-        {
-            'path'   => 'foo/',
-            'prefix' => '',
-            'suffix' => 'foo',
-            'mode'   => $S_IFREG | 0644
-        },
-
-        {
-            'path'   => 'foo/bar',
-            'prefix' => '',
-            'suffix' => 'foo/bar',
-            'mode'   => $S_IFREG | 0644
-        },
-
-        {
-            'path'   => 'foo/bar',
-            'prefix' => '',
-            'suffix' => 'foo/bar/',
-            'mode'   => $S_IFDIR | 0755
-        },
-
-        {
-            'path' => '/' . ( 'X' x 154 ) . '/' . ( 'O' x 100 ),
-            'prefix' => '/' . ( 'X' x 154 ),
-            'suffix' => 'O' x 100,
-            'mode'   => $S_IFREG | 0644
-        },
-
-        {
-            'path' => '/' . ( 'X' x 155 ) . '/' . ( 'O' x 101 ),
-            'prefix' => '/' . ( 'X' x 147 ) . 'cba2be6',
-            'suffix' => ( 'O' x 93 ) . '73b8f86',
-            'mode'   => $S_IFREG | 0644
-        },
-
-        {
-            'path'   => 'X' x 130,
-            'prefix' => '',
-            'suffix' => ( 'X' x 92 ) . '64e7d7e/',
-            'mode'   => $S_IFDIR | 0755
-        }
-    );
-
-    foreach my $test (@TESTS) {
-        my $inode = Filesys::POSIX::Mem::Inode->new( 'mode' => $test->{'mode'} );
-
-        my $result = Filesys::POSIX::Userland::Tar::Header::split_path_components( $test->{'path'}, $inode );
-
-        is( $result->{'prefix'}, $test->{'prefix'}, "Prefix of '$test->{'path'}' is '$test->{'prefix'}'" );
-        is( $result->{'suffix'}, $test->{'suffix'}, "Suffix of '$test->{'path'}' is '$test->{'suffix'}'" );
     }
 }
