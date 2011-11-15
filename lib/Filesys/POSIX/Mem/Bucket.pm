@@ -82,7 +82,7 @@ sub open {
     if ( $flags & $O_APPEND ) {
         $self->{'pos'} = $self->{'size'};
     }
-    elsif ( $flags & $O_TRUNC ) {
+    elsif ( $flags & ( $O_CREAT | $O_TRUNC ) ) {
         $self->{'size'} = 0;
         $self->{'inode'}->{'size'} = 0;
 
