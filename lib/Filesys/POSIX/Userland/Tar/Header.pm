@@ -10,7 +10,7 @@ use Digest::SHA1 ();
 
 use Carp ();
 
-our $HEADER_SIZE = 512;
+our $BLOCK_SIZE = 512;
 
 my %TYPES = (
     0 => $S_IFREG,
@@ -34,7 +34,11 @@ sub inode_linktype {
 sub from_inode {
     my ( $class, $inode, $path ) = @_;
 
-    my $path_components = split_path_components( $path, $inode );
+    my $parts     = Filesys::POSIX::Path->new($path);
+    my $cleanpath = $parts->full;
+    $cleanpath .= '/' if $inode->dir;
+
+    my $path_components = split_path_components( $parts, $inode );
     my $size = $inode->file ? $inode->{'size'} : 0;
 
     my $major = 0;
@@ -46,19 +50,21 @@ sub from_inode {
     }
 
     return bless {
-        'prefix'   => $path_components->{'prefix'},
-        'suffix'   => $path_components->{'suffix'},
-        'mode'     => $inode->{'mode'},
-        'uid'      => $inode->{'uid'},
-        'gid'      => $inode->{'gid'},
-        'size'     => $size,
-        'mtime'    => $inode->{'mtime'},
-        'linktype' => inode_linktype($inode),
-        'linkdest' => $inode->link ? $inode->readlink : '',
-        'user'     => '',
-        'group'    => '',
-        'major'    => $major,
-        'minor'    => $minor
+        'path'      => $cleanpath,
+        'prefix'    => $path_components->{'prefix'},
+        'suffix'    => $path_components->{'suffix'},
+        'truncated' => $path_components->{'truncated'},
+        'mode'      => $inode->{'mode'},
+        'uid'       => $inode->{'uid'},
+        'gid'       => $inode->{'gid'},
+        'size'      => $size,
+        'mtime'     => $inode->{'mtime'},
+        'linktype'  => inode_linktype($inode),
+        'linkdest'  => $inode->link ? $inode->readlink : '',
+        'user'      => '',
+        'group'     => '',
+        'major'     => $major,
+        'minor'     => $minor
     }, $class;
 }
 
@@ -90,16 +96,23 @@ sub decode {
 
 sub encode {
     my ($self) = @_;
-    my $block = "\x00" x $HEADER_SIZE;
+    my $block = "\x00" x $BLOCK_SIZE;
 
     write_str( $block, 0, 100, $self->{'suffix'} );
     write_oct( $block, 100, 8,  $self->{'mode'} & $S_IPERM, 7 );
     write_oct( $block, 108, 8,  $self->{'uid'},             7 );
     write_oct( $block, 116, 8,  $self->{'gid'},             7 );
-    write_oct( $block, 124, 12, $self->{'size'},            12 );
-    write_oct( $block, 136, 12, $self->{'mtime'},           12 );
+    write_oct( $block, 124, 12, $self->{'size'},            11 );
+    write_oct( $block, 136, 12, $self->{'mtime'},           11 );
     write_str( $block, 148, 8, '        ' );
-    write_oct( $block, 156, 1, $self->{'linktype'}, 1 );
+
+    if ( $self->{'linktype'} =~ /^[0-9]$/ ) {
+        write_oct( $block, 156, 1, $self->{'linktype'}, 1 );
+    }
+    else {
+        write_str( $block, 156, 1, $self->{'linktype'} );
+    }
+
     write_str( $block, 157, 100, $self->{'linkdest'} );
     write_str( $block, 257, 6,   'ustar' );
     write_str( $block, 263, 2,   '00' );
@@ -116,10 +129,40 @@ sub encode {
     return $block;
 }
 
-sub split_path_components {
-    my ( $path, $inode ) = @_;
+sub encode_gnu {
+    my ($self) = @_;
 
-    my $parts = Filesys::POSIX::Path->new($path);
+    return $self->encode unless $self->{'truncated'};
+
+    my $pathlen = length $self->{'path'};
+
+    my $longlink_header = bless {
+        'prefix'   => '',
+        'suffix'   => '././@LongLink',
+        'mode'     => 0,
+        'uid'      => 0,
+        'gid'      => 0,
+        'size'     => $pathlen,
+        'mtime'    => 0,
+        'linktype' => 'L',
+        'linkdest' => '',
+        'user'     => '',
+        'group'    => '',
+        'major'    => 0,
+        'minor'    => 0
+      },
+      ref $self;
+
+    my $path_blocks = "\x00" x ( $pathlen + $BLOCK_SIZE - ( $pathlen % $BLOCK_SIZE ) );
+    substr( $path_blocks, 0, $pathlen ) = $self->{'path'};
+
+    return $longlink_header->encode . $path_blocks . $self->encode;
+}
+
+sub split_path_components {
+    my ( $parts, $inode ) = @_;
+
+    my $truncated = 0;
 
     $parts->[-1] .= '/' if $inode->dir;
 
@@ -139,10 +182,11 @@ sub split_path_components {
         if ( $got == 0 && $len > 100 ) {
             my $truncated_len = $inode->dir ? 92 : 93;
 
-            $item = substr( $item, 0, $truncated_len ) . substr( Digest::SHA1::sha1_hex($path), 0, 7 );
+            $item = substr( $item, 0, $truncated_len ) . substr( Digest::SHA1::sha1_hex( $parts->full ), 0, 7 );
             $item .= '/' if $inode->dir;
 
-            $len = 100;
+            $len       = 100;
+            $truncated = 1;
         }
 
         $got++ if $got;
@@ -170,11 +214,13 @@ sub split_path_components {
     #
     if ( length($prefix) > 155 ) {
         $prefix = substr( $prefix, 0, 148 ) . substr( Digest::SHA1::sha1_hex($prefix), 0, 7 );
+        $truncated = 1;
     }
 
     return {
-        'prefix' => $prefix,
-        'suffix' => $suffix
+        'prefix'    => $prefix,
+        'suffix'    => $suffix,
+        'truncated' => $truncated
     };
 }
 

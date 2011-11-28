@@ -86,6 +86,8 @@ sub mkpath {
             $dir = $dir->child( $item, $perm | $S_IFDIR );
         }
     }
+
+    return $dir;
 }
 
 =item C<$fs-E<gt>getcwd>
