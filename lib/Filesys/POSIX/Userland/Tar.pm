@@ -62,7 +62,7 @@ our $BLOCK_SIZE = 512;
 # This is not necessarily something that should be done by end user software.
 #
 sub _write_file {
-    my ( $fs, $inode, $handle, $dest ) = @_;
+    my ( $inode, $handle ) = @_;
     my $fh = $inode->open($O_RDONLY);
 
     while ( my $len = $fh->read( my $buf, 4096 ) ) {
@@ -78,19 +78,18 @@ sub _write_file {
 }
 
 sub _archive {
-    my ( $fs, $inode, $handle, $path ) = @_;
+    my ( $inode, $handle, $path, $opts ) = @_;
 
-    unless ( $path =~ /\/$/ ) {
-        $path .= '/' if $inode->dir;
-    }
+    my $header = Filesys::POSIX::Userland::Tar::Header->from_inode( $inode, $path, $opts );
+    my $blocks = $opts->{'gnu_extensions'} ? $header->encode_gnu : $header->encode;
 
-    my $header = Filesys::POSIX::Userland::Tar::Header->from_inode( $inode, $path );
+    my $len = length $blocks;
 
-    unless ( $handle->write( $header->encode, 512 ) == 512 ) {
+    unless ( $handle->write( $blocks, $len ) == $len ) {
         Carp::confess('Short write while dumping tar header to file handle');
     }
 
-    _write_file( $fs, $inode, $handle, $path ) if $inode->file;
+    _write_file( $inode, $handle ) if $inode->file;
 }
 
 =item C<$fs-E<gt>tar($handle, @items)>
@@ -117,7 +116,7 @@ sub tar {
         sub {
             my ( $path, $inode ) = @_;
 
-            _archive( $self, $inode, $handle, $path->full );
+            _archive( $inode, $handle, $path->full, $opts );
         },
         $opts,
         @items

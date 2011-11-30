@@ -12,7 +12,7 @@ use Filesys::POSIX::Userland::Tar::Header ();
 use Fcntl;
 use IPC::Open3;
 
-use Test::More ( 'tests' => 22 );
+use Test::More ( 'tests' => 25 );
 use Test::Exception;
 use Test::NoWarnings;
 
@@ -189,24 +189,55 @@ $fs->close($fd);
         {
             'path' => '/' . ( 'X' x 155 ) . '/' . ( 'O' x 101 ),
             'prefix' => '/' . ( 'X' x 147 ) . 'cba2be6',
-            'suffix' => ( 'O' x 93 ) . '73b8f86',
+            'suffix' => ( 'O' x 93 ) . 'cba2be6',
             'mode'   => $S_IFREG | 0644
         },
 
         {
             'path'   => 'X' x 130,
             'prefix' => '',
-            'suffix' => ( 'X' x 92 ) . '64e7d7e/',
+            'suffix' => ( 'X' x 92 ) . 'da39a3e/',
             'mode'   => $S_IFDIR | 0755
         }
     );
 
     foreach my $test (@TESTS) {
         my $inode = Filesys::POSIX::Mem::Inode->new( 'mode' => $test->{'mode'} );
+        my $parts = Filesys::POSIX::Path->new( $test->{'path'} );
 
-        my $result = Filesys::POSIX::Userland::Tar::Header::split_path_components( $test->{'path'}, $inode );
+        my $result = Filesys::POSIX::Userland::Tar::Header::split_path_components( $parts, $inode );
 
         is( $result->{'prefix'}, $test->{'prefix'}, "Prefix of '$test->{'path'}' is '$test->{'prefix'}'" );
         is( $result->{'suffix'}, $test->{'suffix'}, "Suffix of '$test->{'path'}' is '$test->{'suffix'}'" );
+    }
+}
+
+#
+# Ensure that Filesys::POSIX::Userland::Tar::Header GNU extensions work; test
+# the LongLink extension functionality, in particular.
+#
+{
+    my $fs = Filesys::POSIX->new(
+        Filesys::POSIX::Mem->new,
+        'noatime' => 1
+    );
+
+    $fs->mkpath('foo/bar/baz');
+
+    {
+        my $path   = 'foo/bar/baz/' . ( 'meow' x 70 );
+        my $inode  = $fs->mkpath($path);
+        my $header = Filesys::POSIX::Userland::Tar::Header->from_inode( $inode, $path );
+
+        ok( $header->{'path'} =~ /\/$/, "$path ends with a / in header object" );
+        is( substr( $header->encode_gnu, 0, 13 ), '././@LongLink', "GNU tar header for $path contains proper path" );
+    }
+
+    {
+        my $path   = 'foo/bar/baz/' . ( 'bleh' x 70 );
+        my $inode  = $fs->touch($path);
+        my $header = Filesys::POSIX::Userland::Tar::Header->from_inode( $inode, $path );
+
+        ok( $header->{'path'} !~ /\/$/, "$path does not end with a / in header object" );
     }
 }
