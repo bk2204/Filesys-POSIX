@@ -10,6 +10,21 @@ use Fcntl;
 use File::Temp ();
 use Carp       ();
 
+=head1 NAME
+
+Filesys::POSIX::Mem::Bucket - Regular file I/O handle
+
+=head1 DESCRIPTION
+
+C<Filesys::POSIX::Mem::Bucket> provides an implementation of the interface in
+L<Filesys::POSIX::IO::Handle> that allows access to the regular file data of a
+file in a L<Filesys::POSIX::Mem> filesystem hierarchy.
+
+Internally, the bucket can store up to a specified maximum number of bytes until
+said data is flushed to a temporary file on disk, backed by L<File::Temp>.
+
+=cut
+
 our @ISA = ('Filesys::POSIX::IO::Handle');
 
 my $DEFAULT_MAX = 16384;
@@ -232,5 +247,15 @@ sub close {
 
     $self->{'pos'} = 0;
 }
+
+=head1 SEE ALSO
+
+=over
+
+=item L<Filesys::POSIX::IO::Handle>
+
+=back
+
+=cut
 
 1;

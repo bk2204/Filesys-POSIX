@@ -102,6 +102,18 @@ of L<Filesys::POSIX::IO::Handle>.  When an anonymous HASH argument, C<$opts>, is
 specified, the data is passed unmodified to L<Filesys::POSIX::Userland::Find>.
 In this way, for instance, the behavior of following symlinks can be specified.
 
+In addition to options supported by L<Filesys::POSIX::Userland::Find>, the
+following options are recognized uniquely by C<$FS-E<gt>tar()>:
+
+=over
+
+=item C<gnu_extensions>
+
+When set, certain GNU extensions to the tar output format are enabled, namely
+support for arbitrarily long filenames.
+
+=back
+
 =cut
 
 sub tar {

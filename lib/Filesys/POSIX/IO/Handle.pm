@@ -125,6 +125,17 @@ sub close {
 
 =back
 
+=head1 SEE ALSO
+
+=over
+
+=item L<Filesys::POSIX::Mem::Bucket>
+
+Provides an implementation of the interface described herein, but for access to
+regular file data for L<Filesys::POSIX::Mem> filesystem hierarchies.
+
+=back
+
 =cut
 
 1;

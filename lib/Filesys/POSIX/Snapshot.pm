@@ -50,7 +50,7 @@ on.
 
 =back
 
-The following values are not mandatory:
+The following value is not mandatory:
 
 =over
 

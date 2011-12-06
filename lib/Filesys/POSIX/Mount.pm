@@ -23,13 +23,13 @@ system calls provided in this module deal in terms of pathnames.
 
 =over
 
-=item C<$fs-E<gt>mount($dev, $path, %data)>
+=item C<$fs-E<gt>mount($dev, $path, %opts)>
 
 Attach the filesystem device, C<$dev>, to the directory inode specified by
-C<$path>.  The C<%data> hash, for special types of filesystems other than
-L<Filesys::POSIX::Mem> should contain a C<'special'> value which has a device-
-dependent meaning.  Mount flags are also specified and saved by the VFS for
-later retrieval.
+C<$path>.  The C<%opts> hash can be used to pass mount options to the
+initialization routines for the device object to be mounted; these options are
+passed to the C<$dev-E<gt>init()> routine that said filesystem device
+implements.
 
 The filesystem mount record is kept in an ordered list by the VFS, and can be
 retrieved later using the C<$fs-E<gt>statfs>, or C<$fs-E<gt>mountlist> system
@@ -38,15 +38,15 @@ calls.
 =cut
 
 sub mount {
-    my ( $self, $dev, $path, %data ) = @_;
+    my ( $self, $dev, $path, %opts ) = @_;
     my $mountpoint = $self->stat($path);
     my $realpath   = $self->_find_inode_path($mountpoint);
 
-    $data{'fs'} ||= $self;
+    $opts{'fs'} ||= $self;
 
-    $dev->init(%data);
+    $dev->init(%opts);
 
-    $self->{'vfs'}->mount( $dev, $realpath, $mountpoint, %data );
+    $self->{'vfs'}->mount( $dev, $realpath, $mountpoint, %opts );
 }
 
 =item C<$fs-E<gt>unmount($path)>

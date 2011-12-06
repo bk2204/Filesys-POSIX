@@ -12,7 +12,7 @@ use Filesys::POSIX::Userland::Tar::Header ();
 use Fcntl;
 use IPC::Open3;
 
-use Test::More ( 'tests' => 25 );
+use Test::More ( 'tests' => 75 );
 use Test::Exception;
 use Test::NoWarnings;
 
@@ -239,5 +239,166 @@ $fs->close($fd);
         my $header = Filesys::POSIX::Userland::Tar::Header->from_inode( $inode, $path );
 
         ok( $header->{'path'} !~ /\/$/, "$path does not end with a / in header object" );
+    }
+}
+
+#
+# Test every field in the tar header for correctness, for a variety of inode
+# types.
+#
+{
+    my $fs = Filesys::POSIX->new(
+        Filesys::POSIX::Mem->new,
+        'noatime' => 1
+    );
+
+    my %FIELDS = (
+        'path'          => [ 0,   100, 'filename (UStar suffix)' ],
+        'mode'          => [ 100, 8,   'mode' ],
+        'uid'           => [ 108, 8,   'uid' ],
+        'gid'           => [ 116, 8,   'gid' ],
+        'size'          => [ 124, 12,  'size' ],
+        'type'          => [ 156, 1,   'link type' ],
+        'dest'          => [ 157, 100, 'symlink destination' ],
+        'ustar'         => [ 257, 6,   'UStar magic' ],
+        'ustar_version' => [ 263, 2,   'UStar version' ],
+        'user'          => [ 265, 32,  'owner username' ],
+        'group'         => [ 297, 32,  'owner group name' ],
+        'major'         => [ 329, 8,   'device major number' ],
+        'minor'         => [ 337, 8,   'device minor number' ],
+        'prefix'        => [ 345, 155, 'ustar filename prefix' ]
+    );
+
+    my @TESTS = (
+        {
+            'path' => 'foo',
+            'type' => 'regular file',
+
+            'setup' => sub {
+                my ($path) = @_;
+
+                my $fd = $fs->open( $path, $O_CREAT | $O_WRONLY );
+                $fs->fchmod( $fd, 0644 );
+                $fs->print( $fd, "bar\n" );
+                $fs->close($fd);
+
+                return $fs->lstat($path);
+            },
+
+            'expected' => {
+                'path'          => 'foo',
+                'mode'          => '0000644',
+                'uid'           => '0000000',
+                'gid'           => '0000000',
+                'size'          => '00000000004',
+                'type'          => '0',
+                'dest'          => '',
+                'ustar'         => 'ustar',
+                'ustar_version' => '00',
+                'user'          => '',
+                'group'         => '',
+                'major'         => '',
+                'minor'         => '',
+                'prefix'        => ''
+            }
+        },
+
+        {
+            'path' => 'bar',
+            'type' => 'symbolic link',
+
+            'setup' => sub {
+                my ($path) = @_;
+                $fs->symlink( 'foo', $path );
+                return $fs->lstat($path);
+            },
+
+            'expected' => {
+                'path'          => 'bar',
+                'mode'          => '0000755',
+                'uid'           => '0000000',
+                'gid'           => '0000000',
+                'size'          => '00000000000',
+                'type'          => '2',
+                'dest'          => 'foo',
+                'ustar'         => 'ustar',
+                'ustar_version' => '00',
+                'user'          => '',
+                'group'         => '',
+                'major'         => '',
+                'minor'         => '',
+                'prefix'        => ''
+            }
+        },
+
+        {
+            'path' => 'baz/boo/' . ( 'meow' x 70 ),
+            'type' => 'GNU long filename',
+
+            'setup' => sub {
+                my ($path) = @_;
+                $fs->mkpath($path);
+                return $fs->lstat($path);
+            },
+
+            'expected' => {
+                'path'          => '././@LongLink',
+                'mode'          => '0000000',
+                'uid'           => '0000000',
+                'gid'           => '0000000',
+                'size'          => '00000000441',
+                'type'          => 'L',
+                'dest'          => '',
+                'ustar'         => 'ustar',
+                'ustar_version' => '00',
+                'user'          => '',
+                'group'         => '',
+                'major'         => '',
+                'minor'         => '',
+                'prefix'        => ''
+            },
+
+            'values' => [
+                [ 512, 288, 'baz/boo/' . ( 'meow' x 70 ) ],
+                [ 1024, 100, ( 'meow' x 23 ) . '01658e3/' ],
+                [ 1124, 8,   '0000755' ],
+                [ 1132, 8,   '0000000' ],
+                [ 1140, 8,   '0000000' ],
+                [ 1148, 12,  '00000000000' ],
+                [ 1180, 1,   '5' ],
+                [ 1369, 155, 'baz/boo' ]
+            ]
+        }
+    );
+
+    foreach my $test (@TESTS) {
+        my $type   = $test->{'type'};
+        my $path   = $test->{'path'};
+        my $inode  = $test->{'setup'}->($path);
+        my $header = Filesys::POSIX::Userland::Tar::Header->from_inode( $inode, $path );
+        my $block  = $header->encode_gnu;
+
+        foreach my $field ( sort keys %{ $test->{'expected'} } ) {
+            my $offset = $FIELDS{$field}->[0];
+            my $len    = $FIELDS{$field}->[1];
+            my $label  = $FIELDS{$field}->[2];
+
+            my $expected = $test->{'expected'}->{$field};
+            my $found = unpack( 'Z*', substr( $block, $offset, $len ) );
+
+            is( $found, $expected, "$type: $label correct in $len-byte field at offset $offset in header" );
+        }
+
+        if ( $test->{'values'} ) {
+            foreach my $value ( @{ $test->{'values'} } ) {
+                my $offset = $value->[0];
+                my $len    = $value->[1];
+
+                my $expected = $value->[2];
+                my $found = unpack( 'Z*', substr( $block, $offset, $len ) );
+
+                is( $found, $expected, "$type: Correct value in $len-byte field at offset $offset in header" );
+            }
+        }
     }
 }

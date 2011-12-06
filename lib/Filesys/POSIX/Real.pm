@@ -31,9 +31,6 @@ the actual system's underlying filesystem.
 
 =head1 MOUNT OPTIONS
 
-The following mount options as passed by C<Filesys::POSIX-E<gt>new> or
-C<$fs-E<gt>mount> are honored.
-
 The following value is mandatory:
 
 =over
