@@ -1,3 +1,9 @@
+# Filesys::POSIX           Copyright (c) 2011 cPanel, Inc.  All rights reserved.
+# copyright@cpanel.net                                        http://cpanel.net/
+# 
+# Written by Erin Schönhals <erin@cpanel.net>.  Released under the terms of the
+# Perl Artistic License.
+
 package Filesys::POSIX;
 
 use strict;
@@ -19,7 +25,7 @@ our $AUTOLOAD;
 
 BEGIN {
     use Exporter ();
-    our $VERSION = '0.9.3_2011113001';
+    our $VERSION = '0.9.4';
 }
 
 =head1 NAME
