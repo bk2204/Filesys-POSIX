@@ -118,8 +118,12 @@ sub encode {
     write_str( $block, 263, 2,   '00' );
     write_str( $block, 265, 32,  $self->{'user'} );
     write_str( $block, 297, 32,  $self->{'group'} );
-    write_oct( $block, 329, 8, $self->{'major'}, 7 );
-    write_oct( $block, 337, 8, $self->{'minor'}, 7 );
+
+    if ( $self->{'major'} || $self->{'minor'} ) {
+        write_oct( $block, 329, 8, $self->{'major'}, 7 );
+        write_oct( $block, 337, 8, $self->{'minor'}, 7 );
+    }
+
     write_str( $block, 345, 155, $self->{'prefix'} );
 
     my $checksum = checksum($block);

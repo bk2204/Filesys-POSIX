@@ -760,6 +760,23 @@ Filesys::POSIX.  For example, one method is provided that allows a developer to
 map a file or directory from the system's underlying, actual filesystem, into
 any arbitrary point in the virtual filesystem.
 
+=item L<Filesys::POSIX::Userland::Find>
+
+Provides the ability to perform breadth-first operations on file hierarchies
+within an instance of a C<Filesys::POSIX> filesystem, in a subset of the
+functionality provided in L<File::Find>.
+
+=item L<Filesys::POSIX::Userland::Tar>
+
+Provides an implementation of the POSIX ustar and certain aspects of the GNU tar
+standard.  Currently allows for the creation of tar archives based on
+hierarchies within a C<Filesys::POSIX> instance.
+
+=item L<Filesys::POSIX::Userland::Test>
+
+Provides a series of truth tests that can be performed on files and directories
+specified by paths.
+
 =back
 
 =head1 UTILITIES

@@ -14,7 +14,7 @@ sub EXPORT {
 
 =head1 NAME
 
-Filesys::POSIX::Userland::Tests - Inode conditional tests
+Filesys::POSIX::Userland::Test - Inode conditional tests
 
 =head1 SYNOPSIS
 
