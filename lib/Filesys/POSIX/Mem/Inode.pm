@@ -1,3 +1,9 @@
+# Filesys::POSIX           Copyright (c) 2011 cPanel, Inc.  All rights reserved.
+# copyright@cpanel.net                                        http://cpanel.net/
+# 
+# Written by Erin Schönhals <erin@cpanel.net>.  Released under the terms of the
+# Perl Artistic License.
+
 package Filesys::POSIX::Mem::Inode;
 
 use strict;
