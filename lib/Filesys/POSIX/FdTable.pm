@@ -1,8 +1,9 @@
-# Filesys::POSIX           Copyright (c) 2011 cPanel, Inc.  All rights reserved.
-# copyright@cpanel.net                                        http://cpanel.net/
-# 
-# Written by Erin Schönhals <erin@cpanel.net>.  Released under the terms of the
-# Perl Artistic License.
+# Copyright (c) 2012, cPanel, Inc.
+# All rights reserved.
+# http://cpanel.net/
+#
+# This is free software; you can redistribute it and/or modify it under the same
+# terms as Perl itself.  See the LICENSE file for further details.
 
 package Filesys::POSIX::FdTable;
 
