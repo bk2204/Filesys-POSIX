@@ -10,7 +10,7 @@ use warnings;
 
 use Filesys::POSIX::Path ();
 
-use Test::More ( 'tests' => 66 );
+use Test::More ( 'tests' => 67 );
 use Test::Exception;
 use Test::NoWarnings;
 
@@ -163,4 +163,9 @@ qr/^Empty path/, "Filesys::POSIX::Path->new() fails when an empty path is specif
 {
     my $path = Filesys::POSIX::Path->new('.');
     ok( scalar(@$path) == 1 && $path->[0] eq '.', "Filesys::POSIX::Path handles '.' appropriately" );
+}
+
+{
+    my $path = Filesys::POSIX::Path->new('foo/0');
+    is( $path->pop, '0', 'Filesys::POSIX::Path->new() does not treat string "0" in paths as empty' );
 }
