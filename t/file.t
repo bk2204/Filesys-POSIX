@@ -12,7 +12,7 @@ use Filesys::POSIX      ();
 use Filesys::POSIX::Mem ();
 use Filesys::POSIX::Bits;
 
-use Test::More ( 'tests' => 49 );
+use Test::More ( 'tests' => 50 );
 use Test::Exception;
 use Test::NoWarnings;
 
@@ -270,4 +270,10 @@ use Test::NoWarnings;
         $fs->rename( '/test', '/test2' );
     }
     'Filesys::POSIX->rename() succeeds when renaming a non-empty directory';
+
+    lives_ok {
+        $fs->mkdir('/shouldnotfail');
+        $fs->mkdir('/shouldnotfail/0');
+    }
+    'Filesys::POSIX->mkdir() does not fail when creating a new subdirectory named "0"';
 }

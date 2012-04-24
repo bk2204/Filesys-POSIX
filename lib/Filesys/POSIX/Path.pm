@@ -10,7 +10,7 @@ package Filesys::POSIX::Path;
 use strict;
 use warnings;
 
-use Carp qw/confess/;
+use Carp ();
 
 =head1 NAME
 
@@ -57,19 +57,19 @@ sub new {
     my @components = split( /\//, $path );
     my @ret;
 
-    if ( @components && $components[0] ) {
+    if ( @components && _non_empty( $components[0] ) ) {
         push @ret, $components[0];
     }
 
     if ( @components > 1 ) {
-        push @ret, grep { $_ && $_ ne '.' } @components[ 1 .. $#components ];
+        push @ret, grep { _non_empty($_) && $_ ne '.' } @components[ 1 .. $#components ];
     }
 
-    confess('Empty path') unless @components || $path;
+    Carp::confess('Empty path') unless @components || _non_empty($path);
 
-    my @hier = $components[0] ? @ret : ( '', @ret );
+    my @hier = _non_empty( $components[0] ) ? @ret : ( '', @ret );
 
-    if ( @hier == 1 && !$hier[0] ) {
+    if ( @hier == 1 && !_non_empty( $hier[0] ) ) {
         @hier = ('/');
     }
 
@@ -84,6 +84,15 @@ sub _proxy {
     }
 
     return $context;
+}
+
+sub _non_empty {
+    my ($string) = @_;
+
+    return 0 unless defined $string;
+    return 0 if $string eq '';
+
+    return 1;
 }
 
 =head1 PATH INTROSPECTION
@@ -131,7 +140,7 @@ sub dirname {
     if ( @hier > 1 ) {
         my @parts = @hier[ 0 .. $#hier - 1 ];
 
-        if ( @parts == 1 && !$parts[0] ) {
+        if ( @parts == 1 && !_non_empty( $parts[0] ) ) {
             return '/';
         }
 
@@ -155,7 +164,7 @@ sub basename {
     my @hier = @$self;
 
     my $name = $hier[$#hier];
-    $name =~ s/$ext$// if $ext;
+    $name =~ s/$ext$// if _non_empty($ext);
 
     return $name;
 }
@@ -249,7 +258,7 @@ Returns true if the current path object represents an absolute path.
 sub is_absolute {
     my ($self) = @_;
 
-    return 1 unless $self->[0];
+    return 1 unless _non_empty( $self->[0] );
     return 0;
 }
 
