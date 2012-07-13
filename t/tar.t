@@ -19,7 +19,7 @@ use Filesys::POSIX::Userland::Tar::Header ();
 use Fcntl;
 use IPC::Open3;
 
-use Test::More ( 'tests' => 75 );
+use Test::More ( 'tests' => 71 );
 use Test::Exception;
 use Test::NoWarnings;
 
@@ -139,8 +139,7 @@ $fs->close($fd);
 }
 
 #
-# Ensure that Filesys::POSIX::Userland::Tar::Header splits path names correctly,
-# and that it will make sure pathnames are made unique in the case of long names.
+# Ensure that Filesys::POSIX::Userland::Tar::Header splits path names correctly.
 #
 {
     my @TESTS = (
@@ -192,20 +191,6 @@ $fs->close($fd);
             'suffix' => 'O' x 100,
             'mode'   => $S_IFREG | 0644
         },
-
-        {
-            'path' => '/' . ( 'X' x 155 ) . '/' . ( 'O' x 101 ),
-            'prefix' => '/' . ( 'X' x 147 ) . 'cba2be6',
-            'suffix' => ( 'O' x 93 ) . 'cba2be6',
-            'mode'   => $S_IFREG | 0644
-        },
-
-        {
-            'path'   => 'X' x 130,
-            'prefix' => '',
-            'suffix' => ( 'X' x 92 ) . 'da39a3e/',
-            'mode'   => $S_IFDIR | 0755
-        }
     );
 
     foreach my $test (@TESTS) {
@@ -237,7 +222,7 @@ $fs->close($fd);
         my $header = Filesys::POSIX::Userland::Tar::Header->from_inode( $inode, $path );
 
         ok( $header->{'path'} =~ /\/$/, "$path ends with a / in header object" );
-        is( substr( $header->encode_gnu, 0, 13 ), '././@LongLink', "GNU tar header for $path contains proper path" );
+        is( substr( $header->encode_longlink, 0, 13 ) => '././@LongLink', "GNU tar header for $path contains proper path" );
     }
 
     {
@@ -367,7 +352,7 @@ $fs->close($fd);
 
             'values' => [
                 [ 512, 288, 'baz/boo/' . ( 'meow' x 70 ) ],
-                [ 1024, 100, ( 'meow' x 23 ) . '01658e3/' ],
+                [ 1024, 100, ( 'meow' x 23 ) . 'meowmeo/' ],
                 [ 1124, 8,   '0000755' ],
                 [ 1132, 8,   '0000000' ],
                 [ 1140, 8,   '0000000' ],
@@ -383,7 +368,13 @@ $fs->close($fd);
         my $path   = $test->{'path'};
         my $inode  = $test->{'setup'}->($path);
         my $header = Filesys::POSIX::Userland::Tar::Header->from_inode( $inode, $path );
-        my $block  = $header->encode_gnu;
+        my $block = '';
+
+        if ( $header->{'truncated'} ) {
+            $block = $header->encode_longlink;
+        }
+
+        $block .= $header->encode;
 
         foreach my $field ( sort keys %{ $test->{'expected'} } ) {
             my $offset = $FIELDS{$field}->[0];

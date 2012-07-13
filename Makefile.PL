@@ -15,8 +15,7 @@ WriteMakefile(
     'ABSTRACT'     => 'Provides POSIX filesystem semantics in pure Perl',
 
     'PREREQ_PM' => {
-        'Carp'         => 0,
-        'Digest::SHA1' => 0
+        'Carp'         => 0
     },
 
     'BUILD_REQUIRES' => {

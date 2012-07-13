@@ -13,8 +13,6 @@ use warnings;
 use Filesys::POSIX::Bits;
 use Filesys::POSIX::Path ();
 
-use Digest::SHA1 ();
-
 use Carp ();
 
 our $BLOCK_SIZE = 512;
@@ -101,6 +99,34 @@ sub decode {
     }, $class;
 }
 
+sub encode_longlink {
+    my ($self) = @_;
+
+    my $pathlen = length $self->{'path'};
+
+    my $longlink_header = bless {
+        'prefix'   => '',
+        'suffix'   => '././@LongLink',
+        'mode'     => 0,
+        'uid'      => 0,
+        'gid'      => 0,
+        'size'     => $pathlen,
+        'mtime'    => 0,
+        'linktype' => 'L',
+        'linkdest' => '',
+        'user'     => '',
+        'group'    => '',
+        'major'    => 0,
+        'minor'    => 0
+      },
+      ref $self;
+
+    my $path_blocks = "\x00" x ( $pathlen + $BLOCK_SIZE - ( $pathlen % $BLOCK_SIZE ) );
+    substr( $path_blocks, 0, $pathlen ) = $self->{'path'};
+
+    return $longlink_header->encode . $path_blocks;
+}
+
 sub encode {
     my ($self) = @_;
     my $block = "\x00" x $BLOCK_SIZE;
@@ -140,36 +166,6 @@ sub encode {
     return $block;
 }
 
-sub encode_gnu {
-    my ($self) = @_;
-
-    return $self->encode unless $self->{'truncated'};
-
-    my $pathlen = length $self->{'path'};
-
-    my $longlink_header = bless {
-        'prefix'   => '',
-        'suffix'   => '././@LongLink',
-        'mode'     => 0,
-        'uid'      => 0,
-        'gid'      => 0,
-        'size'     => $pathlen,
-        'mtime'    => 0,
-        'linktype' => 'L',
-        'linkdest' => '',
-        'user'     => '',
-        'group'    => '',
-        'major'    => 0,
-        'minor'    => 0
-      },
-      ref $self;
-
-    my $path_blocks = "\x00" x ( $pathlen + $BLOCK_SIZE - ( $pathlen % $BLOCK_SIZE ) );
-    substr( $path_blocks, 0, $pathlen ) = $self->{'path'};
-
-    return $longlink_header->encode . $path_blocks . $self->encode;
-}
-
 sub split_path_components {
     my ( $parts, $inode ) = @_;
 
@@ -187,13 +183,11 @@ sub split_path_components {
         #
         # If the first item found is greater than 100 characters in length,
         # truncate it so that it may fit in the standard tar path header field.
-        # The first 7 characters of the SHA1 sum of the entire path name will
-        # be affixed to the end of this path suffix.
         #
         if ( $got == 0 && $len > 100 ) {
-            my $truncated_len = $inode->dir ? 92 : 93;
+            my $truncated_len = $inode->dir ? 99 : 100;
 
-            $item = substr( $item, 0, $truncated_len ) . substr( Digest::SHA1::sha1_hex( $parts->full ), 0, 7 );
+            $item = substr( $item, 0, $truncated_len );
             $item .= '/' if $inode->dir;
 
             $len       = 100;
@@ -214,17 +208,8 @@ sub split_path_components {
     my $prefix = join( '/', reverse @prefix_items );
     my $suffix = join( '/', reverse @suffix_items );
 
-    #
-    # After arranging the prefix and suffix path components into the best slots
-    # possible, now would be a good time to create a unique prefix value with
-    # another short SHA1 sum string, in case the path prefix or suffix overflows
-    # 155 characters.  This time the SHA1 sum is based on the prefix component
-    # of the path, so as to avoid the pitfalls of a different suffix causing the
-    # SHA1 sum in the prefix to differ given the same prefix, which would cause
-    # tons of confusion, indeed.
-    #
     if ( length($prefix) > 155 ) {
-        $prefix = substr( $prefix, 0, 148 ) . substr( Digest::SHA1::sha1_hex($prefix), 0, 7 );
+        $prefix = substr( $prefix, 0, 155 );
         $truncated = 1;
     }
 

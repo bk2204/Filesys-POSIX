@@ -87,8 +87,16 @@ sub _write_file {
 sub _archive {
     my ( $inode, $handle, $path, $opts ) = @_;
 
-    my $header = Filesys::POSIX::Userland::Tar::Header->from_inode( $inode, $path, $opts );
-    my $blocks = $opts->{'gnu_extensions'} ? $header->encode_gnu : $header->encode;
+    my $header = Filesys::POSIX::Userland::Tar::Header->from_inode( $inode, $path );
+    my $blocks = '';
+
+    if ( $header->{'truncated'} ) {
+        die('Filename too long') unless $opts->{'gnu_extensions'};
+
+        $blocks .= $header->encode_longlink;
+    }
+
+    $blocks .= $header->encode;
 
     my $len = length $blocks;
 

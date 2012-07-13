@@ -29,8 +29,6 @@ lib/Filesys/POSIX/VFS/Inode.pm
 LICENSE
 Makefile.PL
 MANIFEST			This list of files
-MYMETA.json
-MYMETA.yml
 README
 t/001_load.t
 t/bucket.t
