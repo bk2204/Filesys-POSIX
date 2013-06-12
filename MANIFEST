@@ -49,6 +49,7 @@ t/real.t
 t/snapshot.t
 t/stat.t
 t/tar.t
+t/tar-race.t
 t/test.t
 t/umask.t
 t/userland.t
