@@ -69,8 +69,7 @@ our $BLOCK_SIZE = 512;
 # This is not necessarily something that should be done by end user software.
 #
 sub _write_file {
-    my ( $inode, $handle ) = @_;
-    my $fh = $inode->open($O_RDONLY);
+    my ( $fh, $inode, $handle ) = @_;
 
     while ( my $len = $fh->read( my $buf, 4096 ) ) {
         if ( ( my $padlen = $BLOCK_SIZE - ( $len % $BLOCK_SIZE ) ) != $BLOCK_SIZE ) {
@@ -98,13 +97,23 @@ sub _archive {
 
     $blocks .= $header->encode;
 
-    my $len = length $blocks;
+    eval {
+        # Acquire the file handle before writing the header so we don't corrupt
+        # the tarball if the file is missing.
+        my $fh  = $inode->open($O_RDONLY);
+        my $len = length $blocks;
 
-    unless ( $handle->write( $blocks, $len ) == $len ) {
-        Carp::confess('Short write while dumping tar header to file handle');
+        unless ( $handle->write( $blocks, $len ) == $len ) {
+            Carp::confess('Short write while dumping tar header to file handle');
+        }
+        _write_file( $fh, $inode, $handle ) if $inode->file;
+    };
+    if ($@) {
+        if ( !$opts->{'ignore_missing'} || $@ !~ /No such file or directory/ ) {
+            die $@;
+        }
+        $opts->{'ignore_missing'}->($path) if ref $opts->{'ignore_missing'} eq 'CODE';
     }
-
-    _write_file( $inode, $handle ) if $inode->file;
 }
 
 =item C<$fs-E<gt>tar($handle, @items)>
@@ -126,6 +135,15 @@ following options are recognized uniquely by C<$fs-E<gt>tar()>:
 
 When set, certain GNU extensions to the tar output format are enabled, namely
 support for arbitrarily long filenames.
+
+=back
+
+=item C<ignore_missing>
+
+When set, ignore if a file is missing when writing it to the tarball.  This can
+happen if a file is removed between the time the find functionality finds it and
+the time it is actually written to the output.  If the value is a coderef, calls
+that function with the name of the missing file.
 
 =back
 
