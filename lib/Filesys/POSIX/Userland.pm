@@ -157,7 +157,7 @@ sub readdir {
 
     my @ret;
 
-    while ( my $item = $directory->read ) {
+    while ( defined( my $item = $directory->read ) ) {
         push @ret, $item;
     }
 

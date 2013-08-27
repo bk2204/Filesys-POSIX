@@ -21,7 +21,9 @@ my %files = (
     '/foo/bar/baz' => 'file',
     '/foo/boo'     => 'file',
     '/bleh'        => 'dir',
-    '/bleh/cats'   => 'file'
+    '/bleh/cats'   => 'file',
+    '/numeric',    => 'dir',
+    map { '/numeric/' . $_ => 'file' } 0 .. 9
 );
 
 my $fs = Filesys::POSIX->new( Filesys::POSIX::Mem->new );
@@ -41,15 +43,18 @@ $fs->symlink( '/bleh', '/foo/bar/meow' );
 {
     my $found = 0;
 
+    my %missing = %files;
+
     $fs->find(
         sub {
             my ( $path, $inode ) = @_;
-            $found++ if $files{ $path->full };
+            delete $missing{ $path->full };
         },
         '/'
     );
 
-    ok( $found == keys %files, "Filesys::POSIX->find() found each file in hierarchy" );
+    is_deeply \%missing, {}, "no files or directories were missing from the find results"
+      or note explain "Missing: ", \%missing;
 }
 
 {

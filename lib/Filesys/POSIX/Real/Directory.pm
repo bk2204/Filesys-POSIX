@@ -42,7 +42,7 @@ sub _sync_all {
 
     $self->open;
 
-    while ( my $item = $self->read ) {
+    while ( defined( my $item = $self->read ) ) {
         $self->_sync_member($item);
     }
 
@@ -190,7 +190,7 @@ sub read {
         $item = readdir $self->{'dh'};
     }
 
-    if ($item) {
+    if ( defined $item ) {
         delete $self->{'skipped'}->{$item};
     }
     else {

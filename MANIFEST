@@ -34,6 +34,7 @@ t/001_load.t
 t/bucket.t
 t/directory.t
 t/extensions.t
+t/false-filename.t
 t/fd_table.t
 t/file.t
 t/find.t
@@ -48,8 +49,8 @@ t/path.t
 t/real.t
 t/snapshot.t
 t/stat.t
-t/tar.t
 t/tar-race.t
+t/tar.t
 t/test.t
 t/umask.t
 t/userland.t
