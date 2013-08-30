@@ -98,7 +98,7 @@ sub find {
         if ( $inode->dir ) {
             my $directory = $inode->directory->open;
 
-            while ( my $item = $directory->read ) {
+            while ( defined( my $item = $directory->read ) ) {
                 next if $item eq '.' || $item eq '..';
                 push @paths,  Filesys::POSIX::Path->new( $path->full . "/$item" );
                 push @inodes, $self->{'vfs'}->vnode( $directory->get($item) );

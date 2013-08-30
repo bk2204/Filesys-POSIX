@@ -67,7 +67,7 @@ sub _copy_dir {
 
     $directory->open;
 
-    while ( my $item = $directory->read ) {
+    while ( defined( my $item = $directory->read ) ) {
         next if $item eq '.' || $item eq '..';
 
         my $inode = $directory->get($item);
