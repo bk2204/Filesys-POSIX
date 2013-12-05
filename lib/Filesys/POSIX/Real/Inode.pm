@@ -11,6 +11,7 @@ use strict;
 use warnings;
 
 use Filesys::POSIX::Bits;
+use Filesys::POSIX::Bits::System;
 use Filesys::POSIX::Inode      ();
 use Filesys::POSIX::Mem::Inode ();
 use Filesys::POSIX::IO::Handle ();
@@ -77,7 +78,7 @@ sub child {
     );
 
     if ( ( $mode & $S_IFMT ) == $S_IFREG ) {
-        sysopen( my $fh, $path, O_CREAT | O_EXCL | O_WRONLY, $mode ) or confess($!);
+        sysopen( my $fh, $path, O_CREAT | O_EXCL | O_WRONLY, Filesys::POSIX::Bits::System::convertModeToSystem($mode) ) or confess($!);
         close($fh);
     }
     elsif ( ( $mode & $S_IFMT ) == $S_IFDIR ) {
@@ -122,7 +123,7 @@ sub update {
 sub open {
     my ( $self, $flags ) = @_;
 
-    sysopen( my $fh, $self->{'path'}, $flags ) or confess($!);
+    sysopen( my $fh, $self->{'path'}, Filesys::POSIX::Bits::System::convertFlagsToSystem($flags) ) or confess($!);
 
     return Filesys::POSIX::IO::Handle->new($fh);
 }

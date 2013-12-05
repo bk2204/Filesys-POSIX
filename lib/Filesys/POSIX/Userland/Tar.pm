@@ -100,7 +100,7 @@ sub _archive {
     eval {
         # Acquire the file handle before writing the header so we don't corrupt
         # the tarball if the file is missing.
-        my $fh  = $inode->open($O_RDONLY);
+        my $fh  = $inode->open( $O_RDONLY | $O_NONBLOCK );    # Case 82969: No block on pipes
         my $len = length $blocks;
 
         unless ( $handle->write( $blocks, $len ) == $len ) {

@@ -10,7 +10,9 @@ package Filesys::POSIX::IO::Handle;
 use strict;
 use warnings;
 
+use Fcntl qw(SEEK_CUR);
 use Filesys::POSIX::Bits;
+use Filesys::POSIX::Bits::System;
 
 =head1 NAME
 
@@ -103,7 +105,7 @@ modifier as specified in L<Filesys::POSIX::Bits>.
 sub seek {
     my ( $self, $pos, $whence ) = @_;
 
-    return sysseek( $$self, $pos, $whence );
+    return sysseek( $$self, $pos, Filesys::POSIX::Bits::System::convertWhenceToSystem($whence) );
 }
 
 =item C<$handle-E<gt>tell>
@@ -115,7 +117,7 @@ Returns the current absolute byte position of the current file C<$handle>.
 sub tell {
     my ($self) = @_;
 
-    return sysseek( $$self, 0, $SEEK_CUR );
+    return sysseek( $$self, 0, SEEK_CUR );
 }
 
 =item C<$handle-E<gt>close>
