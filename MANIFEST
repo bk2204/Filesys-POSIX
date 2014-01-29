@@ -1,6 +1,7 @@
 COPYRIGHT
 lib/Filesys/POSIX.pm
 lib/Filesys/POSIX/Bits.pm
+lib/Filesys/POSIX/Bits/System.pm
 lib/Filesys/POSIX/Directory.pm
 lib/Filesys/POSIX/Directory/Handle.pm
 lib/Filesys/POSIX/Extensions.pm
@@ -31,6 +32,7 @@ Makefile.PL
 MANIFEST			This list of files
 README
 t/001_load.t
+t/bits.t
 t/bucket.t
 t/directory.t
 t/extensions.t
