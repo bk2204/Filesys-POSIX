@@ -1,4 +1,4 @@
-# Copyright (c) 2012, cPanel, Inc.
+# Copyright (c) 2014, cPanel, Inc.
 # All rights reserved.
 # http://cpanel.net/
 #
@@ -63,22 +63,47 @@ sub EXPORT {
 }
 
 our $BLOCK_SIZE = 512;
+our $BUF_MAX    = 4096;
 
 #
 # NOTE: I'm only using $inode->open() calls to avoid having to call stat().
 # This is not necessarily something that should be done by end user software.
 #
 sub _write_file {
-    my ( $fh, $inode, $handle ) = @_;
+    my ( $fh, $inode, $handle, $size ) = @_;
 
-    while ( my $len = $fh->read( my $buf, 4096 ) ) {
+    my $actual_file_len = 0;
+
+    my $premature_eof;
+    do {
+        my $max_read = $size - $actual_file_len;
+        $max_read = $BUF_MAX if $max_read > $BUF_MAX;
+
+        my ( $len, $real_len, $buf );
+        if ($premature_eof) {    # If we reach EOF before the expected length, pad with null bytes
+            $len = $real_len = $max_read;
+            $buf = "\x0" x $max_read;
+        }
+        else {
+            $len = $real_len = $fh->read( $buf, $max_read );
+            if ( $real_len < $max_read ) {
+                $premature_eof = 1;
+                warn sprintf(
+                    'WARNING: Short read while archiving file (expected total of %d bytes, but only got %d); padding with null bytes...',
+                    $size,
+                    $actual_file_len + $real_len,
+                );
+            }
+        }
+
         if ( ( my $padlen = $BLOCK_SIZE - ( $len % $BLOCK_SIZE ) ) != $BLOCK_SIZE ) {
             $len += $padlen;
             $buf .= "\x0" x $padlen;
         }
 
         $handle->write( $buf, $len ) == $len or Carp::confess('Short write while dumping file buffer to handle');
-    }
+        $actual_file_len += $real_len;
+    } while ( $actual_file_len < $size );
 
     $fh->close;
 }
@@ -106,7 +131,7 @@ sub _archive {
         unless ( $handle->write( $blocks, $len ) == $len ) {
             Carp::confess('Short write while dumping tar header to file handle');
         }
-        _write_file( $fh, $inode, $handle ) if $inode->file;
+        _write_file( $fh, $inode, $handle, $header->{'size'} ) if $inode->file;
     };
     if ($@) {
         if ( !$opts->{'ignore_missing'} || $@ !~ /No such file or directory/ ) {
