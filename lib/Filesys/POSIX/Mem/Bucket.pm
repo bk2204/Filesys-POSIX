@@ -11,6 +11,7 @@ use strict;
 use warnings;
 
 use Filesys::POSIX::Bits;
+use Filesys::POSIX::Bits::System;
 use Filesys::POSIX::IO::Handle ();
 
 use Fcntl;
@@ -37,19 +38,6 @@ our @ISA = ('Filesys::POSIX::IO::Handle');
 my $DEFAULT_MAX = 16384;
 my $DEFAULT_DIR = '/tmp';
 
-#
-# Provide a table for converting between open() modes as recognized by both
-# Filesys::POSIX::Bits, and Fcntl.
-#
-my %OPEN_MODES = (
-    $O_CREAT  => O_CREAT,
-    $O_RDONLY => O_RDONLY,
-    $O_RDWR   => O_RDWR,
-    $O_WRONLY => O_WRONLY,
-    $O_APPEND => O_APPEND,
-    $O_TRUNC  => O_TRUNC
-);
-
 sub new {
     my ( $class, %opts ) = @_;
 
@@ -74,25 +62,6 @@ sub DESTROY {
     }
 }
 
-#
-# Since the open() flags in Filesys::POSIX::Bits differ in bit value from their
-# equivalents in Fcntl, it is necessary to have a means of translating from the
-# former to the latter; this method provides such facilities.
-#
-sub _bits_to_fcntl {
-    my ($flags) = @_;
-    my $ret = 0;
-
-    foreach my $key ( keys %OPEN_MODES ) {
-        my $bits_value  = $key;
-        my $fcntl_value = $OPEN_MODES{$key};
-
-        $ret |= $fcntl_value if $flags & $bits_value;
-    }
-
-    return $ret;
-}
-
 sub open {
     my ( $self, $flags ) = @_;
     $flags ||= 0;
@@ -113,7 +82,7 @@ sub open {
     }
 
     if ( $self->{'file'} ) {
-        my $fcntl_flags = _bits_to_fcntl($flags);
+        my $fcntl_flags = Filesys::POSIX::Bits::System::convertFlagsToSystem($flags);
 
         sysopen( my $fh, $self->{'file'}, $fcntl_flags ) or Carp::confess("Unable to reopen bucket $self->{'file'}: $!");
 
