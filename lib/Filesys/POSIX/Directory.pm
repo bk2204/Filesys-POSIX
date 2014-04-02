@@ -175,6 +175,19 @@ sub close {
     confess('Not implemented');
 }
 
+=item C<$directory-E<gt>rename_member()>
+
+Rename an item from one Filesys::POSIX::Directory so that it becomes
+a member of another Filesys::POSIX::Directory and/or changes name.
+
+=cut
+
+sub rename_member {
+    my ( $self, $inode, $old_dir, $old_name, $new_name ) = @_;
+    $old_dir->detach($old_name);
+    $self->set( $new_name, $inode );
+}
+
 =back
 
 =cut

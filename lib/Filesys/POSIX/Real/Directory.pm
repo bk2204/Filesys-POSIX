@@ -90,6 +90,15 @@ sub set {
     return $inode;
 }
 
+sub rename_member {
+    my ( $self, undef, $olddir, $oldname, $newname ) = @_;
+    return rename( $olddir->path . '/' . $oldname, $self->path . '/' . $newname ) && do {
+        $olddir->_sync_member($oldname);
+        $self->_sync_member($newname);
+        1;
+    };
+}
+
 sub exists {
     my ( $self, $name ) = @_;
     return 1 if exists $self->{'overlays'}->{$name};
@@ -213,6 +222,11 @@ sub close {
     }
 
     return;
+}
+
+sub path {
+    my ($self) = @_;
+    return $self->{'path'};
 }
 
 1;
