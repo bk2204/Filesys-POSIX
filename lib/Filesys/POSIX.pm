@@ -26,7 +26,7 @@ our $AUTOLOAD;
 
 BEGIN {
     use Exporter ();
-    our $VERSION = '0.9.12';
+    our $VERSION = '0.9.13';
 }
 
 =head1 NAME
@@ -632,8 +632,7 @@ sub rename {
         }
     }
 
-    $old_dir->detach($old_name);
-    $new_dir->set( $new_name, $inode );
+    $new_dir->rename_member( $inode, $old_dir, $old_name, $new_name );
 
     return $inode;
 }
