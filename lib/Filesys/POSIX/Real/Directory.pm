@@ -36,7 +36,7 @@ sub new {
 
 sub _sync_all {
     my ($self) = @_;
-    my $mtime = ( lstat $self->{'path'} )[9] or Carp::confess($!);
+    my $mtime = ( lstat $self->{'path'} )[9] or Carp::confess("$!");    # Use quotes to copy the error string (resolves Case 98565).
 
     return unless $mtime > $self->{'mtime'};
 
@@ -174,7 +174,8 @@ sub open {
 
     $self->close;
 
-    opendir( $self->{'dh'}, $self->{'path'} ) or Carp::confess($!);
+    opendir( $self->{'dh'}, $self->{'path'} )
+      or Carp::confess("$!");    # Use quotes to copy the error string (resolves Case 98565).
 
     return $self;
 }
