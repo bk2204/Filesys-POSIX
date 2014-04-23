@@ -51,7 +51,7 @@ sub new {
 
 sub from_disk {
     my ( $class, $path, %opts ) = @_;
-    my @st = $opts{'st_info'} ? @{ $opts{'st_info'} } : lstat $path or confess($!);
+    my @st = $opts{'st_info'} ? @{ $opts{'st_info'} } : lstat $path or confess("$!");    # Use quotes to copy the error string (resolves Case 98565).
 
     my $inode = $class->new( $path, %opts )->update(@st);
 
@@ -78,11 +78,13 @@ sub child {
     );
 
     if ( ( $mode & $S_IFMT ) == $S_IFREG ) {
-        sysopen( my $fh, $path, O_CREAT | O_EXCL | O_WRONLY, Filesys::POSIX::Bits::System::convertModeToSystem($mode) ) or confess($!);
+        sysopen( my $fh, $path, O_CREAT | O_EXCL | O_WRONLY, Filesys::POSIX::Bits::System::convertModeToSystem($mode) )
+          or confess("$!");    # Use quotes to copy the error string (resolves Case 98565).
         close($fh);
     }
     elsif ( ( $mode & $S_IFMT ) == $S_IFDIR ) {
-        mkdir( $path, $mode ) or confess($!);
+        mkdir( $path, $mode )
+          or confess("$!");    # Use quotes to copy the error string (resolves Case 98565).
     }
 
     my $inode;
@@ -123,7 +125,8 @@ sub update {
 sub open {
     my ( $self, $flags ) = @_;
 
-    sysopen( my $fh, $self->{'path'}, Filesys::POSIX::Bits::System::convertFlagsToSystem($flags) ) or confess($!);
+    sysopen( my $fh, $self->{'path'}, Filesys::POSIX::Bits::System::convertFlagsToSystem($flags) )
+      or confess("$!");    # Use quotes to copy the error string (resolves Case 98565).
 
     return Filesys::POSIX::IO::Handle->new($fh);
 }
@@ -132,7 +135,8 @@ sub chown {
     my ( $self, $uid, $gid ) = @_;
 
     unless ( $self->{'sticky'} ) {
-        CORE::chown( $uid, $gid, $self->{'path'} ) or confess($!);
+        CORE::chown( $uid, $gid, $self->{'path'} )
+          or confess("$!");    # Use quotes to copy the error string (resolves Case 98565).
     }
 
     @{$self}{qw/uid gid/} = ( $uid, $gid );
@@ -146,7 +150,8 @@ sub chmod {
     my $perm = $mode & ( $S_IPERM | $S_IPROT );
 
     unless ( $self->{'sticky'} ) {
-        CORE::chmod( $perm, $self->{'path'} ) or confess($!);
+        CORE::chmod( $perm, $self->{'path'} )
+          or confess("$!");    # Use quotes to copy the error string (resolves Case 98565).
     }
 
     $self->{'mode'} = $format | $perm;
@@ -158,7 +163,8 @@ sub readlink {
     my ($self) = @_;
 
     unless ( $self->{'dest'} ) {
-        $self->{'dest'} = CORE::readlink( $self->{'path'} ) or confess($!);
+        $self->{'dest'} = CORE::readlink( $self->{'path'} )
+          or confess("$!");    # Use quotes to copy the error string (resolves Case 98565).
     }
 
     return $self->{'dest'};
@@ -168,7 +174,8 @@ sub symlink {
     my ( $self, $dest ) = @_;
 
     unless ( $self->{'sticky'} ) {
-        symlink( $dest, $self->{'path'} ) or confess($!);
+        symlink( $dest, $self->{'path'} )
+          or confess("$!");    # Use quotes to copy the error string (resolves Case 98565).
     }
 
     $self->{'dest'} = $dest;
