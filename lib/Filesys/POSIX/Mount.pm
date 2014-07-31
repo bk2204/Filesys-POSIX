@@ -94,14 +94,16 @@ sub unmount {
     foreach ( $self->{'fds'}->list ) {
         my $inode = $self->{'fds'}->lookup($_)->{'inode'};
 
-        confess('Device or resource busy') if $mount->{'dev'} eq $inode->{'dev'};
+        confess('Device or resource busy')
+          if $mount->{'dev'} eq $inode->{'dev'};
     }
 
     #
     # Next, check to see if the current working directory's device inode
     # is the same device as the one being requested for unmounting.
     #
-    confess('Device or resource busy') if $mount->{'dev'} eq $self->{'cwd'}->{'dev'};
+    confess('Device or resource busy')
+      if $mount->{'dev'} eq $self->{'cwd'}->{'dev'};
 
     $self->{'vfs'}->unmount($mount);
 }

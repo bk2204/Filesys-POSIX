@@ -158,7 +158,8 @@ sub unmount {
     #
     foreach ( @{ $self->{'mounts'} } ) {
         next if $_ == $mount;
-        confess('Device or resource busy') if $_->{'mountpoint'}->{'dev'} == $mount->{'dev'};
+        confess('Device or resource busy')
+          if $_->{'mountpoint'}->{'dev'} == $mount->{'dev'};
     }
 
     #

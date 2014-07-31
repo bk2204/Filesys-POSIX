@@ -23,15 +23,43 @@ my @FLAGS = (
     [ 'O_RDWR',   $O_RDWR,   &Fcntl::O_RDWR ],
 
     # Test the individual flags (O_RDONLY included because an access mode is required)
-    [ 'O_RDONLY | O_APPEND',   $O_RDONLY | $O_APPEND,   &Fcntl::O_RDONLY | &Fcntl::O_APPEND ],
-    [ 'O_RDONLY | O_CREAT',    $O_RDONLY | $O_CREAT,    &Fcntl::O_RDONLY | &Fcntl::O_CREAT ],
-    [ 'O_RDONLY | O_EXCL',     $O_RDONLY | $O_EXCL,     &Fcntl::O_RDONLY | &Fcntl::O_EXCL ],
-    [ 'O_RDONLY | O_NOFOLLOW', $O_RDONLY | $O_NOFOLLOW, &Fcntl::O_RDONLY | &Fcntl::O_NOFOLLOW ],
-    [ 'O_RDONLY | O_NONBLOCK', $O_RDONLY | $O_NONBLOCK, &Fcntl::O_RDONLY | &Fcntl::O_NONBLOCK ],
-    [ 'O_RDONLY | O_TRUNC',    $O_RDONLY | $O_TRUNC,    &Fcntl::O_RDONLY | &Fcntl::O_TRUNC ],
+    [
+        'O_RDONLY | O_APPEND',
+        $O_RDONLY | $O_APPEND,
+        &Fcntl::O_RDONLY | &Fcntl::O_APPEND
+    ],
+    [
+        'O_RDONLY | O_CREAT',
+        $O_RDONLY | $O_CREAT,
+        &Fcntl::O_RDONLY | &Fcntl::O_CREAT
+    ],
+    [
+        'O_RDONLY | O_EXCL',
+        $O_RDONLY | $O_EXCL,
+        &Fcntl::O_RDONLY | &Fcntl::O_EXCL
+    ],
+    [
+        'O_RDONLY | O_NOFOLLOW',
+        $O_RDONLY | $O_NOFOLLOW,
+        &Fcntl::O_RDONLY | &Fcntl::O_NOFOLLOW
+    ],
+    [
+        'O_RDONLY | O_NONBLOCK',
+        $O_RDONLY | $O_NONBLOCK,
+        &Fcntl::O_RDONLY | &Fcntl::O_NONBLOCK
+    ],
+    [
+        'O_RDONLY | O_TRUNC',
+        $O_RDONLY | $O_TRUNC,
+        &Fcntl::O_RDONLY | &Fcntl::O_TRUNC
+    ],
 
     # Test an or-ed group
-    [ 'O_WRONLY | O_APPEND | O_CREAT | O_NONBLOCK', $O_WRONLY | $O_APPEND | $O_CREAT | $O_NONBLOCK, &Fcntl::O_WRONLY | &Fcntl::O_APPEND | &Fcntl::O_CREAT | &Fcntl::O_NONBLOCK ],
+    [
+        'O_WRONLY | O_APPEND | O_CREAT | O_NONBLOCK',
+        $O_WRONLY | $O_APPEND | $O_CREAT | $O_NONBLOCK,
+        &Fcntl::O_WRONLY | &Fcntl::O_APPEND | &Fcntl::O_CREAT | &Fcntl::O_NONBLOCK
+    ],
 );
 
 my @MODES = (
@@ -63,7 +91,11 @@ my @MODES = (
     [ 'S_IFSOCK', $S_IFSOCK, &Fcntl::S_IFSOCK ],
 
     # Test an or-ed group
-    [ 'S_IFREG | S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH', $S_IFREG | $S_IRUSR | $S_IWUSR | $S_IRGRP | $S_IROTH, &Fcntl::S_IFREG | &Fcntl::S_IRUSR | &Fcntl::S_IWUSR | &Fcntl::S_IRGRP | &Fcntl::S_IROTH ],
+    [
+        'S_IFREG | S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH',
+        $S_IFREG | $S_IRUSR | $S_IWUSR | $S_IRGRP | $S_IROTH,
+        &Fcntl::S_IFREG | &Fcntl::S_IRUSR | &Fcntl::S_IWUSR | &Fcntl::S_IRGRP | &Fcntl::S_IROTH
+    ],
 );
 
 my @WHENCE = (
@@ -76,15 +108,24 @@ plan tests => @FLAGS + @MODES + @WHENCE;
 
 foreach my $ref (@FLAGS) {
     my ( $name, $before, $after ) = @$ref;
-    is( Filesys::POSIX::Bits::System::convertFlagsToSystem($before), $after, $name );
+    is(
+        Filesys::POSIX::Bits::System::convertFlagsToSystem($before),
+        $after, $name
+    );
 }
 
 foreach my $ref (@MODES) {
     my ( $name, $before, $after ) = @$ref;
-    is( Filesys::POSIX::Bits::System::convertModeToSystem($before), $after, $name );
+    is(
+        Filesys::POSIX::Bits::System::convertModeToSystem($before),
+        $after, $name
+    );
 }
 
 foreach my $ref (@WHENCE) {
     my ( $name, $before, $after ) = @$ref;
-    is( Filesys::POSIX::Bits::System::convertWhenceToSystem($before), $after, $name );
+    is(
+        Filesys::POSIX::Bits::System::convertWhenceToSystem($before),
+        $after, $name
+    );
 }

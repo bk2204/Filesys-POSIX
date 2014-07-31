@@ -105,7 +105,10 @@ sub open {
             confess('File exists') if $flags & $O_EXCL;
         }
         else {
-            my $format = $mode ? ( $mode & $S_IFMT ? $mode & $S_IFMT : $S_IFREG ) : $S_IFREG;
+            my $format =
+              $mode
+              ? ( $mode & $S_IFMT ? $mode & $S_IFMT : $S_IFREG )
+              : $S_IFREG;
             my $perms = $mode ? $mode & ( $S_IPERM | $S_IPROT ) : $S_IRW;
 
             $perms &= ~$self->{'umask'};
@@ -176,7 +179,8 @@ sub write {
     my ( $self, $fd, $buf, $len ) = @_;
     my $entry = $self->{'fds'}->lookup($fd);
 
-    confess('Invalid argument') unless $entry->{'flags'} & ( $O_WRONLY | $O_RDWR );
+    confess('Invalid argument')
+      unless $entry->{'flags'} & ( $O_WRONLY | $O_RDWR );
 
     return $entry->{'handle'}->write( $buf, $len );
 }
@@ -203,7 +207,8 @@ sub print {
     my ( $self, $fd, @args ) = @_;
     my $entry = $self->{'fds'}->lookup($fd);
 
-    confess('Invalid argument') unless $entry->{'flags'} & ( $O_WRONLY | $O_RDWR );
+    confess('Invalid argument')
+      unless $entry->{'flags'} & ( $O_WRONLY | $O_RDWR );
 
     my $buf = join( $/, @args );
 
@@ -231,7 +236,8 @@ sub printf {
     my ( $self, $fd, $format, @args ) = @_;
     my $entry = $self->{'fds'}->lookup($fd);
 
-    confess('Invalid argument') unless $entry->{'flags'} & ( $O_WRONLY | $O_RDWR );
+    confess('Invalid argument')
+      unless $entry->{'flags'} & ( $O_WRONLY | $O_RDWR );
 
     my $buf = sprintf( $format, @args );
 

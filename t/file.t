@@ -22,7 +22,10 @@ use Test::NoWarnings;
     $fs->mkdir('/mnt');
     $fs->mount( Filesys::POSIX::Mem->new, '/mnt' );
 
-    ok( $fs->stat('/..') eq $fs->{'root'}, "Filesys::POSIX->stat('/..') returns the root vnode" );
+    ok(
+        $fs->stat('/..') eq $fs->{'root'},
+        "Filesys::POSIX->stat('/..') returns the root vnode"
+    );
 
     my $fd = $fs->open( 'foo', $O_CREAT | $O_WRONLY );
     my $inode = $fs->fstat($fd);
@@ -50,7 +53,10 @@ use Test::NoWarnings;
     qr/^Cross-device link/, "Filesys::POSIX->link() prevents cross-device links";
 
     $fs->link( 'foo', 'bar' );
-    ok( $inode eq $fs->stat('bar'), "Filesys::POSIX->link() copies inode reference into directory entry" );
+    ok(
+        $inode eq $fs->stat('bar'),
+        "Filesys::POSIX->link() copies inode reference into directory entry"
+    );
 
     lives_ok {
         $fs->link( 'bar', 'eins' );
@@ -64,7 +70,10 @@ use Test::NoWarnings;
     qr/^File exists/, "Filesys::POSIX->link() dies when destination already exists";
 
     $fs->rename( 'bar', 'baz' );
-    ok( $inode eq $fs->stat('baz'), "Filesys::POSIX->rename() does not modify inode reference in directory entry" );
+    ok(
+        $inode eq $fs->stat('baz'),
+        "Filesys::POSIX->rename() does not modify inode reference in directory entry"
+    );
 
     throws_ok {
         $fs->rename( 'baz', '/mnt/boo' );
@@ -83,7 +92,10 @@ use Test::NoWarnings;
     }
     qr/^No such file or directory/, "Filesys::POSIX->unlink() dies when its target does not exist";
 
-    ok( $inode eq $fs->stat('foo'), "Filesys::POSIX->unlink() does not actually destroy inode" );
+    ok(
+        $inode eq $fs->stat('foo'),
+        "Filesys::POSIX->unlink() does not actually destroy inode"
+    );
 
     throws_ok {
         $fs->rmdir('foo');
@@ -107,7 +119,10 @@ use Test::NoWarnings;
 
     my $inode = $fs->stat('meow');
 
-    ok( $inode->dir, "Filesys::POSIX->mkdir() creates directory inodes in the expected manner" );
+    ok(
+        $inode->dir,
+        "Filesys::POSIX->mkdir() creates directory inodes in the expected manner"
+    );
 
     throws_ok {
         $fs->unlink('meow');
@@ -176,7 +191,10 @@ use Test::NoWarnings;
     $fs->mkpath('eins/zwei/drei');
     $fs->symlink( 'zwei', 'eins/foo' );
 
-    ok( $fs->stat('eins/zwei/drei') eq $fs->lstat('eins/foo/drei'), "Filesys::POSIX->lstat() resolves symlinks in tree" );
+    ok(
+        $fs->stat('eins/zwei/drei') eq $fs->lstat('eins/foo/drei'),
+        "Filesys::POSIX->lstat() resolves symlinks in tree"
+    );
 
     throws_ok {
         $fs->readlink('foo');
@@ -186,8 +204,14 @@ use Test::NoWarnings;
     $fs->symlink( 'foo', 'bar' );
     my $link = $fs->lstat('bar');
 
-    ok( $inode               eq $fs->stat('bar'), "Filesys::POSIX->stat() works on symlinks" );
-    ok( $fs->readlink('bar') eq 'foo',            "Filesys::POSIX->readlink() returns expected result" );
+    ok(
+        $inode eq $fs->stat('bar'),
+        "Filesys::POSIX->stat() works on symlinks"
+    );
+    ok(
+        $fs->readlink('bar') eq 'foo',
+        "Filesys::POSIX->readlink() returns expected result"
+    );
 }
 
 {
@@ -196,14 +220,26 @@ use Test::NoWarnings;
     my $inode = $fs->fstat($fd);
 
     $fs->fchdir($fd);
-    ok( $fs->getcwd eq '/foo', "Filesys::POSIX->fchdir() changes current directory when passed a directory fd" );
+    ok(
+        $fs->getcwd eq '/foo',
+        "Filesys::POSIX->fchdir() changes current directory when passed a directory fd"
+    );
 
     $fs->fchown( $fd, 500, 500 );
-    ok( $inode->{'uid'} == 500, "Filesys::POSIX->fchown() updates inode's uid properly" );
-    ok( $inode->{'gid'} == 500, "Filesys::POSIX->fchown() updates inode's gid properly" );
+    ok(
+        $inode->{'uid'} == 500,
+        "Filesys::POSIX->fchown() updates inode's uid properly"
+    );
+    ok(
+        $inode->{'gid'} == 500,
+        "Filesys::POSIX->fchown() updates inode's gid properly"
+    );
 
     $fs->fchmod( $fd, 0700 );
-    ok( ( $inode->{'mode'} & $S_IPERM ) == 0700, "Filesys::POSIX->fchmod() updates inode's permissions properly" );
+    ok(
+        ( $inode->{'mode'} & $S_IPERM ) == 0700,
+        "Filesys::POSIX->fchmod() updates inode's permissions properly"
+    );
 }
 
 {
@@ -216,17 +252,35 @@ use Test::NoWarnings;
     {
         my $inode = $fs->mknod( '/dev/null', $S_IFCHR | 0666, ( 1 << 16 ) | 3 );
 
-        ok( $inode->char, 'Filesys::POSIX->mknod() creates character devices approrpiately' );
-        is( $inode->major, 1, 'Filesys::POSIX::Inode->major() returns correct value on char devices' );
-        is( $inode->minor, 3, 'Filesys::POSIX::Inode->minor() returns correct value on char devices' );
+        ok(
+            $inode->char,
+            'Filesys::POSIX->mknod() creates character devices approrpiately'
+        );
+        is(
+            $inode->major, 1,
+            'Filesys::POSIX::Inode->major() returns correct value on char devices'
+        );
+        is(
+            $inode->minor, 3,
+            'Filesys::POSIX::Inode->minor() returns correct value on char devices'
+        );
     }
 
     {
         my $inode = $fs->mknod( '/dev/mem', $S_IFBLK | 0644, ( 1 << 16 ) | 1 );
 
-        ok( $inode->block, 'Filesys::POSIX->mknod() creates block devices appropriately' );
-        is( $inode->major, 1, 'Filesys::POSIX::Inode->major() returns correct value on block devices' );
-        is( $inode->minor, 1, 'Filesys::POSIX::Inode->minor() returns correct value on block devices' );
+        ok(
+            $inode->block,
+            'Filesys::POSIX->mknod() creates block devices appropriately'
+        );
+        is(
+            $inode->major, 1,
+            'Filesys::POSIX::Inode->major() returns correct value on block devices'
+        );
+        is(
+            $inode->minor, 1,
+            'Filesys::POSIX::Inode->minor() returns correct value on block devices'
+        );
     }
 
     {
@@ -246,7 +300,10 @@ use Test::NoWarnings;
     {
         my $inode = $fs->mkfifo( '/var/test', 0644 );
 
-        ok( $inode->fifo, 'Filesys::POSIX::Inode->fifo() returns true on FIFO inodes' );
+        ok(
+            $inode->fifo,
+            'Filesys::POSIX::Inode->fifo() returns true on FIFO inodes'
+        );
     }
 
     throws_ok {

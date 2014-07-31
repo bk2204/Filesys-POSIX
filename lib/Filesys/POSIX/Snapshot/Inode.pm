@@ -38,7 +38,8 @@ sub from_inode {
     # in %opts.
     #
     foreach my $attribute (@ATTRIBUTES) {
-        $new_inode->{$attribute} = $opts{$attribute} if exists $opts{$attribute};
+        $new_inode->{$attribute} = $opts{$attribute}
+          if exists $opts{$attribute};
     }
 
     #

@@ -75,5 +75,8 @@ $fs->symlink( '/bleh', '/foo/bar/meow' );
         '/'
     );
 
-    ok( $found == keys %expected, "Filesys::POSIX->find() resolves and recurses into directory symlinks fine" );
+    ok(
+        $found == keys %expected,
+        "Filesys::POSIX->find() resolves and recurses into directory symlinks fine"
+    );
 }

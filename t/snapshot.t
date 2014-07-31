@@ -14,7 +14,7 @@ use Filesys::POSIX           ();
 use Filesys::POSIX::Mem      ();
 use Filesys::POSIX::Snapshot ();
 
-use Test::More ('tests' => 10);
+use Test::More ( 'tests' => 10 );
 use Test::Exception;
 
 sub mkskelfs {
@@ -84,8 +84,8 @@ sub mkskelfs {
         $fs->mkpath('/snapshots/2');
 
         $fs->mount(
-            Filesys::POSIX::Snapshot->new, '/snapshots/2',
-            'path' => '/'
+            Filesys::POSIX::Snapshot->new,
+            '/snapshots/2', 'path' => '/'
         );
     }
     "Filesys::POSIX::Snapshot->new() succeeds when 'path' is specified";
@@ -94,8 +94,8 @@ sub mkskelfs {
         $fs->mkpath('/snapshots/3');
 
         $fs->mount(
-            Filesys::POSIX::Snapshot->new, '/snapshots/3',
-            'path' => '/dev/null'
+            Filesys::POSIX::Snapshot->new,
+            '/snapshots/3', 'path' => '/dev/null'
         );
     }
     qr/^Not a directory/, "Filesys::POSIX::Snapshot->new() emits 'Not a directory' when non-directory 'path' specified";
@@ -115,8 +115,15 @@ sub mkskelfs {
     }
     "Filesys::POSIX::Snapshot::Inode->new() lives when FS mounted with 'immediate_dir_copy'";
 
-    isa_ok( $fs->stat('/snapshots/1/dev')->{'directory'}, "Filesys::POSIX::Mem::Directory", '/snapshots/1/dev' );
-    is( $fs->lstat('/snapshots/1/bin/ksh')->readlink, 'sh', "Symlinks are copied by Filesys::POSIX::Snapshot" );
+    isa_ok(
+        $fs->stat('/snapshots/1/dev')->{'directory'},
+        "Filesys::POSIX::Mem::Directory",
+        '/snapshots/1/dev'
+    );
+    is(
+        $fs->lstat('/snapshots/1/bin/ksh')->readlink,
+        'sh', "Symlinks are copied by Filesys::POSIX::Snapshot"
+    );
 
     #
     # Prepare for testing copy-on-write functionality in extent.
@@ -127,10 +134,7 @@ sub mkskelfs {
     $fs->mkdir('/dir');
 
     $fs->mkpath('/snapshots/2');
-    $fs->mount(
-        Filesys::POSIX::Snapshot->new, '/snapshots/2',
-        'path' => '/'
-    );
+    $fs->mount( Filesys::POSIX::Snapshot->new, '/snapshots/2', 'path' => '/' );
 
     note('Mounted snapshot of / in /snapshots/2');
 
@@ -171,7 +175,10 @@ sub mkskelfs {
     #
     $fd = $fs->open( '/snapshots/2/etc/hosts', $O_RDONLY );
 
-    ok( !defined $fs->fstat($fd)->{'bucket'}, 'Filesys::POSIX::Snapshot::Inode->open() avoids copy-on-write in RO mode' );
+    ok(
+        !defined $fs->fstat($fd)->{'bucket'},
+        'Filesys::POSIX::Snapshot::Inode->open() avoids copy-on-write in RO mode'
+    );
 
     $fs->close($fd);
 }

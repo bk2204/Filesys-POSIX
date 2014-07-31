@@ -51,7 +51,8 @@ sub new {
 
 sub from_disk {
     my ( $class, $path, %opts ) = @_;
-    my @st = $opts{'st_info'} ? @{ $opts{'st_info'} } : lstat $path or confess("$!");    # Use quotes to copy the error string (resolves Case 98565).
+    my @st = $opts{'st_info'} ? @{ $opts{'st_info'} } : lstat $path
+      or confess("$!");    # Use quotes to copy the error string (resolves Case 98565).
 
     my $inode = $class->new( $path, %opts )->update(@st);
 
@@ -78,8 +79,11 @@ sub child {
     );
 
     if ( ( $mode & $S_IFMT ) == $S_IFREG ) {
-        sysopen( my $fh, $path, O_CREAT | O_EXCL | O_WRONLY, Filesys::POSIX::Bits::System::convertModeToSystem($mode) )
-          or confess("$!");    # Use quotes to copy the error string (resolves Case 98565).
+        sysopen(
+            my $fh, $path,
+            O_CREAT | O_EXCL | O_WRONLY,
+            Filesys::POSIX::Bits::System::convertModeToSystem($mode)
+        ) or confess("$!");    # Use quotes to copy the error string (resolves Case 98565).
         close($fh);
     }
     elsif ( ( $mode & $S_IFMT ) == $S_IFDIR ) {
@@ -125,8 +129,10 @@ sub update {
 sub open {
     my ( $self, $flags ) = @_;
 
-    sysopen( my $fh, $self->{'path'}, Filesys::POSIX::Bits::System::convertFlagsToSystem($flags) )
-      or confess("$!");    # Use quotes to copy the error string (resolves Case 98565).
+    sysopen(
+        my $fh, $self->{'path'},
+        Filesys::POSIX::Bits::System::convertFlagsToSystem($flags)
+    ) or confess("$!");    # Use quotes to copy the error string (resolves Case 98565).
 
     return Filesys::POSIX::IO::Handle->new($fh);
 }

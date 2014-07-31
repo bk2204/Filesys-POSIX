@@ -84,7 +84,8 @@ sub open {
     if ( $self->{'file'} ) {
         my $fcntl_flags = Filesys::POSIX::Bits::System::convertFlagsToSystem($flags);
 
-        sysopen( my $fh, $self->{'file'}, $fcntl_flags ) or Carp::confess("Unable to reopen bucket $self->{'file'}: $!");
+        sysopen( my $fh, $self->{'file'}, $fcntl_flags )
+          or Carp::confess("Unable to reopen bucket $self->{'file'}: $!");
 
         $self->{'fh'} = $fh;
     }
@@ -97,7 +98,8 @@ sub _flush_to_disk {
 
     Carp::confess('Already flushed to disk') if $self->{'file'};
 
-    my ( $fh, $file ) = eval { File::Temp::mkstemp("$self->{'dir'}/.bucket-XXXXXX") };
+    my ( $fh, $file ) =
+      eval { File::Temp::mkstemp("$self->{'dir'}/.bucket-XXXXXX") };
 
     Carp::confess("mkstemp() failure: $@") if $@;
 
@@ -128,7 +130,8 @@ sub write {
     }
 
     if ( $self->{'fh'} ) {
-        Carp::confess("Unable to write to disk bucket") unless fileno( $self->{'fh'} );
+        Carp::confess("Unable to write to disk bucket")
+          unless fileno( $self->{'fh'} );
         $ret = syswrite( $self->{'fh'}, $buf );
     }
     else {
@@ -136,7 +139,8 @@ sub write {
             $self->{'buf'} .= "\x00" x $gap;
         }
 
-        substr( $self->{'buf'}, $self->{'pos'}, $len ) = substr( $buf, 0, $len );
+        substr( $self->{'buf'}, $self->{'pos'}, $len ) =
+          substr( $buf, 0, $len );
         $ret = $len;
     }
 
@@ -158,11 +162,13 @@ sub read {
     my $ret  = 0;
 
     if ( $self->{'fh'} ) {
-        Carp::confess("Unable to read bucket: $!") unless fileno( $self->{'fh'} );
+        Carp::confess("Unable to read bucket: $!")
+          unless fileno( $self->{'fh'} );
         $ret = sysread( $self->{'fh'}, $_[0], $len );
     }
     else {
-        my $pos = $self->{'pos'} > $self->{'size'} ? $self->{'size'} : $self->{'pos'};
+        my $pos =
+          $self->{'pos'} > $self->{'size'} ? $self->{'size'} : $self->{'pos'};
         my $maxlen = $self->{'size'} - $pos;
         $len = $maxlen if $len > $maxlen;
 

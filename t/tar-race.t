@@ -24,10 +24,9 @@ use Test::More ( 'tests' => 5 );
 use Test::Exception;
 use Test::NoWarnings;
 
-
 foreach my $ignore ( 0 .. 1 ) {
     my $tempdir = File::Temp->newdir;
-    my $fs = Filesys::POSIX->new( Filesys::POSIX::Mem->new );
+    my $fs      = Filesys::POSIX->new( Filesys::POSIX::Mem->new );
     $fs->import_module('Filesys::POSIX::Userland::Tar');
     $fs->import_module('Filesys::POSIX::Extensions');
     $fs->import_module('Filesys::POSIX::Userland::Find');
@@ -38,6 +37,7 @@ foreach my $ignore ( 0 .. 1 ) {
 
     for ( 1 .. $max_files ) {
         open( my $fh, ">", "$tempdir/$_" );
+        print {$fh} "foo\n";
         close($fh);
         $fs->map( "$tempdir/$_", "foo/$_" );
     }
@@ -53,11 +53,17 @@ foreach my $ignore ( 0 .. 1 ) {
             if ($ignore) {
                 my $callback = sub {
                     my $file = shift;
-                    is($file, "./foo/$max_files", "missing file is correctly indicated");
+                    is(
+                        $file, "./foo/$max_files",
+                        "missing file is correctly indicated"
+                    );
                 };
 
                 lives_ok {
-                    $fs->tar( Filesys::POSIX::IO::Handle->new($in), { 'ignore_missing' => $callback }, "." );
+                    $fs->tar(
+                        Filesys::POSIX::IO::Handle->new($in),
+                        { 'ignore_missing' => $callback }, "."
+                    );
                 }
                 "Filesys::POSIX->tar() doesn't die when file is missing";
             }

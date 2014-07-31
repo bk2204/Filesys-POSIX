@@ -44,7 +44,13 @@ $inode->{'atime'} = 1234;
 $inode = $fs->stat('foo');
 
 ok( $inode->{'atime'} == 1234, "Filesys::POSIX honors 'noatime' mount flag" );
-ok( ( $inode->{'mode'} & $S_IX ) == 0,    "Filesys::POSIX honors 'noexec' mount flag" );
-ok( ( $inode->{'mode'} & $S_ISUID ) == 0, "Filesys::POSIX honors 'nosuid' mount flag" );
+ok(
+    ( $inode->{'mode'} & $S_IX ) == 0,
+    "Filesys::POSIX honors 'noexec' mount flag"
+);
+ok(
+    ( $inode->{'mode'} & $S_ISUID ) == 0,
+    "Filesys::POSIX honors 'nosuid' mount flag"
+);
 ok( $inode->{'uid'} == 42, "Filesys::POSIX honors 'uid' mount flag" );
 ok( $inode->{'gid'} == 42, "Filesys::POSIX honors 'gid' mount flag" );

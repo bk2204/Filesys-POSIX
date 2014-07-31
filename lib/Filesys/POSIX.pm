@@ -26,7 +26,7 @@ our $AUTOLOAD;
 
 BEGIN {
     use Exporter ();
-    our $VERSION = '0.9.13';
+    our $VERSION = '0.9.14';
 }
 
 =head1 NAME
@@ -122,7 +122,8 @@ sub AUTOLOAD {
     my $module = $self->{'methods'}->{$method};
 
     return if $method eq 'DESTROY';
-    confess( "No module imported for method '" . __PACKAGE__ . "::$method()" ) unless $module;
+    confess( "No module imported for method '" . __PACKAGE__ . "::$method()" )
+      unless $module;
 
     no strict 'refs';
 
@@ -157,7 +158,8 @@ sub import_module {
 
     foreach ( *{"$module\::EXPORT"}->() ) {
         if ( my $imported = $self->{'methods'}->{$_} ) {
-            confess("Module $imported already imported method $_") unless $module eq $imported;
+            confess("Module $imported already imported method $_")
+              unless $module eq $imported;
         }
 
         $self->{'methods'}->{$_} = $module;
@@ -224,7 +226,10 @@ sub _find_inode {
         }
         elsif ( $item eq '..' ) {
             my $vnode = $self->{'vfs'}->vnode($dir);
-            $inode = $vnode->{'parent'} ? $vnode->{'parent'} : $self->{'vfs'}->vnode( $directory->get('..') );
+            $inode =
+                $vnode->{'parent'}
+              ? $vnode->{'parent'}
+              : $self->{'vfs'}->vnode( $directory->get('..') );
         }
         else {
             $inode = $self->{'vfs'}->vnode( $directory->get($item) );
@@ -233,7 +238,8 @@ sub _find_inode {
         confess('No such file or directory') unless $inode;
 
         if ( $inode->link ) {
-            $hier = $hier->concat( $inode->readlink ) if $opts{'resolve_symlinks'} || $hier->count;
+            $hier = $hier->concat( $inode->readlink )
+              if $opts{'resolve_symlinks'} || $hier->count;
         }
         else {
             $dir = $inode;
@@ -257,10 +263,7 @@ directory when prefixed with a slash ('C</>').
 
 sub stat {
     my ( $self, $path ) = @_;
-    return $self->_find_inode(
-        $path,
-        'resolve_symlinks' => 1
-    );
+    return $self->_find_inode( $path, 'resolve_symlinks' => 1 );
 }
 
 =item C<$fs-E<gt>lstat($path)>
@@ -677,7 +680,8 @@ sub rmdir {
     my $inode     = $directory->get($name);
 
     confess('No such file or directory') unless $inode;
-    confess('Device or resource busy') if $self->{'vfs'}->statfs( $self->stat($path), 'exact' => 1, 'silent' => 1 );
+    confess('Device or resource busy')
+      if $self->{'vfs'}->statfs( $self->stat($path), 'exact' => 1, 'silent' => 1 );
     confess('Directory not empty') unless $inode->empty;
 
     $directory->delete($name);
