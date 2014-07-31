@@ -26,7 +26,7 @@ our $AUTOLOAD;
 
 BEGIN {
     use Exporter ();
-    our $VERSION = '0.9.13';
+    our $VERSION = '0.9.14';
 }
 
 =head1 NAME
