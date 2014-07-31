@@ -42,7 +42,8 @@ sub _find_inode_path {
 
         foreach my $item ( $directory->list ) {
             next if $item eq '.' || $item eq '..';
-            next unless $self->{'vfs'}->vnode( $directory->get($item) ) == $self->{'vfs'}->vnode($inode);
+            next
+              unless $self->{'vfs'}->vnode( $directory->get($item) ) == $self->{'vfs'}->vnode($inode);
 
             push @ret, $item;
             $inode = $dir;

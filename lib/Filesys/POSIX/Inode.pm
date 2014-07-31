@@ -183,7 +183,8 @@ L<stat()|perlfunc/stat>.
 sub update {
     my ( $self, @st ) = @_;
 
-    @{$self}{qw/size atime mtime ctime uid gid mode rdev/} = ( @st[ 7 .. 10 ], @st[ 4 .. 5 ], $st[2], $st[6] );
+    @{$self}{qw/size atime mtime ctime uid gid mode rdev/} =
+      ( @st[ 7 .. 10 ], @st[ 4 .. 5 ], $st[2], $st[6] );
 
     return $self;
 }

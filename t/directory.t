@@ -97,7 +97,10 @@ foreach my $mountpoint ( sort keys %mounts ) {
 
         $fs->closedir($directory);
 
-        ok( $found == keys %members, "$type\->readdir() returned each member in list context" );
+        ok(
+            $found == keys %members,
+            "$type\->readdir() returned each member in list context"
+        );
     }
 
     {

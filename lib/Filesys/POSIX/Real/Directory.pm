@@ -36,7 +36,8 @@ sub new {
 
 sub _sync_all {
     my ($self) = @_;
-    my $mtime = ( lstat $self->{'path'} )[9] or Carp::confess("$!");    # Use quotes to copy the error string (resolves Case 98565).
+    my $mtime = ( lstat $self->{'path'} )[9]
+      or Carp::confess("$!");    # Use quotes to copy the error string (resolves Case 98565).
 
     return unless $mtime > $self->{'mtime'};
 
@@ -92,11 +93,12 @@ sub set {
 
 sub rename_member {
     my ( $self, undef, $olddir, $oldname, $newname ) = @_;
-    return rename( $olddir->path . '/' . $oldname, $self->path . '/' . $newname ) && do {
+    return rename( $olddir->path . '/' . $oldname, $self->path . '/' . $newname )
+      && do {
         $olddir->_sync_member($oldname);
         $self->_sync_member($newname);
         1;
-    };
+      };
 }
 
 sub exists {
@@ -155,10 +157,7 @@ sub list {
     my ( $self, $name ) = @_;
     $self->_sync_all;
 
-    my %union = (
-        %{ $self->{'members'} },
-        %{ $self->{'overlays'} }
-    );
+    my %union = ( %{ $self->{'members'} }, %{ $self->{'overlays'} } );
 
     return keys %union;
 }
@@ -170,7 +169,8 @@ sub count {
 sub open {
     my ($self) = @_;
 
-    @{ $self->{'skipped'} }{ keys %{ $self->{'overlays'} } } = values %{ $self->{'overlays'} };
+    @{ $self->{'skipped'} }{ keys %{ $self->{'overlays'} } } =
+      values %{ $self->{'overlays'} };
 
     $self->close;
 
@@ -183,7 +183,8 @@ sub open {
 sub rewind {
     my ($self) = @_;
 
-    @{ $self->{'skipped'} }{ keys %{ $self->{'overlays'} } } = values %{ $self->{'overlays'} };
+    @{ $self->{'skipped'} }{ keys %{ $self->{'overlays'} } } =
+      values %{ $self->{'overlays'} };
 
     if ( $self->{'dh'} ) {
         rewinddir $self->{'dh'};

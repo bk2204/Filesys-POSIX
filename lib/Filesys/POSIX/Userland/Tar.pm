@@ -114,8 +114,7 @@ sub _write_file {
                     $premature_eof = 1;
                     warn sprintf(
                         'WARNING: Short read while archiving file (expected total of %d bytes, but only got %d); padding with null bytes...',
-                        $size,
-                        $actual_file_len + $real_len,
+                        $size, $actual_file_len + $real_len,
                     );
                 }
             } while ( $real_len < $max_read && $amt_read > 0 );
@@ -167,7 +166,8 @@ sub _archive {
         if ( !$opts->{'ignore_missing'} || $@ !~ /No such file or directory/ ) {
             die $@;
         }
-        $opts->{'ignore_missing'}->($path) if ref $opts->{'ignore_missing'} eq 'CODE';
+        $opts->{'ignore_missing'}->($path)
+          if ref $opts->{'ignore_missing'} eq 'CODE';
     }
 }
 

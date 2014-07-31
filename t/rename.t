@@ -46,12 +46,7 @@ my @tar_output;
     $fs->rename( "/dir/item1.txt", "/dir/item2.txt" ) or die "rename: $!";
     @tar_output = $do_tar->();
 
-    cmp_bag \@tar_output,
-      [
-        '/dir/',
-        '/dir/item2.txt',
-      ],
-      'The created tarball contains only item2.txt, not item1.txt'
+    cmp_bag \@tar_output, [ '/dir/', '/dir/item2.txt', ], 'The created tarball contains only item2.txt, not item1.txt'
       or note "got: ", explain \@tar_output;
 }
 
@@ -62,13 +57,7 @@ my @tar_output;
     local *Filesys::POSIX::Real::Directory::rename_member;
     $fs->rename( "/dir/item2.txt", "/dir/item3.txt" ) or die "rename: $!";
     @tar_output = $do_tar->();
-    cmp_bag \@tar_output,
-      [
-        '/dir/',
-        '/dir/item2.txt',
-        '/dir/item3.txt',
-      ],
-      'Sanity check: When forcing the old, generic rename behavior to kick in, we get the old-style outcome for real backend storage (duplication)'
+    cmp_bag \@tar_output, [ '/dir/', '/dir/item2.txt', '/dir/item3.txt', ], 'Sanity check: When forcing the old, generic rename behavior to kick in, we get the old-style outcome for real backend storage (duplication)'
       or note "got: ", explain \@tar_output;
 }
 
@@ -77,5 +66,7 @@ my @tar_output;
 {
     local *Filesys::POSIX::Real::Directory::rename_member;
     local *Filesys::POSIX::Directory::rename_member;
-    throws_ok { $fs->rename( "/dir/item3.txt", "/dir/item4.txt" ) } qr/Can't locate object method "rename_member" via package/, "Further sanity check: The rename_member method was provided only by the class(es) we expected";
+    throws_ok { $fs->rename( "/dir/item3.txt", "/dir/item4.txt" ) }
+    qr/Can't locate object method "rename_member" via package/,
+      "Further sanity check: The rename_member method was provided only by the class(es) we expected";
 }

@@ -13,11 +13,7 @@ use warnings;
 sub new {
     my ( $class, $mountpoint, $root ) = @_;
 
-    return bless {
-        %$root,
-        'parent' => $mountpoint->{'parent'}
-      },
-      ref $root;
+    return bless { %$root, 'parent' => $mountpoint->{'parent'} }, ref $root;
 }
 
 1;

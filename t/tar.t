@@ -88,7 +88,8 @@ $fs->close($fd);
 # Test tar()'s output with the system tar(1).
 #
 {
-    my $tar_pid = open3( my ( $in, $out, $error ), qw/tar tf -/ ) or die("Unable to spawn tar: $!");
+    my $tar_pid = open3( my ( $in, $out, $error ), qw/tar tf -/ )
+      or die("Unable to spawn tar: $!");
     my $pid = fork;
 
     if ( $pid > 0 ) {
@@ -101,7 +102,10 @@ $fs->close($fd);
 
         waitpid( $pid, 0 );
 
-        ok( $? == 0, "Filesys::POSIX->tar() outputs archive data in a format readable by system tar(1)" );
+        ok(
+            $? == 0,
+            "Filesys::POSIX->tar() outputs archive data in a format readable by system tar(1)"
+        );
     }
     elsif ( $pid == 0 ) {
         close($out);
@@ -118,10 +122,7 @@ $fs->close($fd);
 # Ensure that Filesys::POSIX::Userland::Tar::Header lists a zero size for symlink inodes.
 #
 {
-    my $fs = Filesys::POSIX->new(
-        Filesys::POSIX::Mem->new,
-        'noatime' => 1
-    );
+    my $fs = Filesys::POSIX->new( Filesys::POSIX::Mem->new, 'noatime' => 1 );
 
     $fs->symlink( 'foo', 'bar' );
 
@@ -135,7 +136,10 @@ $fs->close($fd);
 
     my $header = Filesys::POSIX::Userland::Tar::Header->from_inode( $inode, 'bar' );
 
-    is( $header->{'size'}, 0, "File size on symlink inodes listed as 0 in header objects" );
+    is(
+        $header->{'size'}, 0,
+        "File size on symlink inodes listed as 0 in header objects"
+    );
 }
 
 #
@@ -197,10 +201,19 @@ $fs->close($fd);
         my $inode = Filesys::POSIX::Mem::Inode->new( 'mode' => $test->{'mode'} );
         my $parts = Filesys::POSIX::Path->new( $test->{'path'} );
 
-        my $result = Filesys::POSIX::Userland::Tar::Header::split_path_components( $parts, $inode );
+        my $result = Filesys::POSIX::Userland::Tar::Header::split_path_components(
+            $parts,
+            $inode
+        );
 
-        is( $result->{'prefix'}, $test->{'prefix'}, "Prefix of '$test->{'path'}' is '$test->{'prefix'}'" );
-        is( $result->{'suffix'}, $test->{'suffix'}, "Suffix of '$test->{'path'}' is '$test->{'suffix'}'" );
+        is(
+            $result->{'prefix'}, $test->{'prefix'},
+            "Prefix of '$test->{'path'}' is '$test->{'prefix'}'"
+        );
+        is(
+            $result->{'suffix'}, $test->{'suffix'},
+            "Suffix of '$test->{'path'}' is '$test->{'suffix'}'"
+        );
     }
 }
 
@@ -209,10 +222,7 @@ $fs->close($fd);
 # the LongLink extension functionality, in particular.
 #
 {
-    my $fs = Filesys::POSIX->new(
-        Filesys::POSIX::Mem->new,
-        'noatime' => 1
-    );
+    my $fs = Filesys::POSIX->new( Filesys::POSIX::Mem->new, 'noatime' => 1 );
 
     $fs->mkpath('foo/bar/baz');
 
@@ -221,8 +231,14 @@ $fs->close($fd);
         my $inode  = $fs->mkpath($path);
         my $header = Filesys::POSIX::Userland::Tar::Header->from_inode( $inode, $path );
 
-        ok( $header->{'path'} =~ /\/$/, "$path ends with a / in header object" );
-        is( substr( $header->encode_longlink, 0, 13 ) => '././@LongLink', "GNU tar header for $path contains proper path" );
+        ok(
+            $header->{'path'} =~ /\/$/,
+            "$path ends with a / in header object"
+        );
+        is(
+            substr( $header->encode_longlink, 0, 13 ) => '././@LongLink',
+            "GNU tar header for $path contains proper path"
+        );
     }
 
     {
@@ -230,7 +246,10 @@ $fs->close($fd);
         my $inode  = $fs->touch($path);
         my $header = Filesys::POSIX::Userland::Tar::Header->from_inode( $inode, $path );
 
-        ok( $header->{'path'} !~ /\/$/, "$path does not end with a / in header object" );
+        ok(
+            $header->{'path'} !~ /\/$/,
+            "$path does not end with a / in header object"
+        );
     }
 }
 
@@ -239,10 +258,7 @@ $fs->close($fd);
 # types.
 #
 {
-    my $fs = Filesys::POSIX->new(
-        Filesys::POSIX::Mem->new,
-        'noatime' => 1
-    );
+    my $fs = Filesys::POSIX->new( Filesys::POSIX::Mem->new, 'noatime' => 1 );
 
     my %FIELDS = (
         'path'          => [ 0,   100, 'filename (UStar suffix)' ],
@@ -368,7 +384,7 @@ $fs->close($fd);
         my $path   = $test->{'path'};
         my $inode  = $test->{'setup'}->($path);
         my $header = Filesys::POSIX::Userland::Tar::Header->from_inode( $inode, $path );
-        my $block = '';
+        my $block  = '';
 
         if ( $header->{'truncated'} ) {
             $block = $header->encode_longlink;
@@ -384,7 +400,10 @@ $fs->close($fd);
             my $expected = $test->{'expected'}->{$field};
             my $found = unpack( 'Z*', substr( $block, $offset, $len ) );
 
-            is( $found, $expected, "$type: $label correct in $len-byte field at offset $offset in header" );
+            is(
+                $found, $expected,
+                "$type: $label correct in $len-byte field at offset $offset in header"
+            );
         }
 
         if ( $test->{'values'} ) {
@@ -395,7 +414,10 @@ $fs->close($fd);
                 my $expected = $value->[2];
                 my $found = unpack( 'Z*', substr( $block, $offset, $len ) );
 
-                is( $found, $expected, "$type: Correct value in $len-byte field at offset $offset in header" );
+                is(
+                    $found, $expected,
+                    "$type: Correct value in $len-byte field at offset $offset in header"
+                );
             }
         }
     }

@@ -33,18 +33,12 @@ foreach ( grep { $_ ne '/' } sort keys %$mounts ) {
     "Able to create mount point $_";
 
     lives_ok {
-        $fs->mount(
-            $mounts->{$_}, $_,
-            'noatime' => 1
-        );
+        $fs->mount( $mounts->{$_}, $_, 'noatime' => 1 );
     }
     "Able to mount $mounts->{$_} to $_";
 
     throws_ok {
-        $fs->mount(
-            $mounts->{$_}, $_,
-            'noatime' => 1
-        );
+        $fs->mount( $mounts->{$_}, $_, 'noatime' => 1 );
     }
     qr/^Already mounted/, "Filesys::POSIX->mount() complains when requested device is already mounted";
 }
@@ -74,8 +68,14 @@ foreach ( sort keys %$mounts ) {
     my $fd = $fs->open( "$_/emptyfile", $O_CREAT );
 
     ok( !$@, "Filesys::POSIX->statfs('$_/') returns mount information" );
-    ok( $mount->{'dev'}   eq $expected, "Mount object for $_ lists expected device" );
-    ok( $fs->fstatfs($fd) eq $mount,    "Filesys::POSIX->fstatfs() on open file descriptor returns expected mount object" );
+    ok(
+        $mount->{'dev'} eq $expected,
+        "Mount object for $_ lists expected device"
+    );
+    ok(
+        $fs->fstatfs($fd) eq $mount,
+        "Filesys::POSIX->fstatfs() on open file descriptor returns expected mount object"
+    );
 
     $fs->close($fd);
 }
@@ -87,21 +87,36 @@ foreach ( sort keys %$mounts ) {
         $found++ if $mounts->{ $mount->{'path'} };
     }
 
-    ok( $found == keys %$mounts, "Filesys::POSIX->mountlist() works expectedly" );
+    ok(
+        $found == keys %$mounts,
+        "Filesys::POSIX->mountlist() works expectedly"
+    );
 }
 
 {
     $fs->chdir('/mnt/mem/tmp');
-    ok( $fs->getcwd eq '/mnt/mem/tmp', "Filesys::POSIX->getcwd() reports /mnt/mem/tmp after a chdir()" );
+    ok(
+        $fs->getcwd eq '/mnt/mem/tmp',
+        "Filesys::POSIX->getcwd() reports /mnt/mem/tmp after a chdir()"
+    );
 
     $fs->chdir('..');
-    ok( $fs->getcwd eq '/mnt/mem', "Filesys::POSIX->getcwd() reports /mnt/mem after a chdir('..')" );
+    ok(
+        $fs->getcwd eq '/mnt/mem',
+        "Filesys::POSIX->getcwd() reports /mnt/mem after a chdir('..')"
+    );
 
     $fs->chdir('..');
-    ok( $fs->getcwd eq '/mnt', "Filesys::POSIX->getcwd() reports /mnt after a chdir('..')" );
+    ok(
+        $fs->getcwd eq '/mnt',
+        "Filesys::POSIX->getcwd() reports /mnt after a chdir('..')"
+    );
 
     $fs->chdir('..');
-    ok( $fs->getcwd eq '/', "Filesys::POSIX->getcwd() reports / after a chdir('..')" );
+    ok(
+        $fs->getcwd eq '/',
+        "Filesys::POSIX->getcwd() reports / after a chdir('..')"
+    );
 }
 
 {

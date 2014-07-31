@@ -126,10 +126,7 @@ sub init {
 
     $self->{'flags'} = \%data;
 
-    my $root = Filesys::POSIX::Snapshot::Inode->from_inode(
-        $inode,
-        'dev' => $self
-    );
+    my $root = Filesys::POSIX::Snapshot::Inode->from_inode( $inode, 'dev' => $self );
 
     $self->{'root'}   = $root;
     $root->{'parent'} = $root;

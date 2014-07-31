@@ -105,7 +105,10 @@ modifier as specified in L<Filesys::POSIX::Bits>.
 sub seek {
     my ( $self, $pos, $whence ) = @_;
 
-    return sysseek( $$self, $pos, Filesys::POSIX::Bits::System::convertWhenceToSystem($whence) );
+    return sysseek(
+        $$self, $pos,
+        Filesys::POSIX::Bits::System::convertWhenceToSystem($whence)
+    );
 }
 
 =item C<$handle-E<gt>tell>

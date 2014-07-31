@@ -136,10 +136,7 @@ sub init {
 
     my $path = $data{'path'} or Carp::confess('Invalid argument');
 
-    my $root = Filesys::POSIX::Real::Inode->from_disk(
-        $path,
-        'dev' => $self
-    );
+    my $root = Filesys::POSIX::Real::Inode->from_disk( $path, 'dev' => $self );
 
     confess('Not a directory') unless $root->dir;
 
