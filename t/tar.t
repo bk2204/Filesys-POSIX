@@ -11,6 +11,7 @@ use warnings;
 use Filesys::POSIX::Bits;
 
 use Filesys::POSIX                        ();
+use Filesys::POSIX::Real                  ();
 use Filesys::POSIX::Mem                   ();
 use Filesys::POSIX::Mem::Inode            ();
 use Filesys::POSIX::IO::Handle            ();
@@ -18,8 +19,9 @@ use Filesys::POSIX::Userland::Tar::Header ();
 
 use Fcntl;
 use IPC::Open3;
+use IO::Socket::UNIX;
 
-use Test::More ( 'tests' => 71 );
+use Test::More ( 'tests' => 73 );
 use Test::Exception;
 use Test::NoWarnings;
 
@@ -115,6 +117,71 @@ $fs->close($fd);
     }
     elsif ( !defined $pid ) {
         die("Unable to fork(): $!");
+    }
+}
+
+#
+# Test tar()'s ability to safely ignore sockets.
+#
+{
+    my @unwanted = qw(./foo.sock);
+    my @expected = qw(./bar.file);
+    my %found;
+
+    my $tmpdir = File::Temp::tempdir( 'CLEANUP' => 1 );
+
+    my $sock = IO::Socket::UNIX->new(
+        'Type'   => SOCK_DGRAM,
+        'Local'  => "$tmpdir/foo.sock",
+        'Listen' => 1
+    );
+
+    system 'touch' => "$tmpdir/bar.file";
+
+    my $fs = Filesys::POSIX->new(
+        Filesys::POSIX::Real->new,
+        'path'    => $tmpdir,
+        'noatime' => 1
+    );
+    $fs->import_module('Filesys::POSIX::Userland::Tar');
+
+    my $tar_pid = open3( my ( $in, $out ), undef, qw/tar tf -/ )
+      or die("Unable to spawn tar: $!");
+
+    my $pid = fork();
+
+    if ( !defined $pid ) {
+        die("Unable to fork(): $!");
+    }
+    elsif ( $pid == 0 ) {
+        close $out;
+
+        $fs->tar( Filesys::POSIX::IO::Handle->new($in), '.' );
+
+        exit 0;
+    }
+
+    close $in;
+
+    while ( my $line = readline($out) ) {
+        chomp $line;
+
+        $found{$line} = 1;
+    }
+
+    close $out;
+
+    waitpid( $pid, 0 )
+      or die("Unable to waitpid() on Filesys::POSIX subprocess $pid: $!");
+    waitpid( $tar_pid, 0 )
+      or die("Unable to waitpid() on tar subprocess $tar_pid: $!");
+
+    foreach my $item (@expected) {
+        ok( $found{$item}, "Found expected item $item in tar output" );
+    }
+
+    foreach my $item (@unwanted) {
+        ok( !exists $found{$item}, "Did not found $item in tar output" );
     }
 }
 

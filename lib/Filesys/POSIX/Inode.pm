@@ -1,4 +1,4 @@
-# Copyright (c) 2012, cPanel, Inc.
+# Copyright (c) 2014, cPanel, Inc.
 # All rights reserved.
 # http://cpanel.net/
 #
@@ -83,6 +83,16 @@ Returns true if the current inode is a FIFO.
 
 sub fifo {
     ( shift->{'mode'} & $S_IFMT ) == $S_IFIFO;
+}
+
+=item C<$inode-E<gt>sock>
+
+Returns true if the current inode refers to a socket.
+
+=cut
+
+sub sock {
+    ( shift->{'mode'} & $S_IFMT ) == $S_IFSOCK;
 }
 
 =item C<$inode-E<gt>major>

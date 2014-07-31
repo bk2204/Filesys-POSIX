@@ -37,6 +37,7 @@ foreach my $ignore ( 0 .. 1 ) {
 
     for ( 1 .. $max_files ) {
         open( my $fh, ">", "$tempdir/$_" );
+        print {$fh} "foo\n";
         close($fh);
         $fs->map( "$tempdir/$_", "foo/$_" );
     }
