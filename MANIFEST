@@ -51,7 +51,7 @@ t/path.t
 t/real.t
 t/snapshot.t
 t/stat.t
-t/tar-race.t
+t/tar-missing.t
 t/tar.t
 t/test.t
 t/umask.t
