@@ -27,8 +27,8 @@ Filesys::POSIX::Real - Portal to actual underlying filesystem
     use Filesys::POSIX::Real;
 
     my $fs = Filesys::POSIX->new(Filesys::POSIX::Real->new,
-        'special'   => 'real:/home/foo/test',
-        'noatime'   => 1
+        'path'    => '/home/foo/test',
+        'noatime' => 1
     );
 
 =head1 DESCRIPTION
@@ -115,14 +115,13 @@ Exceptions will be thrown for the following:
 
 =over
 
-=item Invalid special path
+=item Invalid argument
 
-The format of the C<$data{'special'}> argument does not match the aforementioned
-specification.
+No value was specified for C<$data{'path'}>.
 
 =item Not a directory
 
-The path specified in C<$data{'special'}> on the real filesystem does not
+The path specified in C<$data{'path'}> on the real filesystem does not
 correspond to an actual directory.
 
 =back
