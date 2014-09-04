@@ -1,3 +1,4 @@
+.perltidyrc
 COPYRIGHT
 lib/Filesys/POSIX.pm
 lib/Filesys/POSIX/Bits.pm

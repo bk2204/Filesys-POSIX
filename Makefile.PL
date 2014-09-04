@@ -1,4 +1,4 @@
-# Copyright (c) 2012, cPanel, Inc.
+# Copyright (c) 2014, cPanel, Inc.
 # All rights reserved.
 # http://cpanel.net/
 #
@@ -10,17 +10,24 @@ use ExtUtils::MakeMaker;
 WriteMakefile(
     'NAME'         => 'Filesys::POSIX',
     'VERSION_FROM' => 'lib/Filesys/POSIX.pm',
-    'AUTHOR'       => 'Erin Schoenhals <erin@cpanel.net>',
+    'AUTHOR'       => 'Xan Tronix <xan@cpan.org>',
     'LICENSE'      => 'perl',
-    'ABSTRACT'     => 'Provides POSIX filesystem semantics in pure Perl',
+    'ABSTRACT'     => 'Provides POSIX-like filesystem semantics in pure Perl',
 
-    'PREREQ_PM' => {
-        'Carp'         => 0
-    },
+    'PREREQ_PM' => { 'Carp' => 0 },
 
     'BUILD_REQUIRES' => {
         'Test::Simple'     => '0.44',
         'Test::Exception'  => '0.26',
         'Test::NoWarnings' => '0.081'
+    },
+
+    'META_MERGE' => {
+        'meta-spec' => { 'version' => 2 },
+        'resources' => {
+            'type' => 'git',
+            'url'  => 'git://github.com/xantronix/Filesys-POSIX.git',
+            'web'  => 'https://github.com/xantronix/Filesys-POSIX'
+        }
     }
 );
