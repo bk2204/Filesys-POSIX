@@ -1,4 +1,4 @@
-# Copyright (c) 2012, cPanel, Inc.
+# Copyright (c) 2014, cPanel, Inc.
 # All rights reserved.
 # http://cpanel.net/
 #

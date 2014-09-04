@@ -50,9 +50,12 @@ my @tar_output;
       or note "got: ", explain \@tar_output;
 }
 
-# Sanity check: If we use the wrong rename_member method, we get the old, wrong behavior for "Real"
-# that forgets to update the state of the real filesystem. (This is still correct for Directory
-# objects that aren't based on a real filesystem, though.)
+#
+# Sanity check: If we use the wrong rename_member method, we get the old, wrong
+# behavior for "Real" that forgets to update the state of the real filesystem.
+# (This is still correct for Directory objects that aren't based on a real
+# filesystem, though.)
+#
 {
     local *Filesys::POSIX::Real::Directory::rename_member;
     $fs->rename( "/dir/item2.txt", "/dir/item3.txt" ) or die "rename: $!";

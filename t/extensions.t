@@ -1,4 +1,4 @@
-# Copyright (c) 2012, cPanel, Inc.
+# Copyright (c) 2014, cPanel, Inc.
 # All rights reserved.
 # http://cpanel.net/
 #
@@ -18,6 +18,7 @@ use File::Temp ();
 use Test::More ( 'tests' => 11 );
 use Test::Exception;
 use Test::NoWarnings;
+use Test::Filesys::POSIX::Error;
 
 my $tmpdir = File::Temp::tempdir( 'CLEANUP' => 1 );
 my ( $tmpfile_fh, $tmpfile ) = File::Temp::tempfile( 'DIR' => $tmpdir );
@@ -42,11 +43,11 @@ my $inode = $fs->stat('/bin/sh');
         "Filesys::POSIX->map() succeeded"
     );
 
-    throws_ok {
+    throws_errno_ok {
         $fs->touch('/bin/false');
         $fs->map( '/bin/false', '/bin/false' );
     }
-    qr/^File exists/, "Filesys::POSIX->map() fails when destination exists";
+    &Errno::EEXIST, "Filesys::POSIX->map() fails when destination exists";
 }
 
 #
@@ -59,11 +60,11 @@ my $inode = $fs->stat('/bin/sh');
         "Filesys::POSIX->attach() operates expectedly"
     );
 
-    throws_ok {
+    throws_errno_ok {
         $fs->touch('/bin/ksh');
         $fs->attach( $inode, '/bin/ksh' );
     }
-    qr/^File exists/, "Filesys::POSIX->attach() will complain when destination exists";
+    &Errno::EEXIST, "Filesys::POSIX->attach() will complain when destination exists";
 }
 
 #
@@ -77,26 +78,26 @@ my $inode = $fs->stat('/bin/sh');
         "Filesys::POSIX->alias() operates expectedly"
     );
 
-    throws_ok {
+    throws_errno_ok {
         $fs->alias( '/bin/sh', '/mnt/mem/bin/bash' );
     }
-    qr/^File exists/, "Filesys::POSIX->alias() will complain when destination exists";
+    &Errno::EEXIST, "Filesys::POSIX->alias() will complain when destination exists";
 }
 
 #
 # Testing Filesys::POSIX->detach()
 #
 {
-    throws_ok {
+    throws_errno_ok {
         $fs->detach('/mnt/mem/bin/bash');
         $fs->stat('/mnt/mem/bin/bash');
     }
-    qr/^No such file or directory/, "Filesys::POSIX->detach() operates expectedly";
+    &Errno::ENOENT, "Filesys::POSIX->detach() operates expectedly";
 
-    throws_ok {
+    throws_errno_ok {
         $fs->detach('/mnt/mem/bin/bash');
     }
-    qr/^No such file or directory/, "Filesys::POSIX->detach() will complain when specified inode does not exist";
+    &Errno::ENOENT, "Filesys::POSIX->detach() will complain when specified inode does not exist";
 }
 
 #
@@ -110,8 +111,8 @@ my $inode = $fs->stat('/bin/sh');
         "Filesys::POSIX->replace() operates expectedly"
     );
 
-    throws_ok {
+    throws_errno_ok {
         $fs->replace( '/bin/csh', $inode );
     }
-    qr/^No such file or directory/, "Filesys::POSIX->replace() will complain when specified path does not exist";
+    &Errno::ENOENT, "Filesys::POSIX->replace() will complain when specified path does not exist";
 }

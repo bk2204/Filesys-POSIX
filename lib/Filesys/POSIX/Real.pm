@@ -1,4 +1,4 @@
-# Copyright (c) 2012, cPanel, Inc.
+# Copyright (c) 2014, cPanel, Inc.
 # All rights reserved.
 # http://cpanel.net/
 #
@@ -14,8 +14,7 @@ use Filesys::POSIX::Bits;
 use Filesys::POSIX::Path            ();
 use Filesys::POSIX::Real::Inode     ();
 use Filesys::POSIX::Real::Directory ();
-
-use Carp qw/confess/;
+use Filesys::POSIX::Error qw(throw);
 
 =head1 NAME
 
@@ -115,11 +114,11 @@ Exceptions will be thrown for the following:
 
 =over
 
-=item Invalid argument
+=item * EINVAL (Invalid argument)
 
 No value was specified for C<$data{'path'}>.
 
-=item Not a directory
+=item * ENOTDIR (Not a directory)
 
 The path specified in C<$data{'path'}> on the real filesystem does not
 correspond to an actual directory.
@@ -133,11 +132,11 @@ correspond to an actual directory.
 sub init {
     my ( $self, %data ) = @_;
 
-    my $path = $data{'path'} or Carp::confess('Invalid argument');
+    my $path = $data{'path'} or throw &Errno::EINVAL;
 
     my $root = Filesys::POSIX::Real::Inode->from_disk( $path, 'dev' => $self );
 
-    confess('Not a directory') unless $root->dir;
+    throw &Errno::ENOTDIR unless $root->dir;
 
     $self->{'flags'} = \%data;
     $self->{'path'}  = Filesys::POSIX::Path->full($path);
@@ -147,3 +146,24 @@ sub init {
 }
 
 1;
+
+__END__
+
+=head1 AUTHOR
+
+Written by Xan Tronix <xan@cpan.org>
+
+=head1 CONTRIBUTORS
+
+=over
+
+=item Rikus Goodell <rikus.goodell@cpanel.net>
+
+=item Brian Carlson <brian.carlson@cpanel.net>
+
+=back
+
+=head1 COPYRIGHT
+
+Copyright (c) 2014, cPanel, Inc.  Distributed under the terms of the Perl
+Artistic license.

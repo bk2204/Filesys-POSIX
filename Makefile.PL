@@ -19,7 +19,9 @@ WriteMakefile(
     'BUILD_REQUIRES' => {
         'Test::Simple'     => '0.44',
         'Test::Exception'  => '0.26',
-        'Test::NoWarnings' => '0.081'
+        'Test::NoWarnings' => '0.081',
+        'Test::Builder'    => 0,
+        'Test::Deep'       => 0
     },
 
     'META_MERGE' => {
@@ -31,3 +33,22 @@ WriteMakefile(
         }
     }
 );
+
+package MY;
+
+sub test {
+    my ( $self, @args ) = @_;
+
+    my $text = $self->SUPER::test(@args);
+
+    my %substitutions = ( '$(FULLPERLRUN)' => '$(FULLPERLRUN) -It/lib' );
+
+    foreach my $search ( sort keys %substitutions ) {
+        my $replace = $substitutions{$search};
+
+        $text =~ s/\Q$search\E/$replace/mg;
+    }
+
+    return $text;
+}
+

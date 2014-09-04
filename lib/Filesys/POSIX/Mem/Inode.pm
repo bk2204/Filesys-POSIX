@@ -1,4 +1,4 @@
-# Copyright (c) 2012, cPanel, Inc.
+# Copyright (c) 2014, cPanel, Inc.
 # All rights reserved.
 # http://cpanel.net/
 #
@@ -16,9 +16,9 @@ use Filesys::POSIX::Directory::Handle ();
 use Filesys::POSIX::Mem::Bucket       ();
 use Filesys::POSIX::Mem::Directory    ();
 
-use Carp ();
+use Filesys::POSIX::Error qw(throw);
 
-our @ISA = qw/Filesys::POSIX::Inode/;
+our @ISA = qw(Filesys::POSIX::Inode);
 
 sub new {
     my ( $class, %opts ) = @_;
@@ -51,7 +51,7 @@ sub child {
     my ( $self, $name, $mode ) = @_;
     my $directory = $self->directory;
 
-    Carp::confess('File exists') if $directory->exists($name);
+    throw &Errno::EEXIST if $directory->exists($name);
 
     my $child = __PACKAGE__->new(
         'mode'   => $mode,
@@ -79,16 +79,19 @@ sub chmod {
 
 sub readlink {
     my ($self) = @_;
-    Carp::confess('Not a symlink') unless $self->link;
+
+    throw &Errno::EINVAL unless $self->link;
 
     return $self->{'dest'};
 }
 
 sub symlink {
     my ( $self, $dest ) = @_;
-    Carp::confess('Not a symlink') unless $self->link;
+
+    throw &Errno::EINVAL unless $self->link;
 
     $self->{'dest'} = $dest;
+
     return $self;
 }
 

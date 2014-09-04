@@ -5,15 +5,15 @@
 # This is free software; you can redistribute it and/or modify it under the same
 # terms as Perl itself.  See the LICENSE file for further details.
 
-package Filesys::POSIX::VFS::Inode;
-
 use strict;
 use warnings;
 
-sub new {
-    my ( $class, $mountpoint, $root ) = @_;
+use Filesys::POSIX::Error qw(throw);
 
-    return bless { %$root, 'parent' => $mountpoint->{'parent'} }, ref $root;
+use Test::Simple ( 'tests' => 1 );
+use Test::Filesys::POSIX::Error;
+
+throws_errno_ok {
+    throw &Errno::ENOENT;
 }
-
-1;
+&Errno::ENOENT, 'throw() does indeed throw errno stuff just fine';

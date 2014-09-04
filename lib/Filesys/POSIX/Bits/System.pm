@@ -1,4 +1,4 @@
-# Copyright (c) 2013, cPanel, Inc.
+# Copyright (c) 2014, cPanel, Inc.
 # All rights reserved.
 # http://cpanel.net/
 #
@@ -220,4 +220,17 @@ by POSIX, but is rather an almost ubiquitously supported extension.
 
 =back
 
-=cut
+=head1 AUTHORS
+
+=over
+
+=item Rikus Goodell <rikus.goodell@cpanel.net>
+
+=item Brian Carlson <brian.carlson@cpanel.net>
+
+=back
+
+=head1 COPYRIGHT
+
+Copyright (c) 2014, cPanel, Inc.  Distributed under the terms of the Perl
+Artistic license.

@@ -1,4 +1,4 @@
-# Copyright (c) 2012, cPanel, Inc.
+# Copyright (c) 2014, cPanel, Inc.
 # All rights reserved.
 # http://cpanel.net/
 #
@@ -14,7 +14,7 @@ use Filesys::POSIX::Bits;
 use Filesys::POSIX::Path       ();
 use Filesys::POSIX::VFS::Inode ();
 
-use Carp qw/confess/;
+use Filesys::POSIX::Error qw(throw);
 
 sub new {
     return bless {
@@ -42,7 +42,7 @@ sub statfs {
     }
 
     unless ($ret) {
-        confess('Not mounted') unless $opts{'silent'};
+        throw &Errno::ENXIO unless $opts{'silent'};
     }
 
     return $ret;
@@ -64,7 +64,7 @@ sub mount {
     my ( $self, $dev, $path, $mountpoint, %data ) = @_;
 
     if ( grep { $_->{'dev'} eq $dev } @{ $self->{'mounts'} } ) {
-        confess('Already mounted');
+        throw &Errno::EBUSY;
     }
 
     $data{'special'} ||= scalar $dev;
@@ -158,8 +158,8 @@ sub unmount {
     #
     foreach ( @{ $self->{'mounts'} } ) {
         next if $_ == $mount;
-        confess('Device or resource busy')
-          if $_->{'mountpoint'}->{'dev'} == $mount->{'dev'};
+
+        throw &Errno::EBUSY if $_->{'mountpoint'}->{'dev'} == $mount->{'dev'};
     }
 
     #

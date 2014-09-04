@@ -1,4 +1,4 @@
-# Copyright (c) 2012, cPanel, Inc.
+# Copyright (c) 2014, cPanel, Inc.
 # All rights reserved.
 # http://cpanel.net/
 #
@@ -16,6 +16,7 @@ use Filesys::POSIX::Snapshot ();
 
 use Test::More ( 'tests' => 10 );
 use Test::Exception;
+use Test::Filesys::POSIX::Error;
 
 sub mkskelfs {
     my $fs = Filesys::POSIX->new( Filesys::POSIX::Mem->new );
@@ -73,12 +74,12 @@ sub mkskelfs {
 {
     my $fs = mkskelfs();
 
-    throws_ok {
+    throws_errno_ok {
         $fs->mkpath('/snapshots/1');
 
         $fs->mount( Filesys::POSIX::Snapshot->new, '/snapshots/1' );
     }
-    qr/^Invalid argument/, "Filesys::POSIX::Snapshot->new() emits 'Invalid argument' when no 'path' is specified";
+    &Errno::EINVAL, "Filesys::POSIX::Snapshot->new() emits 'Invalid argument' when no 'path' is specified";
 
     lives_ok {
         $fs->mkpath('/snapshots/2');
@@ -90,7 +91,7 @@ sub mkskelfs {
     }
     "Filesys::POSIX::Snapshot->new() succeeds when 'path' is specified";
 
-    throws_ok {
+    throws_errno_ok {
         $fs->mkpath('/snapshots/3');
 
         $fs->mount(
@@ -98,7 +99,7 @@ sub mkskelfs {
             '/snapshots/3', 'path' => '/dev/null'
         );
     }
-    qr/^Not a directory/, "Filesys::POSIX::Snapshot->new() emits 'Not a directory' when non-directory 'path' specified";
+    &Errno::ENOTDIR, "Filesys::POSIX::Snapshot->new() emits 'Not a directory' when non-directory 'path' specified";
 }
 
 {
@@ -164,10 +165,10 @@ sub mkskelfs {
     #
     my $inode = $fs->stat('/snapshots/2/file');
 
-    throws_ok {
+    throws_errno_ok {
         $inode->directory;
     }
-    qr/^Not a directory/, 'Filesys::POSIX::Snapshot::Inode->directory() throws "Not a directory" as appropriate';
+    &Errno::ENOTDIR, 'Filesys::POSIX::Snapshot::Inode->directory() throws "Not a directory" as appropriate';
 
     #
     # Exercise code that avoids performing copy-on-write when performing readonly

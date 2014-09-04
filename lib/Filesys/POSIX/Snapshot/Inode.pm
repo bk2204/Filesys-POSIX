@@ -1,4 +1,4 @@
-# Copyright (c) 2012, cPanel, Inc.
+# Copyright (c) 2014, cPanel, Inc.
 # All rights reserved.
 # http://cpanel.net/
 #
@@ -15,9 +15,9 @@ use Filesys::POSIX::Mem::Inode     ();
 use Filesys::POSIX::Mem::Directory ();
 use Filesys::POSIX::Mem::Bucket    ();
 
-use Carp ();
+use Filesys::POSIX::Error qw(throw);
 
-our @ISA = qw/Filesys::POSIX::Mem::Inode/;
+our @ISA = qw(Filesys::POSIX::Mem::Inode);
 
 sub from_inode {
     my ( $class, $inode, %opts ) = @_;
@@ -113,7 +113,7 @@ sub _copy_file {
 sub directory {
     my ($self) = @_;
 
-    Carp::confess("Not a directory") unless $self->dir;
+    throw &Errno::ENOTDIR unless $self->dir;
 
     unless ( $self->{'directory'} ) {
         $self->{'directory'} = $self->_copy_dir( $self->{'inode'}->directory );

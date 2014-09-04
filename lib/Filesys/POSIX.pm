@@ -1,4 +1,4 @@
-# Copyright (c) 2012, cPanel, Inc.
+# Copyright (c) 2014, cPanel, Inc.
 # All rights reserved.
 # http://cpanel.net/
 #
@@ -19,6 +19,8 @@ use Filesys::POSIX::Bits;
 use Filesys::POSIX::IO       ();
 use Filesys::POSIX::Mount    ();
 use Filesys::POSIX::Userland ();
+
+use Filesys::POSIX::Error qw(throw);
 
 use Carp qw/confess/;
 
@@ -88,8 +90,10 @@ again to the VFS, where the options will be stored for later retrieval.
 
 =head1 ERROR HANDLING
 
-Errors are emitted in the form of exceptions thrown by C<Carp::confess()>, with
-full stack traces.
+Errors are emitted in the form of exceptions thrown by
+L<C<Carp::confess()>|Carp/confess>, with full stack traces.  Where possible,
+L<C<$!>|perlvar/$!> is set with an appropriate error code from L<Errno>, and a
+stringified L<C<$!>|perlvar/$!> is thrown.
 
 =cut
 
@@ -235,7 +239,9 @@ sub _find_inode {
             $inode = $self->{'vfs'}->vnode( $directory->get($item) );
         }
 
-        confess('No such file or directory') unless $inode;
+        $! = 0;
+
+        throw &Errno::ENOENT unless $inode;
 
         if ( $inode->link ) {
             $hier = $hier->concat( $inode->readlink )
@@ -296,16 +302,19 @@ sub fstat {
 
 Change the current working directory to the path specified.  An
 C<$fs-E<gt>stat()> call will be used internally to lookup the inode for that
-path; an exception "Not a directory" will be thrown unless the inode found is a
-directory.  The internal current working directory pointer will be updated with
-the directory inode found; this same inode will also be returned.
+path; an ENOTDIR will be thrown unless the inode found is a directory.  The
+internal current working directory pointer will be updated with the directory
+inode found; this same inode will also be returned.
 
 =cut
 
 sub chdir {
     my ( $self, $path ) = @_;
     my $inode = $self->stat($path);
-    confess('Not a directory') unless $inode->dir;
+
+    $! = 0;
+
+    throw &Errno::ENOTDIR unless $inode->dir;
 
     return $self->{'cwd'} = $inode;
 }
@@ -315,14 +324,17 @@ sub chdir {
 When passed a file descriptor for a directory, update the internal pointer to
 the current working directory to that directory resolved from the file
 descriptor table, and return the same directory inode.  If the inode is not a
-directory, an exception "Not a directory" will be thrown.
+directory, an ENOTDIR will be thrown.
 
 =cut
 
 sub fchdir {
     my ( $self, $fd ) = @_;
     my $inode = $self->fstat($fd);
-    confess('Not a directory') unless $inode->dir;
+
+    $! = 0;
+
+    throw &Errno::ENOTDIR unless $inode->dir;
 
     return $self->{'cwd'} = $inode;
 }
@@ -401,9 +413,9 @@ sub fchmod {
 
 Create a new directory at the path specified, applying the permissions field in
 the mode value specified.  If no mode is specified, the default permissions of
-I<0777> will be modified by the current umask value.  A "Not a directory"
-exception will be thrown in case the intended parent of the directory to be
-created is not actually a directory itself.
+I<0777> will be modified by the current umask value.  An ENOTDIR exception will
+be thrown in case the intended parent of the directory to be created is not
+actually a directory itself.
 
 A reference to the newly-created directory inode will be returned.
 
@@ -440,17 +452,17 @@ Exceptions thrown:
 
 =over
 
-=item Cross-device link
+=item * EXDEV (Cross-device link)
 
 The inode resolved for the link source is not associated with the same device
 as the inode of the destination's parent directory.
 
-=item Is a directory
+=item * EISDIR (Is a directory)
 
 Thrown if the source inode is a directory.  Hard links can only be made for
 non-directory inodes.
 
-=item File exists
+=item * EEXIST (File exists)
 
 Thrown if an entry at the destination path already exists.
 
@@ -466,9 +478,11 @@ sub link {
     my $parent    = $self->stat( $hier->dirname );
     my $directory = $parent->directory;
 
-    confess('Cross-device link') unless $inode->{'dev'} == $parent->{'dev'};
-    confess('Is a directory') if $inode->dir;
-    confess('File exists') if $directory->exists($name);
+    $! = 0;
+
+    throw &Errno::EXDEV unless $inode->{'dev'} == $parent->{'dev'};
+    throw &Errno::EISDIR if $inode->dir;
+    throw &Errno::EEXIST if $directory->exists($name);
 
     $directory->set( $name, $inode );
 
@@ -479,8 +493,8 @@ sub link {
 
 The path in the first argument specified, C<$old>, is cleaned up using
 C<Filesys::POSIX::Path-E<gt>full>, and stored in a new symlink inode created
-in the location specified by C<$new>.  An exception will be thrown if an inode
-at the path indicated by C<$new> exists.  A reference to the newly-created
+in the location specified by C<$new>.  An EEXIST exception will be thrown if an
+inode at the path indicated by C<$new> exists.  A reference to the newly-created
 symlink inode will be returned.
 
 =cut
@@ -498,15 +512,18 @@ sub symlink {
 =item C<$fs-E<gt>readlink($path)>
 
 Using C<$fs-E<gt>lstat()> to resolve the given path for an inode, the symlink
-destination path associated with the inode is returned as a string.  A "Not a
-symlink" exception is thrown unless the inode found is indeed a symlink.
+destination path associated with the inode is returned as a string.  An EINVAL
+exception is thrown unless the inode found is indeed a symlink.
 
 =cut
 
 sub readlink {
     my ( $self, $path ) = @_;
     my $inode = $self->lstat($path);
-    confess('Not a symlink') unless $inode->link;
+
+    $! = 0;
+
+    throw &Errno::EINVAL unless $inode->link;
 
     return $inode->readlink;
 }
@@ -519,12 +536,12 @@ exceptions will be thrown in the event of certain errors:
 
 =over
 
-=item No such file or directory
+=item * ENOENT (No such file or directory)
 
 No entry was found in the path's parent directory for the item specified in the
 path.
 
-=item Is a directory
+=item * EISDIR (Is a directory)
 
 C<$fs-E<gt>unlink()> was called with a directory specified.
 C<$fs-E<gt>rmdir()> must be used instead for removing directory inodes.
@@ -544,8 +561,10 @@ sub unlink {
     my $directory = $parent->directory;
     my $inode     = $directory->get($name);
 
-    confess('No such file or directory') unless $inode;
-    confess('Is a directory') if $inode->dir;
+    $! = 0;
+
+    throw &Errno::ENOENT unless $inode;
+    throw &Errno::EISDIR if $inode->dir;
 
     $directory->delete($name);
 
@@ -577,27 +596,27 @@ The following exceptions are thrown for error conditions:
 
 =over
 
-=item Operation not permitted
+=item * EPERM (Operation not permitted)
 
 Currently, C<$fs-E<gt>rename()> cannot operate if the inode at the old location
 is an inode associated with a Filesys::POSIX::Real filesystem type.
 
-=item Cross-device link
+=item * EXDEV (Cross-device link)
 
 The inode at the old path does not exist on the same filesystem device as the
 inode of the parent directory specified in the new path.
 
-=item Not a directory
+=item * ENOTDIR (Not a directory)
 
 The old inode is a directory, but an existing inode found in the new path
 specified, is not.
 
-=item Is a directory
+=item * EISDIR (Is a directory)
 
 The old inode is not a directory, but an existing inode found in the new path
 specified, is.
 
-=item Directory not empty
+=item * ENOTEMPTY (Directory not empty)
 
 Both the old and new paths correspond to a directory, but the new path is not
 of an empty directory.
@@ -623,15 +642,17 @@ sub rename {
     my $new_parent = $self->stat( $new_hier->dirname );
     my $new_dir    = $new_parent->directory;
 
-    confess('Cross-device link') unless $inode->{'dev'} eq $new_parent->{'dev'};
+    $! = 0;
+
+    throw &Errno::EXDEV unless $inode->{'dev'} eq $new_parent->{'dev'};
 
     if ( my $existing = $new_dir->get($new_name) ) {
         if ( $inode->dir ) {
-            confess('Not a directory')     unless $existing->dir;
-            confess('Directory not empty') unless $existing->empty;
+            throw &Errno::ENOTDIR   unless $existing->dir;
+            throw &Errno::ENOTEMPTY unless $existing->empty;
         }
         else {
-            confess('Is a directory') if $existing->dir;
+            throw &Errno::EISDIR if $existing->dir;
         }
     }
 
@@ -647,20 +668,20 @@ the following conditions:
 
 =over
 
-=item No such file or directory
+=item * ENOENT (No such file or directory)
 
 No inode exists by the name specified in the final component of the path in
 the parent directory specified in the path.
 
-=item Device or resource busy
+=item * EBUSY (Device or resource busy)
 
 The directory specified is an active mount point.
 
-=item Not a directory
+=item * ENOTDIR (Not a directory)
 
 The inode found at C<$path> is not a directory.
 
-=item Directory not empty
+=item * ENOTEMPTY (Directory not empty)
 
 The directory is not empty.
 
@@ -679,10 +700,16 @@ sub rmdir {
     my $directory = $parent->directory;
     my $inode     = $directory->get($name);
 
-    confess('No such file or directory') unless $inode;
-    confess('Device or resource busy')
-      if $self->{'vfs'}->statfs( $self->stat($path), 'exact' => 1, 'silent' => 1 );
-    confess('Directory not empty') unless $inode->empty;
+    $! = 0;
+
+    throw &Errno::ENOENT unless $inode;
+
+    throw &Errno::EBUSY if $self->{'vfs'}->statfs(
+        $self->stat($path),
+        'exact' => 1, 'silent' => 1
+    );
+
+    throw &Errno::ENOTEMPTY unless $inode->empty;
 
     $directory->delete($name);
 
@@ -719,8 +746,10 @@ sub mknod {
     my $format = $mode & $S_IFMT;
     my $perms  = $mode & $S_IPERM;
 
-    confess('Invalid argument') unless $format;
-    confess('File exists') if $directory->exists($name);
+    $! = 0;
+
+    throw &Errno::EINVAL unless $format;
+    throw &Errno::EEXIST if $directory->exists($name);
 
     my $inode = $parent->child( $name, $format | $perms );
 
@@ -847,3 +876,22 @@ Used by Filesys::POSIX, this module provides an implementation of a filesystem
 mount table and VFS inode resolution routines.
 
 =back
+
+=head1 AUTHOR
+
+Written by Xan Tronix <xan@cpan.org>
+
+=head1 CONTRIBUTORS
+
+=over
+
+=item Rikus Goodell <rikus.goodell@cpanel.net>
+
+=item Brian Carlson <brian.carlson@cpanel.net>
+
+=back
+
+=head1 COPYRIGHT
+
+Copyright (c) 2014, cPanel, Inc.  Distributed under the terms of the Perl
+Artistic license.

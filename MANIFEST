@@ -5,6 +5,7 @@ lib/Filesys/POSIX/Bits.pm
 lib/Filesys/POSIX/Bits/System.pm
 lib/Filesys/POSIX/Directory.pm
 lib/Filesys/POSIX/Directory/Handle.pm
+lib/Filesys/POSIX/Error.pm
 lib/Filesys/POSIX/Extensions.pm
 lib/Filesys/POSIX/FdTable.pm
 lib/Filesys/POSIX/Inode.pm
@@ -36,6 +37,7 @@ t/001_load.t
 t/bits.t
 t/bucket.t
 t/directory.t
+t/error.t
 t/extensions.t
 t/false-filename.t
 t/fd_table.t
@@ -45,6 +47,7 @@ t/fs.t
 t/handle.t
 t/inode.t
 t/io.t
+t/lib/Test/Filesys/POSIX/Error.pm
 t/module.t
 t/mount.t
 t/mount_flags.t

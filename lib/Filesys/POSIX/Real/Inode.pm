@@ -1,4 +1,4 @@
-# Copyright (c) 2012, cPanel, Inc.
+# Copyright (c) 2014, cPanel, Inc.
 # All rights reserved.
 # http://cpanel.net/
 #
@@ -15,9 +15,9 @@ use Filesys::POSIX::Bits::System;
 use Filesys::POSIX::Inode      ();
 use Filesys::POSIX::Mem::Inode ();
 use Filesys::POSIX::IO::Handle ();
+use Filesys::POSIX::Error qw(throw);
 
-use Fcntl qw/:DEFAULT :mode/;
-use Carp qw/confess/;
+use Fcntl qw(:DEFAULT :mode);
 
 our @ISA = qw/Filesys::POSIX::Inode/;
 
@@ -51,8 +51,7 @@ sub new {
 
 sub from_disk {
     my ( $class, $path, %opts ) = @_;
-    my @st = $opts{'st_info'} ? @{ $opts{'st_info'} } : lstat $path
-      or confess("$!");    # Use quotes to copy the error string (resolves Case 98565).
+    my @st = $opts{'st_info'} ? @{ $opts{'st_info'} } : lstat $path or Carp::confess("$!");
 
     my $inode = $class->new( $path, %opts )->update(@st);
 
@@ -67,8 +66,8 @@ sub child {
     my ( $self, $name, $mode ) = @_;
     my $directory = $self->directory;
 
-    confess('Invalid directory entry name') if $name =~ /\//;
-    confess('File exists') if $directory->exists($name);
+    throw &Errno::EINVAL if $name =~ /\//;
+    throw &Errno::EEXIST if $directory->exists($name);
 
     my $path = "$self->{'path'}/$name";
 
@@ -83,18 +82,17 @@ sub child {
             my $fh, $path,
             O_CREAT | O_EXCL | O_WRONLY,
             Filesys::POSIX::Bits::System::convertModeToSystem($mode)
-        ) or confess("$!");    # Use quotes to copy the error string (resolves Case 98565).
+        ) or Carp::confess("$!");
         close($fh);
     }
     elsif ( ( $mode & $S_IFMT ) == $S_IFDIR ) {
-        mkdir( $path, $mode )
-          or confess("$!");    # Use quotes to copy the error string (resolves Case 98565).
+        mkdir( $path, $mode ) or Carp::confess("$!");
     }
 
     my $inode;
 
     if ( ( $mode & $S_IFMT ) == $S_IFLNK ) {
-        confess('Operation not permitted') unless $self->{'sticky'};
+        throw &Errno::EPERM unless $self->{'sticky'};
 
         $inode = Filesys::POSIX::Mem::Inode->new( %data, 'mode' => $mode );
     }
@@ -132,7 +130,7 @@ sub open {
     sysopen(
         my $fh, $self->{'path'},
         Filesys::POSIX::Bits::System::convertFlagsToSystem($flags)
-    ) or confess("$!");    # Use quotes to copy the error string (resolves Case 98565).
+    ) or Carp::confess("$!");
 
     return Filesys::POSIX::IO::Handle->new($fh);
 }
@@ -141,8 +139,7 @@ sub chown {
     my ( $self, $uid, $gid ) = @_;
 
     unless ( $self->{'sticky'} ) {
-        CORE::chown( $uid, $gid, $self->{'path'} )
-          or confess("$!");    # Use quotes to copy the error string (resolves Case 98565).
+        CORE::chown( $uid, $gid, $self->{'path'} ) or Carp::confess("$!");
     }
 
     @{$self}{qw/uid gid/} = ( $uid, $gid );
@@ -156,8 +153,7 @@ sub chmod {
     my $perm = $mode & ( $S_IPERM | $S_IPROT );
 
     unless ( $self->{'sticky'} ) {
-        CORE::chmod( $perm, $self->{'path'} )
-          or confess("$!");    # Use quotes to copy the error string (resolves Case 98565).
+        CORE::chmod( $perm, $self->{'path'} ) or Carp::confess("$!");
     }
 
     $self->{'mode'} = $format | $perm;
@@ -169,8 +165,7 @@ sub readlink {
     my ($self) = @_;
 
     unless ( $self->{'dest'} ) {
-        $self->{'dest'} = CORE::readlink( $self->{'path'} )
-          or confess("$!");    # Use quotes to copy the error string (resolves Case 98565).
+        $self->{'dest'} = CORE::readlink( $self->{'path'} ) or Carp::confess("$!");
     }
 
     return $self->{'dest'};
@@ -180,8 +175,7 @@ sub symlink {
     my ( $self, $dest ) = @_;
 
     unless ( $self->{'sticky'} ) {
-        symlink( $dest, $self->{'path'} )
-          or confess("$!");    # Use quotes to copy the error string (resolves Case 98565).
+        symlink( $dest, $self->{'path'} ) or Carp::confess("$!");
     }
 
     $self->{'dest'} = $dest;

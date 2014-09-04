@@ -1,4 +1,4 @@
-# Copyright (c) 2012, cPanel, Inc.
+# Copyright (c) 2014, cPanel, Inc.
 # All rights reserved.
 # http://cpanel.net/
 #
@@ -15,7 +15,7 @@ use Filesys::POSIX::Path            ();
 use Filesys::POSIX::Real::Inode     ();
 use Filesys::POSIX::Real::Directory ();
 
-use Carp qw/confess/;
+use Filesys::POSIX::Error qw(throw);
 
 =head1 NAME
 
@@ -59,7 +59,7 @@ Exceptions will be thrown for the following:
 
 =over
 
-=item File exists
+=item * EEXIST (File exists)
 
 An inode at the destination path already exists.
 
@@ -76,7 +76,9 @@ sub attach {
     my $parent    = $self->stat( $hier->dirname );
     my $directory = $parent->directory;
 
-    confess('File exists') if $directory->exists($name);
+    $! = 0;
+
+    throw &Errno::EEXIST if $directory->exists($name);
 
     $directory->set( $name, $inode );
 
@@ -97,7 +99,7 @@ Exceptions will be thrown in the following conditions:
 
 =over
 
-=item File exists
+=item * EEXIST (File exists)
 
 An inode at the destination path already exists.
 
@@ -118,7 +120,9 @@ sub map {
     my $parent    = $self->stat( $hier->dirname );
     my $directory = $parent->directory;
 
-    confess('File exists') if $directory->exists($name);
+    $! = 0;
+
+    throw &Errno::EEXIST if $directory->exists($name);
 
     my $inode = Filesys::POSIX::Real::Inode->from_disk(
         $real_src,
@@ -138,7 +142,7 @@ directories, unlike C<$fs-E<gt>link>.  Exceptions will be thrown for the followi
 
 =over
 
-=item File exists
+=item * EEXIST (File exists)
 
 An inode at the destination path was found.
 
@@ -156,7 +160,9 @@ sub alias {
     my $parent    = $self->stat( $hier->dirname );
     my $directory = $parent->directory;
 
-    confess('File exists') if $directory->exists($name);
+    $! = 0;
+
+    throw &Errno::EEXIST if $directory->exists($name);
 
     return $directory->set( $name, $inode );
 }
@@ -182,7 +188,7 @@ Exceptions are thrown for the following:
 
 =over
 
-=item No such file or directory
+=item * ENOENT (No such file or directory)
 
 Thrown when the parent directory of the item in $path does not contain an item
 named in the final component of the path.
@@ -201,7 +207,9 @@ sub detach {
     my $parent    = $self->stat( $hier->dirname );
     my $directory = $parent->directory;
 
-    confess('No such file or directory') unless $directory->exists($name);
+    $! = 0;
+
+    throw &Errno::ENOENT unless $directory->exists($name);
 
     return $directory->detach($name);
 }
@@ -215,7 +223,7 @@ Exceptions will be thrown for the following:
 
 =over
 
-=item No such file or directory
+=item * ENOENT (No such file or directory)
 
 No inode was found at the path specified.
 
@@ -233,7 +241,9 @@ sub replace {
     my $parent    = $self->stat( $hier->dirname );
     my $directory = $parent->directory;
 
-    confess('No such file or directory') unless $directory->exists($name);
+    $! = 0;
+
+    throw &Errno::ENOENT unless $directory->exists($name);
 
     $directory->detach($name);
 
@@ -245,3 +255,24 @@ sub replace {
 =cut
 
 1;
+
+__END__
+
+=head1 AUTHOR
+
+Written by Xan Tronix <xan@cpan.org>
+
+=head1 CONTRIBUTORS
+
+=over
+
+=item Rikus Goodell <rikus.goodell@cpanel.net>
+
+=item Brian Carlson <brian.carlson@cpanel.net>
+
+=back
+
+=head1 COPYRIGHT
+
+Copyright (c) 2014, cPanel, Inc.  Distributed under the terms of the Perl
+Artistic license.
