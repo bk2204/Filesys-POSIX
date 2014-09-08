@@ -11,11 +11,16 @@ use strict;
 use warnings;
 
 use Filesys::POSIX::Bits;
+use Filesys::POSIX::Module          ();
 use Filesys::POSIX::Path            ();
 use Filesys::POSIX::Real::Inode     ();
 use Filesys::POSIX::Real::Directory ();
 
 use Filesys::POSIX::Error qw(throw);
+
+my @METHODS = qw(attach map alias detach replace);
+
+Filesys::POSIX::Module->export_methods( __PACKAGE__, @METHODS );
 
 =head1 NAME
 
@@ -24,14 +29,7 @@ environment
 
 =head1 SYNOPSIS
 
-    use Filesys::POSIX;
-    use Filesys::POSIX::Mem;
-
-    my $fs = Filesys::POSIX->new(Filesys::POSIX::Mem->new,
-        'noatime' => 1
-    );
-
-    $fs->import_module('Filesys::POSIX::Extensions');
+    use Filesys::POSIX::Extensions;
 
 =head1 DESCRIPTION
 
@@ -45,12 +43,6 @@ device symlinks.
 =head1 SYSTEM CALLS
 
 =over
-
-=cut
-
-sub EXPORT {
-    qw/attach map alias detach replace/;
-}
 
 =item C<$fs-E<gt>attach($inode, $dest)>
 

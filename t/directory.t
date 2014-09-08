@@ -8,10 +8,11 @@
 use strict;
 use warnings;
 
-use Filesys::POSIX            ();
-use Filesys::POSIX::Mem       ();
-use Filesys::POSIX::Real      ();
-use Filesys::POSIX::Directory ();
+use Filesys::POSIX             ();
+use Filesys::POSIX::Mem        ();
+use Filesys::POSIX::Real       ();
+use Filesys::POSIX::Extensions ();
+use Filesys::POSIX::Directory  ();
 use Filesys::POSIX::Bits;
 
 use File::Temp qw/mkdtemp/;
@@ -45,7 +46,6 @@ my %files = (
 );
 
 my $fs = Filesys::POSIX->new( Filesys::POSIX::Mem->new );
-$fs->import_module('Filesys::POSIX::Extensions');
 
 foreach my $mountpoint ( sort keys %mounts ) {
     my $mount = $mounts{$mountpoint};

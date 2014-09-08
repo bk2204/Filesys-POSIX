@@ -5,14 +5,22 @@
 # This is free software; you can redistribute it and/or modify it under the same
 # terms as Perl itself.  See the LICENSE file for further details.
 
-package Filesys::POSIX;
+package Filesys::POSIX::Mount;
 
 use strict;
 use warnings;
 
 use Filesys::POSIX::Bits;
-use Filesys::POSIX::Path ();
+use Filesys::POSIX::Module ();
+use Filesys::POSIX::Path   ();
+
 use Filesys::POSIX::Error qw(throw);
+
+use Carp qw/confess/;
+
+my @METHODS = qw(mount unmount statfs fstatfs mountlist);
+
+Filesys::POSIX::Module->export_methods( __PACKAGE__, @METHODS );
 
 =head1 NAME
 

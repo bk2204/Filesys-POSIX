@@ -8,8 +8,9 @@
 use strict;
 use warnings;
 
-use Filesys::POSIX      ();
-use Filesys::POSIX::Mem ();
+use Filesys::POSIX                 ();
+use Filesys::POSIX::Mem            ();
+use Filesys::POSIX::Userland::Find ();
 use Filesys::POSIX::Bits;
 
 use Test::More ( 'tests' => 3 );
@@ -27,7 +28,6 @@ my %files = (
 );
 
 my $fs = Filesys::POSIX->new( Filesys::POSIX::Mem->new );
-$fs->import_module('Filesys::POSIX::Userland::Find');
 
 foreach ( sort keys %files ) {
     if ( $files{$_} eq 'dir' ) {

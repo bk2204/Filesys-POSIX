@@ -16,11 +16,12 @@ use File::Temp;
 use lib "lib";
 use ExtUtils::testlib;
 
-use Filesys::POSIX;
-use Filesys::POSIX::IO::Handle;
-use Filesys::POSIX::Mem;
-use Filesys::POSIX::IO::Handle;
-use Filesys::POSIX::Real;
+use Filesys::POSIX                ();
+use Filesys::POSIX::Mem           ();
+use Filesys::POSIX::Real          ();
+use Filesys::POSIX::IO::Handle    ();
+use Filesys::POSIX::Userland::Tar ();
+use Filesys::POSIX::Extensions    ();
 
 my $t = time();
 
@@ -143,8 +144,6 @@ sub execute_single_test {
     };
 
     my $fs = Filesys::POSIX->new( Filesys::POSIX::Real->new, path => $orig_dir );
-    $fs->import_module(q/Filesys::POSIX::Userland::Tar/);
-    $fs->import_module(q/Filesys::POSIX::Extensions/);
     $fs->map( $orig_dir, "/mapped_dir" );
 
     open my $tar_fh, ">", "$dir/test.tar";

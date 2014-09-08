@@ -11,6 +11,7 @@ use warnings;
 use Filesys::POSIX             ();
 use Filesys::POSIX::Mem        ();
 use Filesys::POSIX::Mem::Inode ();
+use Filesys::POSIX::Extensions ();
 use Filesys::POSIX::Bits;
 
 use File::Temp ();
@@ -24,7 +25,6 @@ my $tmpdir = File::Temp::tempdir( 'CLEANUP' => 1 );
 my ( $tmpfile_fh, $tmpfile ) = File::Temp::tempfile( 'DIR' => $tmpdir );
 
 my $fs = Filesys::POSIX->new( Filesys::POSIX::Mem->new );
-$fs->import_module('Filesys::POSIX::Extensions');
 
 $fs->mkpath('/mnt/mem');
 $fs->mount( Filesys::POSIX::Mem->new, '/mnt/mem', 'noatime' => 1 );

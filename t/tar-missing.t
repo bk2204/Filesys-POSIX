@@ -8,8 +8,10 @@
 use strict;
 use warnings;
 
-use Filesys::POSIX      ();
-use Filesys::POSIX::Mem ();
+use Filesys::POSIX                ();
+use Filesys::POSIX::Mem           ();
+use Filesys::POSIX::Userland::Tar ();
+use Filesys::POSIX::Extensions    ();
 
 use File::Temp ();
 
@@ -25,9 +27,6 @@ sub generate {
         Filesys::POSIX::Mem->new,
         'noatime' => 1
     );
-
-    $fs->import_module('Filesys::POSIX::Userland::Tar');
-    $fs->import_module('Filesys::POSIX::Extensions');
 
     my ( $tmpfh, $tmpfile ) = File::Temp::tempfile();
     print {$tmpfh} "non-empty file contents\n";

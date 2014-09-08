@@ -11,13 +11,15 @@ use strict;
 use warnings;
 
 use Filesys::POSIX::Bits;
+use Filesys::POSIX::Module ();
 
-sub EXPORT {
-    qw(
-      exists is_file is_dir is_link is_char is_block is_fifo
-      is_readable is_writable is_executable is_setuid is_setgid
-    );
-}
+my @METHODS = qw(
+  exists is_file is_dir is_link is_char is_block is_fifo
+  is_readable is_writable is_executable
+  is_setuid is_setgid
+);
+
+Filesys::POSIX::Module->export_methods( __PACKAGE__, @METHODS );
 
 =head1 NAME
 
@@ -27,12 +29,11 @@ Filesys::POSIX::Userland::Test - Inode conditional tests
 
     use Filesys::POSIX;
     use Filesys::POSIX::Mem;
+    use Filesys::POSIX::Userland::Test;
 
     my $fs = Filesys::POSIX->new(Filesys::POSIX::Real->new,
         'noatime' => 1
     );
-
-    $fs->import_module('Filesys::POSIX::Userland::Test');
 
     $fs->touch('foo');
     $fs->is_file('foo'); # returns 1
