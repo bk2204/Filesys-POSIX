@@ -118,58 +118,6 @@ sub new {
     }, $class;
 }
 
-sub AUTOLOAD {
-    my ( $self, @args ) = @_;
-    my $method = $AUTOLOAD;
-    $method =~ s/^([a-z0-9_]+::)*//i;
-
-    my $module = $self->{'methods'}->{$method};
-
-    return if $method eq 'DESTROY';
-    confess( "No module imported for method '" . __PACKAGE__ . "::$method()" )
-      unless $module;
-
-    no strict 'refs';
-
-    return *{"$module\::$method"}->( $self, @args );
-}
-
-=head1 IMPORTING MODULES FOR ADDITIONAL FUNCTIONALITY
-
-=over
-
-=item C<$fs-E<gt>import_module($module)>
-
-Import functionality from the module specified into the namespace of the
-current filesystem object instance.  The module to be imported should be
-specified in the usual form of a Perl package name.  Only the methods returned
-by its C<EXPORT()> function will be imported.
-
-See the L</"EXTENSION MODULES"> section below for a listing of modules that
-Filesys::POSIX provides.
-
-=back
-
-=cut
-
-sub import_module {
-    my ( $self, $module ) = @_;
-
-    eval "use $module";
-    confess $@ if $@;
-
-    no strict 'refs';
-
-    foreach ( *{"$module\::EXPORT"}->() ) {
-        if ( my $imported = $self->{'methods'}->{$_} ) {
-            confess("Module $imported already imported method $_")
-              unless $module eq $imported;
-        }
-
-        $self->{'methods'}->{$_} = $module;
-    }
-}
-
 =head1 SYSTEM CALLS
 
 =over
@@ -444,9 +392,8 @@ the directory entry for the destination is empty.
 
 Links traversing filesystem mount points are not allowed.  This functionality
 is provided in the C<alias()> call provided by the L<Filesys::POSIX::Extensions>
-module, which can be imported by C<$fs-E<gt>import_module()> at runtime.  Upon
-success, a reference to the inode for which a new link is to be created will be
-returned.
+module.  Upon success, a reference to the inode for which a new link is to be
+created will be returned.
 
 Exceptions thrown:
 

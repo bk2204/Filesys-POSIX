@@ -10,12 +10,12 @@ use warnings;
 
 use Filesys::POSIX::Bits;
 
-use Filesys::POSIX                        ();
-use Filesys::POSIX::Real                  ();
-use Filesys::POSIX::Mem                   ();
-use Filesys::POSIX::Mem::Inode            ();
-use Filesys::POSIX::IO::Handle            ();
-use Filesys::POSIX::Userland::Tar::Header ();
+use Filesys::POSIX                ();
+use Filesys::POSIX::Real          ();
+use Filesys::POSIX::Mem           ();
+use Filesys::POSIX::Mem::Inode    ();
+use Filesys::POSIX::IO::Handle    ();
+use Filesys::POSIX::Userland::Tar ();
 
 use Fcntl;
 use IPC::Open3;
@@ -26,7 +26,6 @@ use Test::Exception;
 use Test::NoWarnings;
 
 my $fs = Filesys::POSIX->new( Filesys::POSIX::Mem->new );
-$fs->import_module('Filesys::POSIX::Userland::Tar');
 
 $fs->mkdir('foo');
 $fs->symlink( 'foo', 'bar' );
@@ -143,7 +142,6 @@ $fs->close($fd);
         'path'    => $tmpdir,
         'noatime' => 1
     );
-    $fs->import_module('Filesys::POSIX::Userland::Tar');
 
     my $tar_pid = open3( my ( $in, $out ), undef, qw/tar tf -/ )
       or die("Unable to spawn tar: $!");

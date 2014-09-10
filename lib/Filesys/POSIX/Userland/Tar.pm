@@ -11,11 +11,17 @@ use strict;
 use warnings;
 
 use Filesys::POSIX::Bits;
+use Filesys::POSIX::Module ();
 
 use Filesys::POSIX::Path                  ();
+use Filesys::POSIX::Userland::Find        ();
 use Filesys::POSIX::Userland::Tar::Header ();
 
 use Carp ();
+
+my @METHODS = qw(tar);
+
+Filesys::POSIX::Module->export_methods( __PACKAGE__, @METHODS );
 
 =head1 NAME
 
@@ -26,12 +32,11 @@ Filesys::POSIX::Userland::Tar - Generate ustar archives from L<Filesys::POSIX>
     use Filesys::POSIX;
     use Filesys::POSIX::Mem;
     use Filesys::POSIX::IO::Handle;
+    use Filesys::POSIX::Userland::Tar;
 
     my $fs = Filesys::POSIX->new(Filesys::POSIX::Mem->new,
         'noatime' => 1
     );
-
-    $fs->import_module('Filesys::POSIX::Userland::Tar');
 
     $fs->mkdir('foo');
     $fs->touch('foo/bar');
@@ -57,10 +62,6 @@ archival.
 =over
 
 =cut
-
-sub EXPORT {
-    qw/tar/;
-}
 
 our $BLOCK_SIZE = 512;
 our $BUF_MAX    = 4096;
@@ -216,8 +217,6 @@ sub tar {
     my $handle = shift;
     my $opts   = ref $_[0] eq 'HASH' ? shift : {};
     my @items  = @_;
-
-    $self->import_module('Filesys::POSIX::Userland::Find');
 
     $self->find(
         sub {

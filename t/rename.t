@@ -14,10 +14,12 @@ use Test::NoWarnings;
 
 use File::Temp;
 
-use Filesys::POSIX;
-use Filesys::POSIX::IO::Handle;
-use Filesys::POSIX::Mem;
-use Filesys::POSIX::Real;
+use Filesys::POSIX                ();
+use Filesys::POSIX::IO::Handle    ();
+use Filesys::POSIX::Mem           ();
+use Filesys::POSIX::Real          ();
+use Filesys::POSIX::Userland::Tar ();
+use Filesys::POSIX::Extensions    ();
 
 my $tempdir1 = File::Temp->newdir;
 my $tempdir2 = File::Temp->newdir;
@@ -26,8 +28,6 @@ open my $fh, '>', "$tempdir1/item1.txt";
 close $fh;
 
 my $fs = Filesys::POSIX->new( Filesys::POSIX::Real->new, path => $tempdir1 );
-$fs->import_module(q/Filesys::POSIX::Userland::Tar/);
-$fs->import_module(q/Filesys::POSIX::Extensions/);
 
 $fs->map( $tempdir1, "/dir" );
 

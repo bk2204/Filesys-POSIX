@@ -8,15 +8,14 @@
 use strict;
 use warnings;
 
-use Filesys::POSIX;
-use Filesys::POSIX::Mem;
+use Filesys::POSIX                 ();
+use Filesys::POSIX::Mem            ();
+use Filesys::POSIX::Userland::Test ();
 use Filesys::POSIX::Bits;
 
 use Test::More ( 'tests' => 80 );
 
 my $fs = Filesys::POSIX->new( Filesys::POSIX::Mem->new, 'noatime' => 1 );
-
-$fs->import_module('Filesys::POSIX::Userland::Test');
 
 sub controlled_test {
     my ( $expected, $tests, $controls, @exclude ) = @_;

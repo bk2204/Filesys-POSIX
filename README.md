@@ -56,18 +56,6 @@ interface specified within.
 Errors are emitted in the form of exceptions thrown by `Carp::confess()`, with
 full stack traces.
 
-# IMPORTING MODULES FOR ADDITIONAL FUNCTIONALITY
-
-- `$fs->import_module($module)`
-
-    Import functionality from the module specified into the namespace of the
-    current filesystem object instance.  The module to be imported should be
-    specified in the usual form of a Perl package name.  Only the methods returned
-    by its `EXPORT()` function will be imported.
-
-    See the ["EXTENSION MODULES"](#extension-modules) section below for a listing of modules that
-    Filesys::POSIX provides.
-
 # SYSTEM CALLS
 
 - `$fs->umask()`
@@ -162,9 +150,8 @@ full stack traces.
 
     Links traversing filesystem mount points are not allowed.  This functionality
     is provided in the `alias()` call provided by the [Filesys::POSIX::Extensions](https://metacpan.org/pod/Filesys::POSIX::Extensions)
-    module, which can be imported by `$fs->import_module()` at runtime.  Upon
-    success, a reference to the inode for which a new link is to be created will be
-    returned.
+    module.  Upon success, a reference to the inode for which a new link is to be
+    created will be returned.
 
     Exceptions thrown:
 
