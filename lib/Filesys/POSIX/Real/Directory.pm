@@ -1,4 +1,4 @@
-# Copyright (c) 2012, cPanel, Inc.
+# Copyright (c) 2014, cPanel, Inc.
 # All rights reserved.
 # http://cpanel.net/
 #
@@ -13,10 +13,9 @@ use warnings;
 use Filesys::POSIX::Bits;
 use Filesys::POSIX::Directory ();
 
-use Errno qw/ENOENT/;
-use Carp ();
+use Errno qw(ENOENT);
 
-our @ISA = qw/Filesys::POSIX::Directory/;
+our @ISA = qw(Filesys::POSIX::Directory);
 
 sub new {
     my ( $class, $path, $inode ) = @_;
@@ -36,8 +35,7 @@ sub new {
 
 sub _sync_all {
     my ($self) = @_;
-    my $mtime = ( lstat $self->{'path'} )[9]
-      or Carp::confess("$!");    # Use quotes to copy the error string (resolves Case 98565).
+    my $mtime = ( lstat $self->{'path'} )[9] or Carp::confess("$!");
 
     return unless $mtime > $self->{'mtime'};
 
@@ -174,8 +172,7 @@ sub open {
 
     $self->close;
 
-    opendir( $self->{'dh'}, $self->{'path'} )
-      or Carp::confess("$!");    # Use quotes to copy the error string (resolves Case 98565).
+    opendir( $self->{'dh'}, $self->{'path'} ) or Carp::confess("$!");
 
     return $self;
 }

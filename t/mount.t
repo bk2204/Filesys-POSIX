@@ -1,4 +1,4 @@
-# Copyright (c) 2012, cPanel, Inc.
+# Copyright (c) 2014, cPanel, Inc.
 # All rights reserved.
 # http://cpanel.net/
 #
@@ -15,6 +15,7 @@ use Filesys::POSIX::Bits;
 use Test::More ( 'tests' => 30 );
 use Test::Exception;
 use Test::NoWarnings;
+use Test::Filesys::POSIX::Error;
 
 my $mounts = {
     '/'            => Filesys::POSIX::Mem->new,
@@ -37,16 +38,16 @@ foreach ( grep { $_ ne '/' } sort keys %$mounts ) {
     }
     "Able to mount $mounts->{$_} to $_";
 
-    throws_ok {
+    throws_errno_ok {
         $fs->mount( $mounts->{$_}, $_, 'noatime' => 1 );
     }
-    qr/^Already mounted/, "Filesys::POSIX->mount() complains when requested device is already mounted";
+    &Errno::EBUSY, "Filesys::POSIX->mount() complains when requested device is already mounted";
 }
 
-throws_ok {
+throws_errno_ok {
     $fs->stat('/mnt/mem/hidden');
 }
-qr/^No such file or directory/, "Mounting /mnt/mem sweeps /mnt/mem/hidden under the rug";
+&Errno::ENOENT, "Mounting /mnt/mem sweeps /mnt/mem/hidden under the rug";
 
 {
     my $expected = $mounts->{'/'};
@@ -122,24 +123,24 @@ foreach ( sort keys %$mounts ) {
 {
     my $fd = $fs->open( '/mnt/mem/test.txt', $O_CREAT );
 
-    throws_ok {
+    throws_errno_ok {
         $fs->unmount('/mnt/mem');
     }
-    qr/^Device or resource busy/, "Filesys::POSIX->unmount() prevents unmounting busy filesystem /mnt/mem";
+    &Errno::EBUSY, "Filesys::POSIX->unmount() prevents unmounting busy filesystem /mnt/mem";
 
     $fs->close($fd);
     $fd = $fs->open( '/foo.txt', $O_CREAT );
 
-    throws_ok {
+    throws_errno_ok {
         $fs->unmount('/mnt/mem');
     }
-    qr/^Device or resource busy/, "Filesys::POSIX->unmount() prevents unmounting busy filesystem /mnt/mem";
+    &Errno::EBUSY, "Filesys::POSIX->unmount() prevents unmounting busy filesystem /mnt/mem";
 
-    throws_ok {
+    throws_errno_ok {
         $fs->chdir('/mnt/mem');
         $fs->unmount('/mnt/mem');
     }
-    qr/^Device or resource busy/, "Filesys::POSIX->unmount() fails when cwd is /mnt/mem";
+    &Errno::EBUSY, "Filesys::POSIX->unmount() fails when cwd is /mnt/mem";
 
     $fs->chdir('/');
 
@@ -150,8 +151,8 @@ foreach ( sort keys %$mounts ) {
     $fs->unmount('/mnt/mem/tmp');
     $fs->unmount('/mnt/mem');
 
-    throws_ok {
+    throws_errno_ok {
         $fs->stat('/mnt/mem/tmp');
     }
-    qr/^No such file or directory/, "/mnt/mem/tmp can no longer be accessed after unmounting /mnt/mem";
+    &Errno::ENOENT, "/mnt/mem/tmp can no longer be accessed after unmounting /mnt/mem";
 }

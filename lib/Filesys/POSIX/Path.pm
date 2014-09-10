@@ -1,4 +1,4 @@
-# Copyright (c) 2012, cPanel, Inc.
+# Copyright (c) 2014, cPanel, Inc.
 # All rights reserved.
 # http://cpanel.net/
 #
@@ -10,7 +10,7 @@ package Filesys::POSIX::Path;
 use strict;
 use warnings;
 
-use Carp ();
+use Filesys::POSIX::Error qw(throw);
 
 =head1 NAME
 
@@ -46,7 +46,7 @@ redundant tokens are discarded.  Enough context is kept to help the methods
 implemented in this module determine the nature of the path; if it is relative
 to root, prefixed with './', or relative to the "current working directory".
 An C<ARRAY> reference blessed into this package's namespace is returned upon
-success.
+success.  An EINVAL is thrown if the path provided is empty.
 
 =back
 
@@ -65,7 +65,7 @@ sub new {
         push @ret, grep { _non_empty($_) && $_ ne '.' } @components[ 1 .. $#components ];
     }
 
-    Carp::confess('Empty path') unless @components || _non_empty($path);
+    throw &Errno::EINVAL unless @components || _non_empty($path);
 
     my @hier = _non_empty( $components[0] ) ? @ret : ( '', @ret );
 
@@ -267,3 +267,24 @@ sub is_absolute {
 =cut
 
 1;
+
+__END__
+
+=head1 AUTHOR
+
+Written by Xan Tronix <xan@cpan.org>
+
+=head1 CONTRIBUTORS
+
+=over
+
+=item Rikus Goodell <rikus.goodell@cpanel.net>
+
+=item Brian Carlson <brian.carlson@cpanel.net>
+
+=back
+
+=head1 COPYRIGHT
+
+Copyright (c) 2014, cPanel, Inc.  Distributed under the terms of the Perl
+Artistic license.

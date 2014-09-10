@@ -1,4 +1,4 @@
-# Copyright (c) 2012, cPanel, Inc.
+# Copyright (c) 2014, cPanel, Inc.
 # All rights reserved.
 # http://cpanel.net/
 #
@@ -13,6 +13,7 @@ use Filesys::POSIX::Path ();
 use Test::More ( 'tests' => 67 );
 use Test::Exception;
 use Test::NoWarnings;
+use Test::Filesys::POSIX::Error;
 
 my %TEST_DATA = (
     '/' => {
@@ -188,10 +189,10 @@ ok(
     "Filesys::POSIX::Path->basename() works with an extension"
 );
 
-throws_ok {
+throws_errno_ok {
     Filesys::POSIX::Path->new('');
 }
-qr/^Empty path/, "Filesys::POSIX::Path->new() fails when an empty path is specified";
+&Errno::EINVAL, "Filesys::POSIX::Path->new() fails when an empty path is specified";
 
 {
     my $path = Filesys::POSIX::Path->new('.');

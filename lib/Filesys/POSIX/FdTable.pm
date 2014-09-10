@@ -1,4 +1,4 @@
-# Copyright (c) 2012, cPanel, Inc.
+# Copyright (c) 2014, cPanel, Inc.
 # All rights reserved.
 # http://cpanel.net/
 #
@@ -10,7 +10,7 @@ package Filesys::POSIX::FdTable;
 use strict;
 use warnings;
 
-use Carp qw/confess/;
+use Filesys::POSIX::Error qw(throw);
 
 =head1 NAME
 
@@ -43,7 +43,15 @@ object.  Accepts flags as defined in L<Filesys::POSIX::Bits>.  A reference to
 the inode, file handle, flags passed will be stored.
 
 Returns a unused file descriptor number greater than 2, unique to the current
-file descriptor table, upon success.
+file descriptor table, upon success.  Possible exceptions may be thrown:
+
+=over
+
+=item * ENODEV (No such device or address)
+
+Could not open a file handle for the inode passed.
+
+=back
 
 =cut
 
@@ -53,7 +61,9 @@ sub open {
     my $fd     = 2;
     my $handle = $inode->open($flags);
 
-    confess('Unable to open device-specific file handle') unless $handle;
+    $! = 0;
+
+    throw &Errno::ENODEV unless $handle;
 
     foreach ( sort { $a <=> $b } ( $fd, keys %$self ) ) {
         next if $self->{ $fd = $_ + 1 };
@@ -73,13 +83,24 @@ sub open {
 
 Given a file descriptor number, return the file descriptor table entry stored;
 such an object contains an inode reference, a file handle reference, and the
-flags with which the file was opened.
+flags with which the file was opened.  Possible exceptions include:
+
+=over
+
+=item * EBADF (Bad file descriptor)
+
+No handle found for the given file descriptor.
+
+=back
 
 =cut
 
 sub lookup {
     my ( $self, $fd ) = @_;
-    my $entry = $self->{$fd} or confess('Invalid file descriptor');
+
+    $! = 0;
+
+    my $entry = $self->{$fd} or throw &Errno::EBADF;
 
     return $entry;
 }
@@ -117,3 +138,24 @@ sub list {
 =cut
 
 1;
+
+__END__
+
+=head1 AUTHOR
+
+Written by Xan Tronix <xan@cpan.org>
+
+=head1 CONTRIBUTORS
+
+=over
+
+=item Rikus Goodell <rikus.goodell@cpanel.net>
+
+=item Brian Carlson <brian.carlson@cpanel.net>
+
+=back
+
+=head1 COPYRIGHT
+
+Copyright (c) 2014, cPanel, Inc.  Distributed under the terms of the Perl
+Artistic license.

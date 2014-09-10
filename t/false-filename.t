@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# Copyright (c) 2013, cPanel, Inc.
+# Copyright (c) 2014, cPanel, Inc.
 # All rights reserved.
 # http://cpanel.net/
 #
@@ -23,6 +23,7 @@ my $fs = Filesys::POSIX::Real::Directory->new($tmpdir);
 $fs->open;
 
 my @contents;
+
 while ( defined( $_ = $fs->read ) ) {
     push @contents, $_;
 }

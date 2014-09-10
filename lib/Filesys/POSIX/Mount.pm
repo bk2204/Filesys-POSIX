@@ -1,4 +1,4 @@
-# Copyright (c) 2012, cPanel, Inc.
+# Copyright (c) 2014, cPanel, Inc.
 # All rights reserved.
 # http://cpanel.net/
 #
@@ -12,8 +12,7 @@ use warnings;
 
 use Filesys::POSIX::Bits;
 use Filesys::POSIX::Path ();
-
-use Carp qw/confess/;
+use Filesys::POSIX::Error qw(throw);
 
 =head1 NAME
 
@@ -73,10 +72,10 @@ checks.
 
 =item The file descriptor table is scanned for open files whose inodes exist on
 the device found for the mount record queried in the previous step by the VFS.
-An exception is thrown when matching file descriptors are found.
+An EBUSY exception is thrown when matching file descriptors are found.
 
 =item The current working directory is checked to ensure it is not a reference
-to a directory inode associated with the mounted device.  An exception is
+to a directory inode associated with the mounted device.  An EBUSY exception is
 thrown if the current directory is on the same device that is to be unmounted.
 
 =back
@@ -94,16 +93,14 @@ sub unmount {
     foreach ( $self->{'fds'}->list ) {
         my $inode = $self->{'fds'}->lookup($_)->{'inode'};
 
-        confess('Device or resource busy')
-          if $mount->{'dev'} eq $inode->{'dev'};
+        throw &Errno::EBUSY if $mount->{'dev'} eq $inode->{'dev'};
     }
 
     #
     # Next, check to see if the current working directory's device inode
     # is the same device as the one being requested for unmounting.
     #
-    confess('Device or resource busy')
-      if $mount->{'dev'} eq $self->{'cwd'}->{'dev'};
+    throw &Errno::EBUSY if $mount->{'dev'} eq $self->{'cwd'}->{'dev'};
 
     $self->{'vfs'}->unmount($mount);
 }
@@ -205,3 +202,24 @@ A copy of the options passed to C<$fs-E<gt>mount>, minus the C<special> option.
 =cut
 
 1;
+
+__END__
+
+=head1 AUTHOR
+
+Written by Xan Tronix <xan@cpan.org>
+
+=head1 CONTRIBUTORS
+
+=over
+
+=item Rikus Goodell <rikus.goodell@cpanel.net>
+
+=item Brian Carlson <brian.carlson@cpanel.net>
+
+=back
+
+=head1 COPYRIGHT
+
+Copyright (c) 2014, cPanel, Inc.  Distributed under the terms of the Perl
+Artistic license.

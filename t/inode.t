@@ -1,4 +1,4 @@
-# Copyright (c) 2012, cPanel, Inc.
+# Copyright (c) 2014, cPanel, Inc.
 # All rights reserved.
 # http://cpanel.net/
 #
@@ -15,6 +15,7 @@ use Filesys::POSIX::Bits;
 use Test::More ( 'tests' => 18 );
 use Test::Exception;
 use Test::NoWarnings;
+use Test::Filesys::POSIX::Error;
 
 {
     ok(
@@ -31,21 +32,21 @@ ok(
     'Filesys::POSIX::Inode->dir() reports true for directory inodes'
 );
 
-throws_ok {
+throws_errno_ok {
     $fs->touch('foo/bar');
     $fs->lstat('foo')->child( 'bar', 0644 );
 }
-qr/^File exists/, "Filesys::POSIX::Inode->child() throws an exception when requested member exists";
+&Errno::EEXIST, "Filesys::POSIX::Inode->child() throws an exception when requested member exists";
 
-throws_ok {
+throws_errno_ok {
     $fs->lstat('foo')->readlink;
 }
-qr/^Not a symlink/, "Filesys::POSIX::Inode->readlink() throws an exception on non-symlink inodes";
+&Errno::EINVAL, "Filesys::POSIX::Inode->readlink() throws an exception on non-symlink inodes";
 
-throws_ok {
+throws_errno_ok {
     $fs->lstat('foo')->symlink('bar');
 }
-qr/^Not a symlink/, "Filesys::POSIX::Inode->symlink() throws an exception on non-symlink inodes";
+&Errno::EINVAL, "Filesys::POSIX::Inode->symlink() throws an exception on non-symlink inodes";
 
 $fs->symlink( 'foo', 'bar' );
 ok(

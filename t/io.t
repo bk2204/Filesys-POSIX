@@ -1,4 +1,4 @@
-# Copyright (c) 2012, cPanel, Inc.
+# Copyright (c) 2014, cPanel, Inc.
 # All rights reserved.
 # http://cpanel.net/
 #
@@ -15,6 +15,7 @@ use Filesys::POSIX::Bits;
 use Test::More ( 'tests' => 31 );
 use Test::Exception;
 use Test::NoWarnings;
+use Test::Filesys::POSIX::Error;
 
 {
     my $fs = Filesys::POSIX->new( Filesys::POSIX::Mem->new );
@@ -49,10 +50,10 @@ use Test::NoWarnings;
     );
     $fs->close($fd);
 
-    throws_ok {
+    throws_errno_ok {
         $fs->read( $fd, my $buf, 512 );
     }
-    qr/^Invalid file descriptor/, 'Filesys::POSIX->read() throws "Invalid file descriptor" exception on closed fd';
+    &Errno::EBADF, 'Filesys::POSIX->read() throws "Bad file descriptor" exception on closed fd';
 
     $fs->close($fd);
     $fs->close($new_fd);
@@ -61,29 +62,29 @@ use Test::NoWarnings;
 {
     my $fs = Filesys::POSIX->new( Filesys::POSIX::Mem->new );
 
-    throws_ok {
+    throws_errno_ok {
         my $fd = $fs->open( 'foo', $O_CREAT | $O_WRONLY );
         $fs->read( $fd, my $buf, 0 );
     }
-    qr/^Invalid argument/, "Filesys::POSIX->read() throws 'Invalid argument' when reading on write-only fd";
+    &Errno::EBADF, "Filesys::POSIX->read() throws 'Invalid argument' when reading on write-only fd";
 
-    throws_ok {
+    throws_errno_ok {
         my $fd = $fs->open( 'foo', $O_CREAT | $O_RDONLY );
         $fs->write( $fd, 'foo', 3 );
     }
-    qr/^Invalid argument/, "Filesys::POSIX->write() throws 'Invalid argument' when writing on read-only fd";
+    &Errno::EINVAL, "Filesys::POSIX->write() throws 'Invalid argument' when writing on read-only fd";
 
-    throws_ok {
+    throws_errno_ok {
         my $fd = $fs->open( 'foo', $O_CREAT | $O_RDONLY );
         $fs->print( $fd, 'foo' );
     }
-    qr/^Invalid argument/, "Filesys::POSIX->print() throws 'Invalid argument' when writing on read-only fd";
+    &Errno::EINVAL, "Filesys::POSIX->print() throws 'Invalid argument' when writing on read-only fd";
 
-    throws_ok {
+    throws_errno_ok {
         my $fd = $fs->open( 'foo', $O_CREAT | $O_RDONLY );
         $fs->printf( $fd, "Foo: %d\n", 1024 );
     }
-    qr/^Invalid argument/, "Filesys::POSIX->printf() throws 'Invalid argument' when writing on read-only fd";
+    &Errno::EINVAL, "Filesys::POSIX->printf() throws 'Invalid argument' when writing on read-only fd";
 
     lives_ok {
         my $fd = $fs->open( 'foo', $O_CREAT | $O_WRONLY );
@@ -191,8 +192,8 @@ use Test::NoWarnings;
 {
     my $fs = Filesys::POSIX->new( Filesys::POSIX::Mem->new );
 
-    throws_ok {
+    throws_errno_ok {
         $fs->open('foo');
     }
-    qr/^Invalid argument/, 'Filesys::POSIX->open() dies when no flags are passed';
+    &Errno::EINVAL, 'Filesys::POSIX->open() dies when no flags are passed';
 }

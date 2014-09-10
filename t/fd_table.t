@@ -1,4 +1,4 @@
-# Copyright (c) 2012, cPanel, Inc.
+# Copyright (c) 2014, cPanel, Inc.
 # All rights reserved.
 # http://cpanel.net/
 #
@@ -13,6 +13,7 @@ use Filesys::POSIX::FdTable ();
 use Test::More ( 'tests' => 3 );
 use Test::Exception;
 use Test::NoWarnings;
+use Test::Filesys::POSIX::Error;
 
 package Dummy::Inode;
 
@@ -35,7 +36,7 @@ lives_ok {
 }
 'Filesys::POSIX::FdTable->open() returns a file handle opened by inode object';
 
-throws_ok {
+throws_errno_ok {
     $fds->open( Dummy::Inode->new, 0 );
 }
-qr/^Unable to open device-specific file handle/, "Filesys::POSIX::FdTable->open() dies when \$inode->open() fails";
+&Errno::ENODEV, "Filesys::POSIX::FdTable->open() dies when \$inode->open() fails";

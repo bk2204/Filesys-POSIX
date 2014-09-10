@@ -1,4 +1,4 @@
-# Copyright (c) 2012, cPanel, Inc.
+# Copyright (c) 2014, cPanel, Inc.
 # All rights reserved.
 # http://cpanel.net/
 #
@@ -14,7 +14,7 @@ use Filesys::POSIX::Bits;
 use Filesys::POSIX::Path            ();
 use Filesys::POSIX::Snapshot::Inode ();
 
-use Carp ();
+use Filesys::POSIX::Error qw(throw);
 
 =head1 NAME
 
@@ -97,16 +97,16 @@ Exceptions will be thrown for the following:
 
 =over
 
-=item Invalid argument
+=item * EINVAL (Invalid argument)
 
 No C<L<path>> value was specified.
 
-=item No such file or directory
+=item * ENOENT (No such file or directory)
 
 The path specified in mount argument C<L<path>> does not exist within the
 current virtual filesystem.
 
-=item Not a directory
+=item * ENOTDIR (Not a directory)
 
 The path specified in mount argument C<L<path>> is not a directory.
 
@@ -119,10 +119,10 @@ The path specified in mount argument C<L<path>> is not a directory.
 sub init {
     my ( $self, %data ) = @_;
 
-    my $path = $data{'path'} or Carp::confess('Invalid argument');
+    my $path = $data{'path'} or throw &Errno::EINVAL;
     my $inode = $data{'fs'}->stat($path);
 
-    Carp::confess('Not a directory') unless $inode->dir;
+    throw &Errno::ENOTDIR unless $inode->dir;
 
     $self->{'flags'} = \%data;
 
@@ -135,3 +135,24 @@ sub init {
 }
 
 1;
+
+__END__
+
+=head1 AUTHOR
+
+Written by Xan Tronix <xan@cpan.org>
+
+=head1 CONTRIBUTORS
+
+=over
+
+=item Rikus Goodell <rikus.goodell@cpanel.net>
+
+=item Brian Carlson <brian.carlson@cpanel.net>
+
+=back
+
+=head1 COPYRIGHT
+
+Copyright (c) 2014, cPanel, Inc.  Distributed under the terms of the Perl
+Artistic license.

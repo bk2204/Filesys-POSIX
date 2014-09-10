@@ -1,4 +1,4 @@
-# Copyright (c) 2012, cPanel, Inc.
+# Copyright (c) 2014, cPanel, Inc.
 # All rights reserved.
 # http://cpanel.net/
 #
@@ -15,6 +15,7 @@ use Filesys::POSIX::Bits;
 
 use Test::More ( 'tests' => 56 );
 use Test::Exception;
+use Test::Filesys::POSIX::Error;
 use Test::NoWarnings;
 
 {
@@ -37,10 +38,10 @@ use Test::NoWarnings;
         "Filesys::POSIX::Mem::Bucket->write() returns expected write length"
     );
 
-    throws_ok {
+    throws_errno_ok {
         $bucket->_flush_to_disk(3);
     }
-    qr/^Already flushed to disk/, "Filesys::POSIX::Mem::Bucket->_flush_to_disk() cannot be repeated";
+    &Errno::EALREADY, "Filesys::POSIX::Mem::Bucket->_flush_to_disk() cannot be repeated";
 
     my ( $file, $handle ) = @{$bucket}{qw/file fh/};
 
@@ -75,10 +76,10 @@ use Test::NoWarnings;
         "Filesys::POSIX::Mem::Bucket->seek(3, \$SEEK_CUR) operates expectedly"
     );
 
-    throws_ok {
+    throws_errno_ok {
         $bucket->open(0);
     }
-    qr/^Already opened/, "Filesys::POSIX::Mem::Bucket->open() will throw 'Already opened' when appropriate";
+    &Errno::EBUSY, "Filesys::POSIX::Mem::Bucket->open() will throw 'Already opened' when appropriate";
 
     $bucket->close;
 
@@ -181,10 +182,10 @@ use Test::NoWarnings;
     $bucket->close;
     unlink($file);
 
-    throws_ok {
+    throws_errno_ok {
         $bucket->open;
     }
-    qr/^Unable to reopen bucket/, "Filesys::POSIX::Mem::Bucket->open() will die when reopening missing bucket";
+    &Errno::ENOENT, "Filesys::POSIX::Mem::Bucket->open() will die when reopening missing bucket";
 }
 
 {
@@ -303,10 +304,10 @@ use Test::NoWarnings;
         "Filesys::POSIX::Mem::Bucket->seek() with \$SEEK_CUR works properly"
     );
 
-    throws_ok {
+    throws_errno_ok {
         $bucket->seek( 2048, 0x04 );
     }
-    qr/^Invalid argument/, "Filesys::POSIX::Mem::Bucket->seek() will die with 'Invalid argument' when appropriate";
+    &Errno::EINVAL, "Filesys::POSIX::Mem::Bucket->seek() will die with 'Invalid argument' when appropriate";
 }
 
 {
