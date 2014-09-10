@@ -21,7 +21,7 @@ use Fcntl;
 use IPC::Open3;
 use IO::Socket::UNIX;
 
-use Test::More ( 'tests' => 73 );
+use Test::More ( 'tests' => 85 );
 use Test::Exception;
 use Test::NoWarnings;
 
@@ -485,5 +485,26 @@ $fs->close($fd);
                 );
             }
         }
+    }
+}
+
+{
+    my $header = bless {}, 'Filesys::POSIX::Userland::Tar::Header';
+    my %tests = (
+        10  => 18,
+        94  => 103,
+        100 => 109,
+        990 => 999,
+        991 => 1001,
+        995 => 1005,
+    );
+
+    foreach my $datalen ( sort { $a <=> $b } keys %tests ) {
+        my $totallen = $tests{$datalen};
+        my $expected = sprintf "%d key=%s\n", $totallen, 'a' x $datalen;
+        my $encoded  = $header->_compute_posix_header( 'key', 'a' x $datalen );
+
+        is( $encoded,         $expected, "Encoding of $datalen bytes is correct" );
+        is( length($encoded), $totallen, "Length of encoding $datalen bytes is correct" );
     }
 }

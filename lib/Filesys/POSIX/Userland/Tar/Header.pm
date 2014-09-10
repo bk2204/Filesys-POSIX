@@ -127,6 +127,53 @@ sub encode_longlink {
     return $longlink_header->encode . $path_blocks;
 }
 
+sub _compute_posix_header {
+    my ( $self, $key, $value ) = @_;
+    my $header = " $key=$value\n";
+    my $len    = length $header;
+    my $hdrlen = length($len) + $len;
+    my $curlen = length($hdrlen);
+
+    # The length field includes everything up to and including the newline and
+    # the length field itself.  Compute the proper value if adding the length
+    # would push us to a larger number of digits.
+    $hdrlen = $curlen + $len if $curlen > length($len);
+
+    return "$hdrlen$header";
+}
+
+sub encode_posix {
+    my ($self) = @_;
+
+    my $linklen = length $self->{'linkdest'};
+    my $encoded = $self->_compute_posix_header( 'path', $self->{'path'} );
+    $encoded .= $self->_compute_posix_header( 'linkpath', $self->{'linkdest'} ) if $linklen;
+
+    my $encodedlen = length $encoded;
+
+    my $posix_header = bless {
+        'prefix'   => "./PaxHeaders.$$",
+        'suffix'   => substr( $self->{'path'}, 0, 100 ),
+        'mode'     => 0,
+        'uid'      => 0,
+        'gid'      => 0,
+        'size'     => $encodedlen,
+        'mtime'    => 0,
+        'linktype' => 'x',
+        'linkdest' => '',
+        'user'     => '',
+        'group'    => '',
+        'major'    => 0,
+        'minor'    => 0
+      },
+      ref $self;
+
+    my $path_blocks = "\x00" x ( $encodedlen + $BLOCK_SIZE - ( $encodedlen % $BLOCK_SIZE ) );
+    substr( $path_blocks, 0, $encodedlen ) = $encoded;
+
+    return $posix_header->encode . $path_blocks;
+}
+
 sub encode {
     my ($self) = @_;
     my $block = "\x00" x $BLOCK_SIZE;

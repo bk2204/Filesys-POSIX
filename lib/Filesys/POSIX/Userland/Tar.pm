@@ -145,9 +145,16 @@ sub _archive {
     my $blocks = '';
 
     if ( $header->{'truncated'} ) {
-        die('Filename too long') unless $opts->{'gnu_extensions'};
 
-        $blocks .= $header->encode_longlink;
+        if ( $opts->{'gnu_extensions'} ) {
+            $blocks .= $header->encode_longlink;
+        }
+        elsif ( $opts->{'posix_extensions'} ) {
+            $blocks .= $header->encode_posix;
+        }
+        else {
+            die('Filename too long');
+        }
     }
 
     $blocks .= $header->encode;
