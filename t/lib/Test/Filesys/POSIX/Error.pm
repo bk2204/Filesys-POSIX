@@ -25,6 +25,8 @@ BEGIN {
     foreach my $name ( @Errno::EXPORT_OK, @{ $Errno::EXPORT_TAGS{'POSIX'} } ) {
         my $sv = $Errno::{$name};
 
+        next unless $$sv;
+
         $cache{ int $$sv } = $name;
     }
 
