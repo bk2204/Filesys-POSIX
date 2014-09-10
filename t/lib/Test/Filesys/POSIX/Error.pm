@@ -7,6 +7,9 @@
 
 package Test::Filesys::POSIX::Error;
 
+use strict;
+use warnings;
+
 use base 'Test::Builder::Module';
 use Errno;
 
