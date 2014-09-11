@@ -17,6 +17,7 @@ use File::Temp ();
 
 use Test::More ( 'tests' => 3 );
 use Test::Exception;
+use Test::Filesys::POSIX::Error;
 
 package Test::Filesys::POSIX::Data;
 
@@ -92,8 +93,8 @@ package main;
 
     unlink $data->{'tmpfile'};
 
-    throws_ok {
+    throws_errno_ok {
         $data->test('.');
     }
-    qr/No such file or directory/, '$fs->tar() dies when encountering missing file';
+    &Errno::ENOENT, '$fs->tar() dies when encountering missing file';
 }

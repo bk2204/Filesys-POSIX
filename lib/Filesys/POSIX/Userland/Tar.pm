@@ -17,6 +17,7 @@ use Filesys::POSIX::Path                  ();
 use Filesys::POSIX::Userland::Find        ();
 use Filesys::POSIX::Userland::Tar::Header ();
 
+use Errno;
 use Carp ();
 
 my @METHODS = qw(tar);
@@ -170,8 +171,8 @@ sub _archive {
         }
     };
 
-    if ($@) {
-        if ( !$opts->{'ignore_missing'} || $@ !~ /No such file or directory/ ) {
+    if ($!) {
+        if ( !$opts->{'ignore_missing'} || $! != &Errno::ENOENT ) {
             die $@;
         }
         $opts->{'ignore_missing'}->($path)

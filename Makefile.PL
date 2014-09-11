@@ -21,7 +21,8 @@ WriteMakefile(
         'Test::Exception'  => '0.26',
         'Test::NoWarnings' => '0.081',
         'Test::Builder'    => 0,
-        'Test::Deep'       => 0
+        'Test::Deep'       => 0,
+        'Try::Tiny'        => 0
     },
 
     'META_MERGE' => {
